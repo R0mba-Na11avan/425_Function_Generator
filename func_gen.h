@@ -21,7 +21,6 @@ enum WAVEFORM {
 class FunctionGenerator {
     public:
         FunctionGenerator(uint8_t funcSelect, uint8_t resistSelect,__SPI_CLASS__ * mySPI = &SPI);
-
         
         void setWaveform(WAVEFORM waveform);
         void setFrequency(float frequency);
@@ -31,16 +30,16 @@ class FunctionGenerator {
         WAVEFORM waveform() const;
         float frequency() const;
         float amplitude() const;
-        float dcOffset() const;
+        float DCOffset() const;
 
     private:
         AD9833 funcIC;
         MCP4131 varR;
 
-        WAVEFORM waveform;
-        float frequency;
-        float amplitude;
-        float dcOffset;
+        WAVEFORM wave;
+        float freq;
+        float amp;
+        float dcOff;
 };
 
 #endif
