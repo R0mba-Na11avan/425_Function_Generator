@@ -17,9 +17,9 @@ void FunctionGenerator::setWaveform(WAVEFORM wave) {
 }
 
 void FunctionGenerator::setFrequency(float freq) {
-    float maxFreq = funcIC.getMaxFrequency();
 
-    if (freq > maxFreq || freq < 1) return;
+    freq = (freq > AD9833_MAX_FREQ) ? AD9833_MAX_FREQ : freq;
+    freq = (freq < 1) ? 1 : freq;
 
     this->freq = freq;
     funcIC.setFrequency(freq);
@@ -27,6 +27,7 @@ void FunctionGenerator::setFrequency(float freq) {
 
 void FunctionGenerator::setAmplitude(float amp) {
     // validate amiplitude based on waveform type and set
+    amp = (amp < AMP_MIN) ? AMP_MIN : amp;
     this->amp = amp;
 }
 

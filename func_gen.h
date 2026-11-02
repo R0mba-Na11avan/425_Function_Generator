@@ -33,6 +33,13 @@ class FunctionGenerator {
         float DCOffset() const;
 
     private:
+        //hese are measured peak to peak
+        //we also need to add a voltage divider if we're using a square wave to keep amplitude consistent
+        //^^^ this is because the square wave is V_CC-0 while the sine wave is 680mV to 38mV
+        //2N7000 mosfet switch my goat (for the voltage divider)
+        static const float AMP_MIN = 0.650-0.038; //numbers from data sheet
+
+
         AD9833 funcIC;
         MCP4131 varR;
 
