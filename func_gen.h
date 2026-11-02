@@ -1,6 +1,7 @@
 /**************************************************************************
 *   Author: Parikshith Venkataraghavan
-*   Purpose: function generator class sued to intefrace with AD9833 module
+*   Purpose: function generator class used to intefrace with AD9833 module
+             and MCP4131 variable resistor
 *   Date: Oct-30-2026
 **************************************************************************/
 
@@ -9,6 +10,7 @@
 #define FUNC_GEN_H
 
 #include "AD9833.h"
+#include "MCP4131.h"
 
 enum WAVEFORM {
     SINE,
@@ -18,8 +20,7 @@ enum WAVEFORM {
 
 class FunctionGenerator {
     public:
-        FunctionGenerator(uint8_t slaveSelectPin, __SPI_CLASS__ * mySPI = &SPI);
-        FunctionGenerator(uint8_t slaveSelectPin, uint8_t spiData, uint8_t spiClock);
+        FunctionGenerator(uint8_t funcSelect, uint8_t resistSelect,__SPI_CLASS__ * mySPI = &SPI);
 
         
         void setWaveform(WAVEFORM waveform);
@@ -34,6 +35,7 @@ class FunctionGenerator {
 
     private:
         AD9833 funcIC;
+        MCP4131 varR;
 
         WAVEFORM waveform;
         float frequency;
