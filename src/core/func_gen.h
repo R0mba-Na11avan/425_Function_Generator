@@ -9,8 +9,8 @@
 #ifndef FUNC_GEN_H
 #define FUNC_GEN_H
 
-#include "AD9833.h"
-#include "MCP4131.h"
+#include "../drivers/AD9833.h"
+#include "../drivers/MCP4131.h"
 
 enum class WAVEFORM : uint8_t {
     SINE,
