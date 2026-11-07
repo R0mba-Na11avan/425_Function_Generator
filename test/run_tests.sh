@@ -17,6 +17,7 @@ SOURCES=(
     "$ROOT/src/ui/input_logic.cpp"
     "$ROOT/src/ui/dashboard_logic.cpp"
     "$ROOT/src/ui/dashboard_view.cpp"
+    "$ROOT/src/comms/http_server.cpp"
     "$ROOT/src/libs/AD9833/AD9833.cpp"
     "$ROOT/src/libs/MCP4131/MCP4131.cpp"
     "$ROOT/src/libs/Adafruit_GFX/Adafruit_GFX.cpp"
@@ -26,7 +27,7 @@ SOURCES=(
 g++ -std=gnu++17 -Wall -Wextra -g -O0 \
     -DARDUINO=10607 -DSCREENS_DIR="\"$OUT/screens\"" \
     -I"$ROOT/test/fakes" \
-    "$ROOT"/test/*.cpp "$ROOT/test/fakes/fakes.cpp" "${SOURCES[@]}" \
+    "$ROOT"/test/*.cpp "$ROOT"/test/fakes/*.cpp "${SOURCES[@]}" \
     -o "$OUT/host_tests"
 
 "$OUT/host_tests"

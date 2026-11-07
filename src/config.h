@@ -185,6 +185,8 @@
 
 #define HTTP_PORT               80
 #define HTTP_MAX_BODY           4096        //bigger request bodies get 413
+#define HTTP_MAX_ROUTES         12          //path + method pairs on the shared server
+#define HTTP_MAX_PATH_LEN       32
 #define MCP_PATH                "/mcp"
 
 //Preferences/NVS for the saved credentials

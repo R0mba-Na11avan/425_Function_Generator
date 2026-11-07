@@ -54,7 +54,8 @@ headers, so include across folders with relative paths (`"../core/..."`).
 | `FuncGenController` / `FuncGenState` | done |
 | `ui/input` (encoder via PCNT, button, XPT2046 touch) | done, not tried on hardware yet, touch calibration is a placeholder |
 | `ui/display_ui` (dashboard, editing) | done, not tried on hardware yet, waits for `WifiManager` for the network line |
-| `comms/wifi_manager`, `http_server` | stub, spec in the headers |
+| `comms/http_server` (shared esp_http_server + route table) | done, host-tested against a fake httpd, not tried on hardware yet |
+| `comms/wifi_manager` | stub, spec in the header |
 | `comms/mcp_server` | stub, spec in the headers |
 | `comms/ble_service` | stub, **implement last** |
 | `comms/rest_api`, `web/index_html.h` | deferred, may not be built |
