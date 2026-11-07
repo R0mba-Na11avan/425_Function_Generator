@@ -18,14 +18,20 @@ SOURCES=(
     "$ROOT/src/ui/dashboard_logic.cpp"
     "$ROOT/src/ui/dashboard_view.cpp"
     "$ROOT/src/comms/http_server.cpp"
+    "$ROOT/src/comms/wifi_logic.cpp"
+    "$ROOT/src/comms/provisioning.cpp"
     "$ROOT/src/libs/AD9833/AD9833.cpp"
     "$ROOT/src/libs/MCP4131/MCP4131.cpp"
     "$ROOT/src/libs/Adafruit_GFX/Adafruit_GFX.cpp"
 )
 
-#ARDUINO is checked by Adafruit_GFX.h before it includes Arduino.h, so it has to be set here
+#ARDUINO is checked by Adafruit_GFX.h before it includes Arduino.h, so it has to be set here.
+#it also turns on ArduinoJson's String/Stream/Print/PROGMEM support, which the fakes
+#don't have and the firmware doesn't use, so those are switched off again
 g++ -std=gnu++17 -Wall -Wextra -g -O0 \
     -DARDUINO=10607 -DSCREENS_DIR="\"$OUT/screens\"" \
+    -DARDUINOJSON_ENABLE_ARDUINO_STRING=0 -DARDUINOJSON_ENABLE_ARDUINO_STREAM=0 \
+    -DARDUINOJSON_ENABLE_ARDUINO_PRINT=0 -DARDUINOJSON_ENABLE_PROGMEM=0 \
     -I"$ROOT/test/fakes" \
     "$ROOT"/test/*.cpp "$ROOT"/test/fakes/*.cpp "${SOURCES[@]}" \
     -o "$OUT/host_tests"

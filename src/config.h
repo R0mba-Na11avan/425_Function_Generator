@@ -161,7 +161,7 @@
 #define INPUT_TASK_CORE     1
 
 #define WIFI_TASK_PRIO      1
-#define WIFI_TASK_STACK     4096
+#define WIFI_TASK_STACK     6144    //NVS, scan results and logging
 #define WIFI_TASK_CORE      0
 
 #define HTTP_TASK_PRIO      2
@@ -182,6 +182,12 @@
 
 #define STA_CONNECT_TIMEOUT_MS  15000       //before falling back to AP
 #define STA_LOST_TIMEOUT_MS     30000       //lost connection tolerated this long
+#define STA_RETRY_MIN_MS        1000        //wait after a failed attempt, doubles each time
+#define STA_RETRY_MAX_MS        8000
+#define AP_STA_RETRY_MS         300000      //in AP fallback with saved credentials, try the saved
+                                            //network again this often while nobody is on the AP. 0 = never
+#define WIFI_SCAN_MAX           20          //networks listed on the setup page
+#define WIFI_RESTART_DELAY_MS   1000        //after saving credentials, lets the /save response get out
 
 #define HTTP_PORT               80
 #define HTTP_MAX_BODY           4096        //bigger request bodies get 413
