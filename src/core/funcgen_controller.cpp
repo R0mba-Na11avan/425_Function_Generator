@@ -1,11 +1,7 @@
 #include "funcgen_controller.h"
 
 FuncGenController::FuncGenController(FunctionGenerator& funcGen)
-    : _funcGen(funcGen), _lock(nullptr), _outputEnabled(false), _listenerCount(0) {}
-
-void FuncGenController::begin() {
-    _lock = xSemaphoreCreateMutex();
-}
+    : _funcGen(funcGen), _lock(xSemaphoreCreateMutex()), _listenerCount(0) {}
 
 void FuncGenController::setWaveform(WAVEFORM waveform) {
     xSemaphoreTake(_lock, portMAX_DELAY);
@@ -43,9 +39,8 @@ void FuncGenController::setDCOffset(float dcOffset) {
 }
 
 void FuncGenController::setOutputEnabled(bool enabled) {
-    //TODO: FunctionGenerator has no output enable yet, this only tracks the flag
     xSemaphoreTake(_lock, portMAX_DELAY);
-    _outputEnabled = enabled;
+    _funcGen.setOutput(enabled);
     xSemaphoreGive(_lock);
     notify();
 }
@@ -80,6 +75,6 @@ FuncGenState FuncGenController::snapshot() const {
         _funcGen.phase(),
         _funcGen.amplitude(),
         _funcGen.DCOffset(),
-        _outputEnabled
+        _funcGen.outputOn()
     };
 }

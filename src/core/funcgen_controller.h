@@ -23,8 +23,6 @@ class FuncGenController {
 
         FuncGenController(FunctionGenerator& funcGen);
 
-        void begin();
-
         void setWaveform(WAVEFORM waveform);
         void setFrequency(float frequency);
         void setPhase(float phase);
@@ -45,8 +43,6 @@ class FuncGenController {
 
         FunctionGenerator& _funcGen;
         SemaphoreHandle_t _lock;
-
-        bool _outputEnabled;
 
         Listener _listeners[MAX_LISTENERS];
         void* _listenerCtx[MAX_LISTENERS];

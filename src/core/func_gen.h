@@ -29,22 +29,28 @@ class FunctionGenerator {
         void setPhase(float phase);
         void setAmplitude(float amplitude);
         void setDCOffset(float dcOffset);
+        void setOutput(bool on);
 
         WAVEFORM waveform() const;
         float frequency() const;
         float phase() const;
         float amplitude() const;
         float DCOffset() const;
+        bool outputOn() const;
 
     private:
 
         unsigned int ampToWipe(float amplitude);
 
+        //writes _funcOn to the AD9833 power bits. setWave() clears them, so this has to be
+        //re-applied after every waveform change
+        void applyOutput();
+
         //hese are measured peak to peak
         //we also need to add a voltage divider if we're using a square wave to keep amplitude consistent
         //^^^ this is because the square wave is V_CC-0 while the sine wave is 680mV to 38mV
         //2N7000 mosfet switch my goat (for the voltage divider)
-        static const float AMP_MIN = 0.650-0.038; //numbers from data sheet
+        static constexpr float AMP_MIN = 0.650-0.038; //numbers from data sheet
 
 
         __SPI_CLASS__* _spi;
@@ -57,6 +63,7 @@ class FunctionGenerator {
         float _phase;
         float _amplitude;
         float _dcOffset;
+        bool _funcOn;
 };
 
 #endif
