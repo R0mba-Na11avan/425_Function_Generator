@@ -5,59 +5,102 @@
 **************************************************************************/
 
 /*
-    TO IMPLEMENT: class DisplayUI(FuncGenController&, WifiManager&, InputQueue&)
-    (WifiManager is only read for status, see network line below)
-
     Rules
         - draws directly with Adafruit_GFX + Adafruit_ILI9341 (vendored in
           src/libs). no LVGL, no separate display driver
-        - talks to the generator ONLY through FuncGenController (never
-          FunctionGenerator)
-        - the ILI9341 and the XPT2046 share one SPI bus. never touch the display
-          from any task except the UI task, and wrap bus use in SPI transactions
+        - talks to the generator ONLY through FuncGenController
+        - only the UI task touches the display. the XPT2046 shares the bus,
+          both libraries wrap every access in an SPI transaction
+        - network status comes from a function the sketch passes in
+          (setNetStatusSource), because ui never includes comms
 
     Threading
-        - the controller calls listeners from whichever task made the change
-          (HTTP, input, ...). the listener registered here must NOT draw. it just
-          copies the FuncGenState and sets a "dirty" flag/notifies the UI task
-        - the UI task wakes on that flag (or at ~20-30 Hz), reads the latest
-          state and redraws
-
-    Dashboard (single screen)
-        - waveform name plus a small drawn preview (sine/square/triangle drawn
-          with GFX lines from a precomputed point table, scaled to the box)
-        - frequency, large (use one of the DigitalWF fonts), auto-scaled units
-          Hz / kHz / MHz with sensible decimals
-        - amplitude (Vpp) and DC offset (V) readouts
-        - output ON/OFF indicator, colour coded
-        - network line: Wi-Fi state (connecting / connected / AP mode), hostname
-          or IP. a slot is reserved for a BLE status icon (BLE is not
-          implemented yet, so leave the slot blank)
-        - in AP-fallback mode, show the AP SSID and 192.168.4.1 prominently so the
-          user knows where to connect to enter credentials
+        - the controller listener registered here only copies the state into
+          a spinlock-protected slot and marks it dirty. it never draws
+        - the UI task waits up to UI_FRAME_MS for input events, applies them,
+          picks up the latest state and redraws what changed (at most every
+          UI_FRAME_MS, so ~25 Hz)
 
     Redraw strategy
-        - keep a copy of the last drawn state. on each pass only erase and redraw
-          the fields that changed (fillRect the field's box, then print). never
-          clear the whole screen after the first draw. this avoids flicker and
-          keeps SPI traffic low
-        - for large text, use setTextColor(fg, bg) or redraw over a cleared box,
-          since GFX fonts don't erase the old glyphs themselves
+        - the screen is split into areas (status bar + one per field, see
+          dashboard_logic.h). each area keeps a key string of what it last
+          showed (value text, selection, ...). only areas whose key changed
+          are redrawn, the whole screen is cleared only once at startup
+        - the drawing itself is in dashboard_view (GFX only, host-testable)
+        - an area is drawn into its own GFXcanvas16 in PSRAM and sent in one
+          block, so nothing flickers. if a canvas can't be allocated that area
+          falls back to clearing its box and drawing straight to the panel
 
-    Editing (driven by input events)
-        - a "selected field" cursor moves over: waveform, frequency, amplitude,
-          offset, output. highlight the selected one
-        - encoder press: enter/leave edit mode on the selected field. in edit
-          mode, encoder turns change the value by the current step
-        - frequency has a step selector (1 Hz ... 1 MHz) cycled by a long press
-          or by tapping the digit on the touchscreen
-        - touch: tap a field to select it, tap the output indicator to toggle it
-        - every change goes through controller.setX(); the display itself only
-          updates when the listener fires, so the screen always shows what was
-          actually applied after clamping (also when an agent changed it)
-
-    Public interface (sketch)
-        - begin(): init the panel, set rotation, draw the static parts (labels,
-          frames), start the UI task
-        - the rest is internal. everything else comes in via listener + input
+    Editing: see DashboardEditor in dashboard_logic.h. every change goes through
+    controller.setX(), and the screen only changes when the listener fires, so
+    it always shows what was actually applied (also when an agent changed it)
 */
+
+#ifndef DISPLAY_UI_H
+#define DISPLAY_UI_H
+
+#include <Arduino.h>
+#include <SPI.h>
+#include "freertos/FreeRTOS.h"
+
+#include "../config.h"
+#include "../core/funcgen_controller.h"
+#include "../core/net_status.h"
+#include "../libs/Adafruit_ILI9341/Adafruit_ILI9341.h"
+#include "input.h"
+#include "dashboard_logic.h"
+#include "dashboard_view.h"
+
+class DisplayUI {
+    public:
+        //returns the current network status. called from the UI task
+        using NetStatusFn = NetStatus (*)(void* ctx);
+
+        //bus is the display's SPI bus (HSPI), shared with the touch controller
+        DisplayUI(FuncGenController& controller, InputManager& input, SPIClass& bus);
+
+        //optional, call before begin(). without it the network line reads "Wi-Fi off"
+        void setNetStatusSource(NetStatusFn fn, void* ctx = nullptr);
+
+        //allocates the canvases, registers the listener and starts the UI task,
+        //which initialises the panel and draws the first frame
+        bool begin();
+
+    private:
+        static void onStateChanged(const FuncGenState& state, void* ctx);
+        static void taskEntry(void* arg);
+        void run();
+
+        void takeLatestState();
+        void apply(const EditCommand& command);
+        void pollNetStatus();
+
+        void redraw();
+        void drawArea(uint8_t area, const DashboardView& view);
+
+        Adafruit_ILI9341 _tft;
+        FuncGenController& _controller;
+        InputManager& _input;
+        SPIClass& _bus;
+
+        NetStatusFn _netFn;
+        void* _netCtx;
+        NetStatus _net;
+
+        //written by the listener (any task), read by the UI task
+        portMUX_TYPE _stateMux;
+        FuncGenState _latest;
+        bool _stateDirty;
+
+        //UI task only
+        FuncGenState _state;
+        FuncGenLimits _limits;
+        DashboardEditor _editor;
+        uint32_t _lastNetPoll;
+        uint32_t _lastDraw;
+
+        GFXcanvas16* _canvas[DASHBOARD_AREA_COUNT];
+        char _drawnKey[DASHBOARD_AREA_COUNT][AREA_KEY_LEN];
+};
+
+#endif

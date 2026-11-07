@@ -32,8 +32,10 @@ src/
   libs/      vendored third-party libs (AD9833, MCP4131, Adafruit GFX + ILI9341,
              XPT2046_Touchscreen, ArduinoJson)
   core/      FunctionGenerator, FuncGenState, FuncGenController
-  ui/        display_ui (dashboard drawn with Adafruit GFX), input (encoder + touch),
-             input_logic (debounce/accel/tap, host-tested)
+  core/      ... + net_status.h (Wi-Fi state shared by comms and ui)
+  ui/        display_ui (UI task, canvases, listener), dashboard_view (drawing),
+             dashboard_logic (layout, formatting, editor), input (encoder + touch),
+             input_logic (debounce/accel/tap). the *_logic/_view files are host-tested
   comms/     wifi_manager, http_server, mcp_server (+ ble_service, rest_api stubs)
   web/       provisioning_html.h (Wi-Fi setup page), index_html.h (deferred)
 ```
@@ -51,7 +53,7 @@ headers, so include across folders with relative paths (`"../core/..."`).
 | `FunctionGenerator` (AD9833 + MCP4131) | done (incl. output enable and limit getters), amplitude mapping is a placeholder |
 | `FuncGenController` / `FuncGenState` | done |
 | `ui/input` (encoder via PCNT, button, XPT2046 touch) | done, not tried on hardware yet, touch calibration is a placeholder |
-| `ui/display_ui` | stub, spec in the header |
+| `ui/display_ui` (dashboard, editing) | done, not tried on hardware yet, waits for `WifiManager` for the network line |
 | `comms/wifi_manager`, `http_server` | stub, spec in the headers |
 | `comms/mcp_server` | stub, spec in the headers |
 | `comms/ble_service` | stub, **implement last** |
@@ -84,9 +86,11 @@ include it as `#include "../libs/ArduinoJson/ArduinoJson.h"`.
 
 ## Tests
 
-Host tests run the real core and vendored chip libraries on a PC against fake
-Arduino/SPI/FreeRTOS headers (`test/fakes`), and check what would reach the
-AD9833 and MCP4131. Needs g++ (on Windows: `scoop install mingw`):
+Host tests run the real core, UI logic and vendored libraries on a PC against
+fake Arduino/SPI/FreeRTOS headers (`test/fakes`). They check what would reach
+the AD9833 and MCP4131, and render the dashboard with the real Adafruit GFX code
+to BMP screenshots in `test/build/screens`. Needs g++ (on Windows:
+`scoop install mingw`):
 
     bash test/run_tests.sh
 

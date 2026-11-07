@@ -101,6 +101,13 @@
 
 //redraw rate cap for the UI task
 #define UI_FRAME_MS         40      //~25 Hz
+#define UI_NET_POLL_MS      500     //how often the network line is refreshed
+
+//editing steps on the dashboard. frequency steps are 1 Hz .. 1 MHz (x10 each),
+//cycled with a long press or by tapping a digit
+#define UI_FREQ_STEP_DEFAULT    3       //index into 1, 10, 100, 1k, ... -> 1 kHz
+#define UI_AMP_STEP_V           0.05f
+#define UI_OFFSET_STEP_V        0.05f
 
 //touch calibration: raw XPT2046 readings (0..4095) at the left/right and
 //top/bottom screen edges, after the optional X/Y swap. if an axis is mirrored,

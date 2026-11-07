@@ -12,6 +12,22 @@
 #include <stdint.h>
 #include "../config.h"
 
+//what InputManager delivers to DisplayUI
+enum class INPUT_EVENT : uint8_t {
+    ENCODER_DELTA,
+    BUTTON_SHORT,
+    BUTTON_LONG,
+    TOUCH_TAP
+};
+
+struct InputEvent {
+    INPUT_EVENT type;
+    int16_t clicks; //ENCODER_DELTA: clicks turned (use to move a cursor)
+    int16_t delta;  //ENCODER_DELTA: accelerated steps (use to change a value)
+    int16_t x;      //TOUCH_TAP: screen pixel
+    int16_t y;
+};
+
 //turns encoder clicks into steps, multiplied when the knob is spun quickly
 class EncoderAccel {
     public:

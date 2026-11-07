@@ -1,0 +1,43 @@
+/**************************************************************************
+*   Author: Parikshith Venkataraghavan
+*   Purpose: draws the dashboard areas onto any Adafruit_GFX surface (a
+             GFXcanvas16 or the panel). no FreeRTOS, no ILI9341, so the host
+             tests can render it to an image
+**************************************************************************/
+
+#ifndef DASHBOARD_VIEW_H
+#define DASHBOARD_VIEW_H
+
+#include <stdint.h>
+#include <stddef.h>
+#include "../libs/Adafruit_GFX/Adafruit_GFX.h"
+#include "dashboard_logic.h"
+
+//everything the screen shows
+struct DashboardView {
+    FuncGenState state;
+    NetStatus net;
+    UI_FIELD selected;
+    bool editing;
+    uint8_t freqStepIndex;
+};
+
+//areas: one per UI_FIELD (same index), then the status bar
+static const uint8_t STATUS_AREA = UI_FIELD_COUNT;
+static const uint8_t DASHBOARD_AREA_COUNT = UI_FIELD_COUNT + 1;
+static const uint8_t AREA_KEY_LEN = 64;
+
+static const uint16_t DASHBOARD_BG = 0x0000;
+
+Rect areaRect(uint8_t area);
+
+//short text describing what an area shows. if it hasn't changed since the
+//last draw, the area doesn't need redrawing
+void areaKey(const DashboardView& view, uint8_t area, char* key, size_t len);
+
+//draws one area. r is where it goes on g: (0, 0, w, h) for a canvas of the
+//area's size, or areaRect(area) when drawing straight to the panel.
+//the area must already be cleared to DASHBOARD_BG
+void renderArea(Adafruit_GFX& g, uint8_t area, Rect r, const DashboardView& view);
+
+#endif

@@ -12,6 +12,7 @@
 #include <stddef.h>
 #include <math.h>
 #include <string.h>
+#include <stdlib.h>
 
 typedef uint8_t byte;
 typedef bool boolean;
@@ -32,8 +33,23 @@ typedef bool boolean;
 
 #define RAD_TO_DEG 57.295779513082320876798154814105
 #define DEG_TO_RAD 0.017453292519943295769236907684886
+#define radians(deg) ((deg) * DEG_TO_RAD)
 
 #define F(s) (s)
+#define PROGMEM
+
+//just enough for Adafruit_GFX's String / flash-string overloads
+class __FlashStringHelper;
+
+class String {
+    public:
+        String(const char* s = "") : _s(s) {}
+        const char* c_str() const { return _s; }
+        unsigned int length() const { return (unsigned int)strlen(_s); }
+
+    private:
+        const char* _s;
+};
 
 static const int FAKE_PIN_COUNT = 64;
 

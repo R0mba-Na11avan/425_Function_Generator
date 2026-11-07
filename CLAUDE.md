@@ -21,6 +21,8 @@ BLE (last). Read `README.md` for the architecture and status. Each stub header i
 - Layering: `ui`/`comms` -> `core` -> `libs`. `ui` and `comms` never include each
   other.
 - `ui` and `comms` talk only to `FuncGenController`, never `FunctionGenerator`.
+- Wi-Fi status reaches the UI as a `NetStatus` (`core/net_status.h`) through a
+  callback the `.ino` passes to `DisplayUI::setNetStatusSource`.
 - Controller listeners are called from whatever task made the change. A listener
   must only copy state / set a flag. It must not draw, block, or call a setter.
 - All pins, limits, task settings and network constants live in `src/config.h`.
