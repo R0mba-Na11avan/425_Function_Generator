@@ -13,6 +13,7 @@ mkdir -p "$OUT"
 SOURCES=(
     "$ROOT/src/core/func_gen.cpp"
     "$ROOT/src/core/funcgen_controller.cpp"
+    "$ROOT/src/ui/input_logic.cpp"
     "$ROOT/src/libs/AD9833/AD9833.cpp"
     "$ROOT/src/libs/MCP4131/MCP4131.cpp"
 )

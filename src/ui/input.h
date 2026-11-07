@@ -5,41 +5,106 @@
 **************************************************************************/
 
 /*
-    TO IMPLEMENT: class InputManager
-
     This class only produces events. It does not know what a field or a
-    frequency is. DisplayUI decides what an event means. The FunctionGenerator is
-    deliberately easy to drive from any input, so adding buttons later should
-    only mean adding another event source here.
+    frequency is. DisplayUI decides what an event means, so adding buttons
+    later should only mean adding another event source here.
 
-    Event type (struct + enum, shared with display_ui)
-        - ENCODER_DELTA   (signed steps since the last event, accelerated if
-                           the knob is turned quickly)
-        - BUTTON_SHORT    (press and release under ~500 ms)
-        - BUTTON_LONG     (held past ~500 ms)
-        - TOUCH_TAP       (x, y in screen coordinates, after calibration)
+    How it works
+        - one input task (config.h: INPUT_TASK_*) runs every INPUT_POLL_MS
+        - encoder: the PCNT peripheral decodes the quadrature in hardware with
+          a glitch filter, so no edges are missed even while the task waits.
+          the task just reads the count. EncoderAccel multiplies fast turns
+        - button: sampled each tick, debounced, short vs long press
+          (ButtonDebouncer). LONG fires while still held, SHORT on release
+        - touch: XPT2046_Touchscreen sets a flag from the T_IRQ interrupt, so
+          the SPI bus is only read while the screen is pressed. readings are
+          mapped to pixels with the calibration in config.h (mapTouch) and
+          TapDetector turns press + release into one TOUCH_TAP
+        - the touch chip shares the display's SPI bus. both libraries wrap
+          every access in an SPI transaction, and the ESP32 SPIClass holds a
+          lock for the length of a transaction, so a touch read never cuts
+          into a redraw
 
     Delivery
-        - events go into a FreeRTOS queue (small, e.g. 16 entries). DisplayUI
-          is the only consumer. if the queue is full, drop the oldest
-          ENCODER_DELTA, never drop button/touch events
-
-    Rotary encoder
-        - quadrature decoding. either the ESP32-S3 PCNT peripheral (preferred,
-          no missed edges, hardware glitch filter) or a pin interrupt with a state
-          table. no polling in loop()
-        - button: debounce (~20-30 ms), long-press detection, ISR or timer based
-
-    Touch (XPT2046)
-        - shares the ILI9341 SPI bus with its own CS and a much slower clock, so
-          wrap each read in an SPI transaction with its own settings
-        - use the IRQ pin to know when a touch exists instead of polling the SPI
-          bus constantly, and then sample a few times and median/average
-        - map raw readings to screen pixels with calibration constants from
-          config.h. tap = touch released within a short time and a small movement
-        - lift/drop (no sliding or multi-touch needed)
-
-    Public interface (sketch)
-        - begin(): configure pins/PCNT/touch, create the queue and the input task
-        - queue handle (or a receive(event, timeout) method) for DisplayUI
+        - FreeRTOS queue of INPUT_QUEUE_LEN events, DisplayUI is the only
+          consumer
+        - encoder clicks are summed and only queued while more than
+          INPUT_QUEUE_RESERVED slots are free, so they never crowd out a button
+          or tap. clicks aren't lost meanwhile, they wait in the sum (and in
+          the PCNT counter)
+        - button/touch events wait for a free slot, they are never dropped
 */
+
+#ifndef INPUT_H
+#define INPUT_H
+
+#include <Arduino.h>
+#include <SPI.h>
+#include "freertos/FreeRTOS.h"
+#include "freertos/queue.h"
+#include "driver/pulse_cnt.h"
+
+#include "../config.h"
+#include "../libs/XPT2046_Touchscreen/XPT2046_Touchscreen.h"
+#include "input_logic.h"
+
+enum class INPUT_EVENT : uint8_t {
+    ENCODER_DELTA,
+    BUTTON_SHORT,
+    BUTTON_LONG,
+    TOUCH_TAP
+};
+
+struct InputEvent {
+    INPUT_EVENT type;
+    int16_t clicks; //ENCODER_DELTA: clicks turned (use to move a cursor)
+    int16_t delta;  //ENCODER_DELTA: accelerated steps (use to change a value)
+    int16_t x;      //TOUCH_TAP: screen pixel
+    int16_t y;
+};
+
+class InputManager {
+    public:
+        //touchBus is the display's SPI bus (HSPI). begin() starts it on the
+        //PIN_LCD_* pins if nobody has yet
+        InputManager(SPIClass& touchBus);
+
+        //configures pins, PCNT and touch, creates the queue and starts the
+        //input task. returns false if any of that failed
+        bool begin();
+
+        //waits up to timeout for the next event
+        bool receive(InputEvent& event, TickType_t timeout);
+
+    private:
+        static void taskEntry(void* arg);
+        void run();
+
+        bool setupEncoder();
+        void pollEncoder(uint32_t nowMs);
+        void pollButton(uint32_t nowMs);
+        void pollTouch(uint32_t nowMs);
+
+        //queues the summed encoder clicks if there is room above the reserve
+        void flushEncoder();
+        //queues a button/touch event, waiting for room if needed
+        void sendEvent(const InputEvent& event);
+
+        SPIClass& _bus;
+        XPT2046_Touchscreen _touch;
+        QueueHandle_t _queue;
+        pcnt_unit_handle_t _pcnt;
+
+        int _lastCount;
+        int32_t _countRemainder;    //PCNT counts not yet worth a full click
+        int32_t _pendingClicks;     //summed, not queued yet
+        int32_t _pendingDelta;
+
+        EncoderAccel _accel;
+        ButtonDebouncer _button;
+        TapDetector _tap;
+        TouchCalibration _cal;
+        uint32_t _lastCalPrintMs;
+};
+
+#endif

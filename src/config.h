@@ -36,7 +36,10 @@
 #define PIN_AD9833_CS   10
 #define PIN_MCP4131_CS  9
 
-//display + touch bus (HSPI)
+//display + touch bus (HSPI). wire T_CLK/T_DIN/T_DO to the same SCK/MOSI/MISO.
+//MISO is only for the touch chip's T_DO: leave the LCD's own SDO(MISO) pin
+//unconnected, on some of these modules it doesn't release the line and
+//corrupts touch reads (the display is never read from)
 #define PIN_LCD_SCK     4
 #define PIN_LCD_MOSI    5
 #define PIN_LCD_MISO    6
@@ -99,13 +102,41 @@
 //redraw rate cap for the UI task
 #define UI_FRAME_MS         40      //~25 Hz
 
-//touch calibration: raw XPT2046 readings at the screen edges.
-//PLACEHOLDERS, measure them with the touch calibration mode once the panel is wired.
+//touch calibration: raw XPT2046 readings (0..4095) at the left/right and
+//top/bottom screen edges, after the optional X/Y swap. if an axis is mirrored,
+//just put the bigger number in _MIN. PLACEHOLDERS: set TOUCH_CALIBRATION_MODE
+//to 1, tap the corners and read the raw values off the serial monitor.
 //the XPT2046 runs at its own ~2 MHz SPI clock (set inside the touch library)
 #define TOUCH_RAW_X_MIN     200
 #define TOUCH_RAW_X_MAX     3900
 #define TOUCH_RAW_Y_MIN     200
 #define TOUCH_RAW_Y_MAX     3900
+#define TOUCH_SWAP_XY       0       //1 if the panel's X axis runs along the screen's Y
+#define TOUCH_CALIBRATION_MODE 0    //1 = print raw touch readings on Serial
+
+
+/*
+    Input (encoder, button, touch). All times in ms.
+*/
+
+#define INPUT_POLL_MS           5       //input task period
+#define INPUT_QUEUE_LEN         16
+#define INPUT_QUEUE_RESERVED    2       //slots encoder events leave free for button/touch
+
+//rotary encoder, decoded by the PCNT peripheral (x4 quadrature)
+#define ENC_COUNTS_PER_DETENT   4       //most mechanical encoders: 4 edges per click
+#define ENC_GLITCH_NS           1000    //PCNT glitch filter (max ~12700 ns)
+#define ENC_ACCEL_SLOW_MS       100     //clicks further apart than this count 1x
+#define ENC_ACCEL_MAX           10      //max multiplier when spun fast
+
+//encoder push button: to GND, internal pull-up, so LOW = pressed
+#define BUTTON_DEBOUNCE_MS      25
+#define BUTTON_LONG_MS          500
+
+//tap = finger lifted within TOUCH_TAP_MAX_MS, moved less than TOUCH_TAP_MAX_MOVE_PX
+#define TOUCH_TAP_MAX_MS        600
+#define TOUCH_TAP_MAX_MOVE_PX   15
+#define TOUCH_RELEASE_MS        30      //no touch for this long = finger lifted
 
 
 /*
