@@ -9,12 +9,12 @@
 #include "MCP4131.h"
 #include <SPI.h>
 
-int slaveSelectPin;
-
 MCP4131::MCP4131(int slavePin) {
     SPI.begin();
     slaveSelectPin = slavePin;
 	pinMode(slavePin, OUTPUT);
+    // deselect until first command, otherwise every pot listens on the bus at boot
+    digitalWrite(slavePin, HIGH);
 }
 
 byte MCP4131::readWiper() {

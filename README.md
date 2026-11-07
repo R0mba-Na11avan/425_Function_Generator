@@ -9,13 +9,13 @@ oui oui baugette
 ```
 425_Function_Generator.ino   setup()/loop() only
 src/
-  drivers/   AD9833, MCP4131 (chip level, no app logic)
+  libs/      vendored third-party libs (AD9833, MCP4131, Adafruit GFX + ILI9341)
   core/      FunctionGenerator, FuncGenState, FuncGenController
   ui/        LCD UI (planned)
   comms/     BLE, Wi-Fi, HTTP, MCP server (planned)
 ```
 
-Dependencies only point downward: `ui`/`comms` -> `core` -> `drivers`.
+Dependencies only point downward: `ui`/`comms` -> `core` -> `libs`.
 `ui` and `comms` only talk to `FuncGenController`, never to `FunctionGenerator`.
 
 Arduino IDE compiles `src/` recursively but only searches `src/` roots for

@@ -20,6 +20,8 @@ class MCP4131
         void incrementWiper();
 
     private:
+        int slaveSelectPin; // per instance so multiple pots can share the SPI bus
+
         const static byte ADDRESS_WIPER0 = 0x0;
         const static byte ADDRESS_WIPER1 = 0x1;
         const static byte COMMAND_MASK = 0x00;
