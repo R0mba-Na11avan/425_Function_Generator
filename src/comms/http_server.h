@@ -50,6 +50,9 @@ class HttpRequest {
         HTTP_METHOD method() const;
         size_t contentLength() const;
 
+        //true if the header was sent at all (also when it is too long for header())
+        bool hasHeader(const char* name);
+
         //copies a request header into out (NUL terminated). false if missing or too long
         bool header(const char* name, char* out, size_t len);
 

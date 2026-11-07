@@ -20,6 +20,7 @@ SOURCES=(
     "$ROOT/src/comms/http_server.cpp"
     "$ROOT/src/comms/wifi_logic.cpp"
     "$ROOT/src/comms/provisioning.cpp"
+    "$ROOT/src/comms/mcp_server.cpp"
     "$ROOT/src/libs/AD9833/AD9833.cpp"
     "$ROOT/src/libs/MCP4131/MCP4131.cpp"
     "$ROOT/src/libs/Adafruit_GFX/Adafruit_GFX.cpp"

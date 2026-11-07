@@ -194,6 +194,8 @@
 #define HTTP_MAX_ROUTES         12          //path + method pairs on the shared server
 #define HTTP_MAX_PATH_LEN       32
 #define MCP_PATH                "/mcp"
+#define MCP_SERVER_NAME         "funcgen"
+#define FIRMWARE_VERSION        "0.1.0"     //reported to MCP clients as serverInfo.version
 
 //Preferences/NVS for the saved credentials
 #define NVS_NAMESPACE           "wifi"

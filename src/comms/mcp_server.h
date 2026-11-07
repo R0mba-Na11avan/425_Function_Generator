@@ -5,60 +5,85 @@
 **************************************************************************/
 
 /*
-    TO IMPLEMENT: class McpServer(FuncGenController&, HttpServer&)
-
     Scope (decided)
         - basic tools only, no auth, stateless plain-JSON responses. no SSE
           stream, no Mcp-Session-Id, no server-initiated notifications
         - revisit auth if the device is ever exposed beyond a trusted LAN
 
     Transport
-        - single route: POST /mcp, body = one JSON-RPC 2.0 message,
-          response = application/json
-        - GET /mcp -> 405 Method Not Allowed (we don't offer an SSE stream)
-        - notifications (no "id", e.g. notifications/initialized) -> 202 Accepted
-          with an empty body
-        - parse with ArduinoJson (vendored v7.4.3 in src/libs/ArduinoJson). cap the body size
+        - POST /mcp, body = one JSON-RPC 2.0 message, response = application/json
+        - GET /mcp -> 405 (no SSE stream offered). other methods get 405 from
+          esp_http_server since no route exists for them
+        - notifications and responses from the client (no "id") -> 202, empty body
+        - batches (JSON arrays) -> -32600, they were dropped from MCP in 2025-06-18
+        - body capped at HTTP_MAX_BODY (413 beyond)
+
+    Request checks (before any JSON is parsed)
+        - Content-Type must be application/json (415). a cross-site form or a
+          "simple" fetch can't send that, so a web page can't reach the tools
+          without a CORS preflight, which this server never answers
+        - Origin, if present, must be http(s)://<MDNS_HOSTNAME>.local or an
+          IPv4 address (403). browsers always send Origin on POST, so this stops
+          DNS rebinding (an attacker's domain resolving to the device's IP),
+          as the MCP spec requires. clients outside a browser send no Origin
+        - MCP-Protocol-Version, if present, must be one we support (400)
 
     JSON-RPC methods
-        - initialize: reply with protocolVersion (echo the client's if we
-          support it, otherwise our newest), capabilities { tools: {} } and
-          serverInfo { name, version }
-        - ping: reply with an empty result
-        - tools/list: return the tool table below
-        - tools/call: look up the tool by name, validate the arguments against its
-          schema, run it, return { content: [{ type: "text", text: ... }] }
-        - anything else: error -32601 (method not found). malformed JSON: -32700.
-          bad params: -32602
+        - initialize: echoes the client's protocolVersion if supported, else our
+          newest. capabilities { tools: { listChanged: false } }, serverInfo and
+          short instructions for the agent
+        - ping: empty result
+        - tools/list: built from the tool table, schemas use controller.limits()
+        - tools/call: unknown tool or params not an object -> -32602. bad
+          arguments (missing, wrong type, out of range, unknown) -> a tool
+          result with isError: true and a message the model can act on.
+          success -> text + structuredContent with the state that was actually applied
+        - anything else -32601, malformed JSON -32700 (HTTP 400), not a JSON-RPC
+          2.0 object -32600 (HTTP 400 without a usable id)
 
-    Tool table (single table: name, description, JSON schema, handler)
-        Adding a tool should be a single new entry. Each handler calls exactly one
-        FuncGenController method.
+    Tools (TOOLS table in mcp_server.cpp, one entry each)
         - set_waveform { waveform: "sine" | "square" | "triangle" }
-        - set_frequency { hz: number }
-        - set_amplitude { vpp: number }
-        - set_phase { degrees: number }
-        - set_dc_offset { volts: number }
-        - set_output { enabled: boolean }
-        - get_state  -> current FuncGenState as JSON
-        - get_limits -> min/max (and unit) for frequency, amplitude, phase and
-                        offset, per waveform where they differ, so an agent can
-                        check before setting
+        - set_frequency { hz }, set_amplitude { vpp }, set_phase { degrees },
+          set_dc_offset { volts }, set_output { enabled }
+        - get_state, get_limits
+        - out-of-range values are rejected, never clamped (the LCD clamps instead)
 
-    Errors the agent can act on
-        - out-of-range or wrong-type arguments are TOOL errors (result with
-          isError: true and a clear message such as "frequency must be between 0
-          and 12500000 Hz"), not JSON-RPC protocol errors, so the model sees the
-          message and can correct itself
-        - decide whether out-of-range values are rejected (preferred for an agent:
-          explicit) or silently clamped as FunctionGenerator does today. the
-          response should always report the value that was actually applied
-
-    Dependencies in other files (do these first)
-        - FunctionGenerator/FuncGenController need limit getters (frequency
-          max is AD9833_MAX_FREQ, amplitude min is AMP_MIN and the max depends on the
-          waveform), so get_limits and the schemas aren't hardcoded in two places
-
-    Public interface (sketch)
-        - begin(): register POST /mcp (and GET /mcp -> 405) on the HttpServer
+    Threading
+        - handlers run in the HTTP task. the controller's mutex serializes them
+          with the LCD. no state is kept between requests
 */
+
+#ifndef MCP_SERVER_H
+#define MCP_SERVER_H
+
+#include "../config.h"
+#include "../core/funcgen_controller.h"
+#include "http_server.h"
+
+//true if a browser Origin header may talk to the server (see above). exposed for the tests
+bool mcpOriginAllowed(const char* origin);
+
+//true for protocol versions this server speaks
+bool mcpVersionSupported(const char* version);
+
+class McpServer {
+    public:
+        McpServer(FuncGenController& controller, HttpServer& http);
+
+        //registers POST/GET MCP_PATH. works before or after http.begin()
+        bool begin();
+
+        //handles one JSON-RPC message (the body of a POST). writes the response
+        //into out (malloc'd, caller frees) and returns the HTTP status. *out is
+        //nullptr for 202. public so the tests can call it without HTTP
+        int handleMessage(const char* body, size_t len, char** out);
+
+    private:
+        static void handlePost(HttpRequest& req, void* ctx);
+        static void handleGet(HttpRequest& req, void* ctx);
+
+        FuncGenController& _controller;
+        HttpServer& _http;
+};
+
+#endif

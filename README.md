@@ -57,7 +57,7 @@ headers, so include across folders with relative paths (`"../core/..."`).
 | `ui/display_ui` (dashboard, editing) | done, not tried on hardware yet, network line gets hooked up in the `.ino` |
 | `comms/http_server` (shared esp_http_server + route table) | done, host-tested against a fake httpd, not tried on hardware yet |
 | `comms/wifi_manager` (STA, AP fallback, setup page, mDNS, NVS) | done, state machine and setup routes host-tested, radio part only compiled, not tried on hardware yet |
-| `comms/mcp_server` | stub, spec in the headers |
+| `comms/mcp_server` (JSON-RPC, 8 tools) | done, host-tested end to end against a fake httpd, not tried on hardware yet |
 | `comms/ble_service` | stub, **implement last** |
 | `comms/rest_api`, `web/index_html.h` | deferred, may not be built |
 
@@ -77,6 +77,9 @@ AP fallback + provisioning page) -> MCP server -> BLE.
   (`WifiManager::forgetCredentials()`) and restart.
 - **MCP:** Streamable HTTP at `POST /mcp`, stateless, basic tools, **no auth**
   (trusted bench network). Revisit if it is ever exposed more widely.
+  Out-of-range values are rejected with a tool error (the LCD clamps instead).
+  Requests need `Content-Type: application/json`, and a browser `Origin` must be
+  `funcgen.local` or an IP address, so a web page can't drive the generator.
 - **Limits live in one place** so the LCD, MCP schemas and `get_limits` can't
   disagree.
 
@@ -92,6 +95,20 @@ the Library Manager. ArduinoJson is v7.4.3 as the official single-header release
 include path, which the IDE doesn't do for `src/libs`). It is used by the Wi-Fi
 setup routes and the MCP server, include it as
 `#include "../libs/ArduinoJson/ArduinoJson.h"`.
+
+## Connecting an agent
+
+Once the generator is on your network (the LCD shows its address):
+
+    claude mcp add --transport http funcgen http://funcgen.local/mcp
+
+If `funcgen.local` doesn't resolve, use the IP from the LCD instead. To poke at it
+by hand, run `npx @modelcontextprotocol/inspector`, choose "Streamable HTTP" and
+the same URL (the Inspector's default proxy mode works; its direct mode needs
+CORS, which this server doesn't offer).
+
+Tools: `set_waveform`, `set_frequency`, `set_amplitude`, `set_phase`,
+`set_dc_offset`, `set_output`, `get_state`, `get_limits`.
 
 ## Tests
 

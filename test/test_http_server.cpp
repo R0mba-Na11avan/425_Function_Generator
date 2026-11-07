@@ -43,6 +43,10 @@ static void headerHandler(HttpRequest& req, void*) {
     else req.sendError(400, "no header");
 }
 
+static void hasHeaderHandler(HttpRequest& req, void*) {
+    req.sendText(200, req.hasHeader("X-Test") ? "yes" : "no");
+}
+
 static void statusHandler(HttpRequest& req, void*) {
     req.setHeader("Allow", "POST");
     req.sendEmpty(202);
@@ -227,6 +231,11 @@ TEST(http_request_headers) {
 
     o.headers["X-Test"] = std::string(40, 'x'); //longer than the handler's buffer
     CHECK_EQ(fakeHttpRequest(HTTP_GET, "/h", "", o).status, 400);
+
+    //hasHeader still sees a header that is too long to copy
+    http.registerRoute("/has", HTTP_METHOD::GET, hasHeaderHandler);
+    CHECK(fakeHttpRequest(HTTP_GET, "/has", "", o).body == "yes");
+    CHECK(fakeHttpRequest(HTTP_GET, "/has").body == "no");
 }
 
 TEST(http_response_status_and_headers) {

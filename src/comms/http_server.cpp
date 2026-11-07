@@ -30,6 +30,10 @@ size_t HttpRequest::contentLength() const {
     return _req->content_len;
 }
 
+bool HttpRequest::hasHeader(const char* name) {
+    return httpd_req_get_hdr_value_len(_req, name) > 0;
+}
+
 bool HttpRequest::header(const char* name, char* out, size_t len) {
     size_t valueLen = httpd_req_get_hdr_value_len(_req, name);
     if (valueLen == 0 || valueLen >= len) return false;
