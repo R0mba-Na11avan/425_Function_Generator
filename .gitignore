@@ -1,0 +1,8 @@
+#host test binaries
+test/build/
+
+#machine specific, regenerate with: python tools/gen_intellisense.py
+.vscode/compile_commands.json
+
+#compile-time secrets, if ever added (see src/config.h)
+src/secrets.h

@@ -1,49 +1,15 @@
 {
     "configurations": [
         {
-            "name": "Linux",
+            "name": "ESP32-S3",
+            "compileCommands": "${workspaceFolder}/.vscode/compile_commands.json",
             "includePath": [
-                "${workspaceFolder}/**",
-                "${userHome}/.arduino15/packages/arduino/hardware/avr/1.8.8/cores/arduino",
-                "${userHome}/.arduino15/packages/arduino/hardware/avr/1.8.8/variants/standard",
-                "${userHome}/.arduino15/packages/arduino/tools/avr-gcc/*/avr/include",
-                "${userHome}/.arduino15/packages/arduino/tools/avr-gcc/*/lib/gcc/avr/*/include",
-                "${userHome}/.arduino15/packages/arduino/tools/avr-gcc/*/lib/gcc/avr/*/include-fixed",
-                "${userHome}/.arduino15/packages/arduino/hardware/avr/1.8.8/libraries/*/src"
+                "${workspaceFolder}/**"
             ],
-            "defines": [
-                "ARDUINO=10813",
-                "ARDUINO_AVR_UNO",
-                "ARDUINO_ARCH_AVR",
-                "__AVR_ATmega328P__"
-            ],
-            "compilerPath": "/usr/bin/gcc",
-            "cStandard": "c11",
-            "cppStandard": "c++17",
-            "intelliSenseMode": "linux-gcc-x64"
-        },
-        {
-            "name": "Win32",
-            "includePath": [
-                "${workspaceFolder}/**",
-                "${userHome}/AppData/Local/Arduino15/packages/arduino/hardware/avr/1.8.8/cores/arduino",
-                "${userHome}/AppData/Local/Arduino15/packages/arduino/hardware/avr/1.8.8/variants/standard",
-                "${userHome}/AppData/Local/Arduino15/packages/arduino/tools/avr-gcc/*/avr/include",
-                "${userHome}/AppData/Local/Arduino15/packages/arduino/tools/avr-gcc/*/lib/gcc/avr/*/include",
-                "${userHome}/AppData/Local/Arduino15/packages/arduino/tools/avr-gcc/*/lib/gcc/avr/*/include-fixed",
-                "${userHome}/AppData/Local/Arduino15/packages/arduino/hardware/avr/1.8.8/libraries/*/src"
-            ],
-            "defines": [
-                "ARDUINO=10813",
-                "ARDUINO_AVR_UNO",
-                "ARDUINO_ARCH_AVR",
-                "__AVR_ATmega328P__"
-            ],
-            "compilerPath": "cl.exe",
-            "cStandard": "c17",
-            "cppStandard": "c++17",
-            "intelliSenseMode": "windows-msvc-x64"
+            "cStandard": "gnu17",
+            "cppStandard": "gnu++20",
+            "intelliSenseMode": "gcc-x86"
         }
     ],
     "version": 4
-}   
+}

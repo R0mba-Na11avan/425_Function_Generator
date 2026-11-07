@@ -45,15 +45,21 @@ BLE (last). Read `README.md` for the architecture and status. Each stub header i
   headers are only found relative to the including file, so include across
   folders with relative paths (`"../core/func_gen.h"`).
 - Exactly one `.ino` (`425_Function_Generator.ino`). Everything else is `.h`/`.cpp`.
-- Board: ESP32S3 Dev Module, Flash 16MB, PSRAM "OPI PSRAM". Avoid GPIO26-37
-  (octal flash/PSRAM) and the strapping pins 0/3/45/46.
+- Board: ESP32S3 Dev Module, Flash 16MB, PSRAM "OPI PSRAM", Partition Scheme
+  "16M Flash (3MB APP/9.9MB FATFS)". Avoid GPIO26-37 (octal flash/PSRAM) and
+  the strapping pins 0/3/45/46.
 
 ## Verifying
 
 Compile with `arduino-cli` if it is installed (check `which arduino-cli`; if it
 isn't, say so instead of claiming the code compiles):
 
-    arduino-cli compile --fqbn esp32:esp32:esp32s3:PSRAM=opi,FlashSize=16M .
+    arduino-cli compile --fqbn esp32:esp32:esp32s3:PSRAM=opi,FlashSize=16M,PartitionScheme=app3M_fat9M_16MB .
+
+Host tests (fakes for Arduino/SPI/FreeRTOS in `test/fakes`, real core + libs
+compiled with g++; needs mingw on Windows). Add new hardware-free logic to them:
+
+    bash test/run_tests.sh
 
 If a build option is rejected, run `arduino-cli board details -b esp32:esp32:esp32s3`
 to see the valid ones. There is no hardware in the loop: say what is compiled
@@ -61,6 +67,7 @@ versus what has only been reasoned about.
 
 ## Known gaps
 
-- `FunctionGenerator::ampToWipe()` is an unfinished placeholder.
+- `FunctionGenerator::ampToWipe()` is a linear placeholder, and the amplitude and
+  DC offset limits in `config.h` are placeholders until the output stage is
+  measured.
 - DC offset is stored but not applied to hardware.
-- `FunctionGenerator` has no limit getters yet (needed by `get_limits`).

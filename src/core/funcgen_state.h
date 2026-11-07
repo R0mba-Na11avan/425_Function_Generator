@@ -18,4 +18,13 @@ struct FuncGenState {
     bool outputEnabled;
 };
 
+//every valid range, in one struct so the LCD, MCP schemas and get_limits
+//all read the same numbers
+struct FuncGenLimits {
+    ValueRange frequency;                   //Hz
+    ValueRange phase;                       //degrees, max is exclusive (wraps to 0)
+    ValueRange amplitude[WAVEFORM_COUNT];   //Vpp, indexed by (uint8_t)WAVEFORM
+    ValueRange dcOffset;                    //V
+};
+
 #endif

@@ -1,3 +1,6 @@
 {
-    "workbench.experimental.modernUI": false
+    "workbench.experimental.modernUI": false,
+    "files.associations": {
+        "*.ino": "cpp"
+    }
 }

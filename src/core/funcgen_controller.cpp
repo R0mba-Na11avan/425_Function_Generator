@@ -52,6 +52,17 @@ FuncGenState FuncGenController::state() {
     return s;
 }
 
+FuncGenLimits FuncGenController::limits() const {
+    FuncGenLimits l;
+    l.frequency = FunctionGenerator::frequencyRange();
+    l.phase = FunctionGenerator::phaseRange();
+    for (uint8_t i = 0; i < WAVEFORM_COUNT; i++) {
+        l.amplitude[i] = FunctionGenerator::amplitudeRange((WAVEFORM)i);
+    }
+    l.dcOffset = FunctionGenerator::dcOffsetRange();
+    return l;
+}
+
 bool FuncGenController::addListener(Listener listener, void* ctx) {
     if (_listenerCount >= MAX_LISTENERS) return false;
     _listeners[_listenerCount] = listener;

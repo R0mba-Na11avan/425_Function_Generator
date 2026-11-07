@@ -32,6 +32,9 @@ class FuncGenController {
 
         FuncGenState state();
 
+        //constant, so no lock is needed
+        FuncGenLimits limits() const;
+
         //returns false if the listener table is full
         bool addListener(Listener listener, void* ctx = nullptr);
 

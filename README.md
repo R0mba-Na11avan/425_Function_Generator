@@ -46,7 +46,7 @@ headers, so include across folders with relative paths (`"../core/..."`).
 
 | Part | State |
 |---|---|
-| `FunctionGenerator` (AD9833 + MCP4131) | done (incl. output enable), still needs limit getters |
+| `FunctionGenerator` (AD9833 + MCP4131) | done (incl. output enable and limit getters), amplitude mapping is a placeholder |
 | `FuncGenController` / `FuncGenState` | done |
 | `ui/display_ui`, `ui/input` | stub, spec in the headers |
 | `comms/wifi_manager`, `http_server` | stub, spec in the headers |
@@ -71,8 +71,21 @@ AP fallback + provisioning page) -> MCP server -> BLE.
 
 ## Build (Arduino IDE)
 
-Board: ESP32S3 Dev Module, Flash 16MB, PSRAM "OPI PSRAM".
+Board: ESP32S3 Dev Module, Flash 16MB, PSRAM "OPI PSRAM", Partition Scheme
+"16M Flash (3MB APP/9.9MB FATFS)" (the default 1.2 MB app partition is too small
+once Wi-Fi and BLE are in).
 
 Libraries: everything is vendored in `src/libs`, so nothing needs installing from
 the Library Manager. ArduinoJson is v7.4.3 (header-only, used by the MCP server),
 include it as `#include "../libs/ArduinoJson/ArduinoJson.h"`.
+
+## Tests
+
+Host tests run the real core and vendored chip libraries on a PC against fake
+Arduino/SPI/FreeRTOS headers (`test/fakes`), and check what would reach the
+AD9833 and MCP4131. Needs g++ (on Windows: `scoop install mingw`):
+
+    bash test/run_tests.sh
+
+VS Code IntelliSense: `python tools/gen_intellisense.py` writes
+`.vscode/compile_commands.json` from the real ESP32-S3 build flags.
