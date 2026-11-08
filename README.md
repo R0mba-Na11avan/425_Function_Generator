@@ -26,7 +26,7 @@ outside `core/` touches `FunctionGenerator` directly.
 ## Layout
 
 ```
-425_Function_Generator.ino   setup()/loop() only
+425_Function_Generator.ino   creates and wires everything in setup(), loop() deletes itself
 src/
   config.h   pins, limits, task settings, network constants
   libs/      vendored third-party libs (AD9833, MCP4131, Adafruit GFX + ILI9341,
@@ -35,7 +35,8 @@ src/
   core/      ... + net_status.h (Wi-Fi state shared by comms and ui)
   ui/        display_ui (UI task, canvases, listener), dashboard_view (drawing),
              dashboard_logic (layout, formatting, editor), input (encoder + touch),
-             input_logic (debounce/accel/tap). the *_logic/_view files are host-tested
+             input_logic (debounce/accel/tap/hold), boot_screen (Wi-Fi reset countdown).
+             the *_logic/_view files are host-tested
   comms/     wifi_manager (+ wifi_logic state machine, provisioning routes),
              http_server, mcp_server (+ ble_service, rest_api stubs)
   web/       provisioning_html.h (Wi-Fi setup page), index_html.h (deferred)
@@ -54,7 +55,8 @@ headers, so include across folders with relative paths (`"../core/..."`).
 | `FunctionGenerator` (AD9833 + MCP4131) | done (incl. output enable and limit getters), amplitude mapping is a placeholder |
 | `FuncGenController` / `FuncGenState` | done |
 | `ui/input` (encoder via PCNT, button, XPT2046 touch) | done, not tried on hardware yet, touch calibration is a placeholder |
-| `ui/display_ui` (dashboard, editing) | done, not tried on hardware yet, network line gets hooked up in the `.ino` |
+| `ui/display_ui` (dashboard, editing, info panel, remote-change flash) | done, not tried on hardware yet |
+| `425_Function_Generator.ino` (wiring, boot-time Wi-Fi reset) | done, compiled, not tried on hardware yet |
 | `comms/http_server` (shared esp_http_server + route table) | done, host-tested against a fake httpd, not tried on hardware yet |
 | `comms/wifi_manager` (STA, AP fallback, setup page, mDNS, NVS) | done, state machine and setup routes host-tested, radio part only compiled, not tried on hardware yet |
 | `comms/mcp_server` (JSON-RPC, 8 tools) | done, host-tested end to end against a fake httpd, not tried on hardware yet |
@@ -95,6 +97,23 @@ the Library Manager. ArduinoJson is v7.4.3 as the official single-header release
 include path, which the IDE doesn't do for `src/libs`). It is used by the Wi-Fi
 setup routes and the MCP server, include it as
 `#include "../libs/ArduinoJson/ArduinoJson.h"`.
+
+## Using it
+
+- **Knob:** turn to pick a field, press to edit it (press on OUTPUT toggles the
+  output), turn to change the value, press again when done. Edit mode also ends
+  after 10 s without input. Long press on FREQUENCY changes the step.
+- **Touch:** tap a field to select it, tap it again to edit, tap a frequency
+  digit to step that digit. Tap the status bar for the network info panel.
+- **Agent changes:** a field changed over MCP flashes magenta and an "MCP" badge
+  shows in the status bar for a few seconds. If you were editing that field,
+  editing stops and your next turn starts from the agent's value.
+- **Power-on:** sine, 1 Hz, minimum amplitude, output OFF.
+- **Change Wi-Fi:** hold the knob button while powering on, keep holding through
+  the 3 s countdown. The saved network is forgotten and the generator restarts
+  in setup mode (see the info panel for the steps).
+- **Serial (115200):** prints the firmware version and every network address
+  change.
 
 ## Connecting an agent
 

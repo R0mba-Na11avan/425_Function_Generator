@@ -20,6 +20,8 @@ struct DashboardView {
     UI_FIELD selected;
     bool editing;
     uint8_t freqStepIndex;
+    uint8_t remoteFlash;    //fields an agent just changed (mask of fieldBit)
+    bool remoteBadge;       //"MCP" in the status bar
 };
 
 //areas: one per UI_FIELD (same index), then the status bar
@@ -39,5 +41,14 @@ void areaKey(const DashboardView& view, uint8_t area, char* key, size_t len);
 //area's size, or areaRect(area) when drawing straight to the panel.
 //the area must already be cleared to DASHBOARD_BG
 void renderArea(Adafruit_GFX& g, uint8_t area, Rect r, const DashboardView& view);
+
+//the info panel (infoRect()), drawn instead of the fields while it is open.
+//same rules as areaKey/renderArea
+void infoKey(const NetStatus& net, char* key, size_t len);
+void renderInfo(Adafruit_GFX& g, Rect r, const NetStatus& net);
+
+//boot screens (whole screen): the hold-to-forget-Wi-Fi countdown and a message
+void renderBootHold(Adafruit_GFX& g, uint8_t secondsLeft);
+void renderBootMessage(Adafruit_GFX& g, const char* title, const char* detail);
 
 #endif

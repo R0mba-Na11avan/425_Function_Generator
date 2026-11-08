@@ -52,6 +52,8 @@ static const uint8_t UI_FIELD_COUNT = 5;
 */
 Rect statusRect();
 Rect bleSlotRect();
+Rect mcpBadgeRect();    //status bar, left of the BLE slot: shown after an agent change
+Rect infoRect();        //the info panel, covers everything below the status bar
 Rect fieldRect(UI_FIELD field);
 //field under a screen point, false if none
 bool fieldAt(int16_t x, int16_t y, UI_FIELD& field);
@@ -96,6 +98,32 @@ void formatOffset(float volts, char* out, size_t len);        //"+0.25"
 const char* waveformName(WAVEFORM waveform);
 void formatNetLine(const NetStatus& net, char* out, size_t len);
 
+//text of the info panel (opened by tapping the status bar), one line each
+static const uint8_t INFO_MAX_LINES = 9;
+static const uint8_t INFO_LINE_LEN = 64;   //fits the longest SSID and hostname (a long line is clipped on screen)
+uint8_t formatInfoLines(const NetStatus& net, char lines[][INFO_LINE_LEN], uint8_t maxLines);
+
+//fields are passed around as bit masks: bit (uint8_t)field
+inline uint8_t fieldBit(UI_FIELD field) { return (uint8_t)(1u << (uint8_t)field); }
+
+//fields whose shown value differs between two states (phase isn't on screen)
+uint8_t changedFields(const FuncGenState& before, const FuncGenState& after);
+
+//remembers recent agent (MCP/BLE) changes: which fields flash and whether
+//the status bar badge shows
+class RemoteHighlight {
+    public:
+        void changed(uint8_t fields, uint32_t nowMs);
+        uint8_t flashing(uint32_t nowMs) const;   //mask of fields still flashing
+        bool badge(uint32_t nowMs) const;
+
+    private:
+        uint32_t _fieldAt[UI_FIELD_COUNT] = {};
+        uint8_t _fields = 0;
+        uint32_t _badgeAt = 0;
+        bool _badge = false;
+};
+
 //what the editor wants the controller to do
 enum class EDIT_ACTION : uint8_t {
     NONE,
@@ -124,6 +152,10 @@ struct EditCommand {
         - tap: selects a field, tapping the selected one toggles edit mode,
           tapping OUTPUT toggles the output, tapping a frequency digit makes
           that digit the step and starts editing
+        - tap on the status bar: opens the info panel. while it is open the
+          encoder does nothing and any press or tap closes it
+        - edit mode ends after UI_EDIT_TIMEOUT_MS without input (tick), and
+          when an agent changes the field being edited (remoteChanged)
     It only returns commands. The values shown always come from the
     controller's state, so the screen shows what was actually applied.
 */
@@ -131,11 +163,19 @@ class DashboardEditor {
     public:
         DashboardEditor();
 
-        EditCommand handle(const InputEvent& event, const FuncGenState& state, const FuncGenLimits& limits);
+        EditCommand handle(const InputEvent& event, const FuncGenState& state, const FuncGenLimits& limits,
+                           uint32_t nowMs);
+
+        //call regularly: ends edit mode after UI_EDIT_TIMEOUT_MS without input
+        void tick(uint32_t nowMs);
+
+        //an agent changed these fields (mask of fieldBit)
+        void remoteChanged(uint8_t fields);
 
         UI_FIELD selected() const { return _selected; }
         bool editing() const { return _editing; }
         uint8_t freqStepIndex() const { return _stepIndex; }
+        bool infoOpen() const { return _infoOpen; }
 
     private:
         EditCommand onEncoder(const InputEvent& event, const FuncGenState& state, const FuncGenLimits& limits);
@@ -146,6 +186,8 @@ class DashboardEditor {
         UI_FIELD _selected;
         bool _editing;
         uint8_t _stepIndex;
+        bool _infoOpen;
+        uint32_t _lastInputMs;
 };
 
 #endif

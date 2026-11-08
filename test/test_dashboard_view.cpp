@@ -12,13 +12,15 @@
 #include <string.h>
 #include "../src/ui/dashboard_view.h"
 #include "../src/core/func_gen.h"
+#include "../src/libs/Adafruit_GFX/Fonts/FreeSans9pt7b.h" //the info panel's font, to measure its lines
 
 //set by run_tests.sh, which also creates the folder
 #ifndef SCREENS_DIR
 #define SCREENS_DIR "."
 #endif
 
-static const uint16_t SENTINEL = 0xF81F; //magenta, never used by the dashboard
+static const uint16_t SENTINEL = 0x0841; //near-black, never used by the dashboard
+static const uint16_t REMOTE_COLOR = 0xF81F; //magenta frame/badge for agent changes
 
 static DashboardView baseView() {
     DashboardView v;
@@ -62,6 +64,18 @@ static DashboardView scenario(int i, const char*& name) {
             strcpy(v.net.hostname, "funcgen");
             strcpy(v.net.ip, "192.168.1.137");
             break;
+        case 4:
+            name = "remote_change_flash_and_badge";
+            v.state.frequency = 2500.0f;
+            v.state.amplitude = 3.0f;
+            v.state.outputEnabled = true;
+            v.selected = UI_FIELD::FREQUENCY;
+            v.remoteFlash = fieldBit(UI_FIELD::FREQUENCY) | fieldBit(UI_FIELD::AMPLITUDE);
+            v.remoteBadge = true;
+            v.net.state = WIFI_STATE::CONNECTED;
+            strcpy(v.net.hostname, "funcgen");
+            strcpy(v.net.ip, "192.168.1.137");
+            break;
         default:
             name = "connecting_long_ssid_output_selected";
             v.state.frequency = 440.0f;
@@ -73,7 +87,7 @@ static DashboardView scenario(int i, const char*& name) {
     return v;
 }
 
-static const int SCENARIO_COUNT = 4;
+static const int SCENARIO_COUNT = 5;
 
 //one area through the canvas path, like DisplayUI with PSRAM
 static void renderToCanvas(GFXcanvas16& canvas, uint8_t area, const DashboardView& v) {
@@ -246,4 +260,131 @@ TEST(save_screens_as_bmp) {
         snprintf(path, sizeof(path), "%s/%s.bmp", SCREENS_DIR, name);
         saveBmp(path, screen);
     }
+}
+
+TEST(remote_change_flash_and_badge) {
+    DashboardView v = baseView();
+    Rect fr = areaRect((uint8_t)UI_FIELD::FREQUENCY);
+    GFXcanvas16 field(fr.w, fr.h);
+    renderToCanvas(field, (uint8_t)UI_FIELD::FREQUENCY, v);
+    CHECK_EQ(countColor(field, REMOTE_COLOR), 0);
+    v.remoteFlash = fieldBit(UI_FIELD::FREQUENCY);
+    renderToCanvas(field, (uint8_t)UI_FIELD::FREQUENCY, v);
+    CHECK(countColor(field, REMOTE_COLOR) > 2 * (fr.w + fr.h)); //thick frame
+    //other fields don't flash
+    Rect ar = areaRect((uint8_t)UI_FIELD::AMPLITUDE);
+    GFXcanvas16 amp(ar.w, ar.h);
+    renderToCanvas(amp, (uint8_t)UI_FIELD::AMPLITUDE, v);
+    CHECK_EQ(countColor(amp, REMOTE_COLOR), 0);
+
+    Rect sr = statusRect();
+    GFXcanvas16 status(sr.w, sr.h);
+    renderToCanvas(status, STATUS_AREA, v);
+    CHECK_EQ(countColor(status, REMOTE_COLOR), 0);
+    v.remoteBadge = true;
+    renderToCanvas(status, STATUS_AREA, v);
+    Rect b = mcpBadgeRect();
+    CHECK(countColor(status, REMOTE_COLOR) > b.w * b.h / 2);
+    //the badge sits inside the status bar and clear of the network text
+    CHECK(sr.contains(b.x, b.y) && sr.contains(b.x + b.w - 1, b.y + b.h - 1));
+    CHECK(4 + 42 * 6 <= b.x);
+}
+
+TEST(remote_flash_and_badge_change_area_keys) {
+    DashboardView a = baseView();
+    DashboardView b = a;
+    b.remoteFlash = fieldBit(UI_FIELD::OFFSET);
+    b.remoteBadge = true;
+    char ka[AREA_KEY_LEN], kb[AREA_KEY_LEN];
+    for (uint8_t area = 0; area < DASHBOARD_AREA_COUNT; area++) {
+        areaKey(a, area, ka, sizeof(ka));
+        areaKey(b, area, kb, sizeof(kb));
+        bool changed = strcmp(ka, kb) != 0;
+        CHECK(changed == (area == (uint8_t)UI_FIELD::OFFSET || area == STATUS_AREA));
+    }
+}
+
+static NetStatus connectedNet() {
+    NetStatus n = {};
+    n.state = WIFI_STATE::CONNECTED;
+    strcpy(n.ssid, "ECE425-Lab");
+    strcpy(n.ip, "192.168.1.137");
+    strcpy(n.hostname, "funcgen");
+    return n;
+}
+
+static NetStatus apNet() {
+    NetStatus n = {};
+    n.state = WIFI_STATE::AP_MODE;
+    strcpy(n.ssid, "FuncGen-A1B2");
+    strcpy(n.ip, "192.168.4.1");
+    strcpy(n.hostname, "funcgen");
+    return n;
+}
+
+TEST(info_panel_stays_inside_and_lines_fit) {
+    GFXcanvas16 screen(LCD_WIDTH, LCD_HEIGHT);
+    NetStatus nets[] = {connectedNet(), apNet()};
+    for (NetStatus& n : nets) {
+        Rect r = infoRect();
+        screen.fillScreen(SENTINEL);
+        screen.fillRect(r.x, r.y, r.w, r.h, DASHBOARD_BG);
+        renderInfo(screen, r, n);
+        int outside = 0;
+        for (int y = 0; y < LCD_HEIGHT; y++)
+            for (int x = 0; x < LCD_WIDTH; x++)
+                if (!r.contains(x, y) && screen.getPixel(x, y) != SENTINEL) outside++;
+        CHECK_EQ(outside, 0);
+
+        //with a normal SSID every line fits inside the frame
+        char lines[INFO_MAX_LINES][INFO_LINE_LEN];
+        uint8_t count = formatInfoLines(n, lines, INFO_MAX_LINES);
+        screen.setFont(nullptr);
+        for (uint8_t i = 0; i < count; i++) {
+            screen.setFont(&FreeSans9pt7b);
+            int16_t x1, y1;
+            uint16_t w, h;
+            screen.getTextBounds(lines[i], 0, 0, &x1, &y1, &w, &h);
+            if (x1 + w > r.w - 24) printf("    info line too wide: \"%s\" (%u px)\n", lines[i], w);
+            CHECK(x1 + w <= r.w - 24);
+        }
+    }
+}
+
+TEST(info_key_tracks_network) {
+    char a[AREA_KEY_LEN], b[AREA_KEY_LEN];
+    NetStatus n = connectedNet();
+    infoKey(n, a, sizeof(a));
+    infoKey(n, b, sizeof(b));
+    CHECK(strcmp(a, b) == 0);
+    strcpy(n.ip, "192.168.1.200");
+    infoKey(n, b, sizeof(b));
+    CHECK(strcmp(a, b) != 0);
+}
+
+TEST(save_extra_screens_as_bmp) {
+    GFXcanvas16 screen(LCD_WIDTH, LCD_HEIGHT);
+    char path[128];
+
+    NetStatus nets[] = {connectedNet(), apNet()};
+    const char* names[] = {"info_connected", "info_ap_mode"};
+    for (int i = 0; i < 2; i++) {
+        DashboardView v = baseView();
+        v.net = nets[i];
+        screen.fillScreen(DASHBOARD_BG);
+        Rect sr = statusRect();
+        GFXcanvas16 status(sr.w, sr.h);
+        renderToCanvas(status, STATUS_AREA, v);
+        screen.drawRGBBitmap(sr.x, sr.y, status.getBuffer(), sr.w, sr.h);
+        renderInfo(screen, infoRect(), v.net);
+        snprintf(path, sizeof(path), "%s/%s.bmp", SCREENS_DIR, names[i]);
+        saveBmp(path, screen);
+    }
+
+    renderBootHold(screen, 3);
+    snprintf(path, sizeof(path), "%s/boot_hold.bmp", SCREENS_DIR);
+    saveBmp(path, screen);
+    renderBootMessage(screen, "Wi-Fi forgotten", "Restarting...");
+    snprintf(path, sizeof(path), "%s/boot_message.bmp", SCREENS_DIR);
+    saveBmp(path, screen);
 }

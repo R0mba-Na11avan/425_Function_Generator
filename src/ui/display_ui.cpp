@@ -8,7 +8,8 @@
 DisplayUI::DisplayUI(FuncGenController& controller, InputManager& input, SPIClass& bus)
     : _tft(&bus, PIN_LCD_DC, PIN_LCD_CS, PIN_LCD_RST), _controller(controller), _input(input), _bus(bus),
       _netFn(nullptr), _netCtx(nullptr), _stateMux(portMUX_INITIALIZER_UNLOCKED), _stateDirty(false),
-      _lastNetPoll(0), _lastDraw(0) {
+      _remoteFields(0), _remotePending(false), _lastNetPoll(0), _lastDraw(0) {
+    _infoKey[0] = '\0';
     memset(&_net, 0, sizeof(_net));
     _net.state = WIFI_STATE::IDLE;
     for (uint8_t i = 0; i < DASHBOARD_AREA_COUNT; i++) {
@@ -37,7 +38,7 @@ bool DisplayUI::begin() {
         }
     }
 
-    _state = _latest = _controller.state();
+    _state = _latest = _lastSeen = _controller.state();
     _limits = _controller.limits();
     if (!_controller.addListener(onStateChanged, this)) return false;
 
@@ -46,10 +47,15 @@ bool DisplayUI::begin() {
     return ok == pdPASS;
 }
 
-void DisplayUI::onStateChanged(const FuncGenState& state, void* ctx) {
+void DisplayUI::onStateChanged(const FuncGenState& state, CHANGE_SOURCE source, void* ctx) {
     //runs in whatever task changed the generator: copy and flag only
     DisplayUI* ui = (DisplayUI*)ctx;
     portENTER_CRITICAL(&ui->_stateMux);
+    if (source != CHANGE_SOURCE::LOCAL) {
+        ui->_remoteFields |= changedFields(ui->_lastSeen, state);
+        ui->_remotePending = true;
+    }
+    ui->_lastSeen = state;
     ui->_latest = state;
     ui->_stateDirty = true;
     portEXIT_CRITICAL(&ui->_stateMux);
@@ -67,7 +73,7 @@ void DisplayUI::run() {
     _tft.fillScreen(DASHBOARD_BG);
 
     pollNetStatus();
-    redraw();
+    redraw(millis());
 
     for (;;) {
         InputEvent event;
@@ -75,30 +81,44 @@ void DisplayUI::run() {
             do {
                 //the previous command's listener call has updated _latest by now
                 takeLatestState();
-                apply(_editor.handle(event, _state, _limits));
+                apply(_editor.handle(event, _state, _limits, millis()));
             } while (_input.receive(event, 0));
         }
 
         takeLatestState();
         uint32_t now = millis();
+        _editor.tick(now);
         if (now - _lastNetPoll >= UI_NET_POLL_MS) {
             _lastNetPoll = now;
             pollNetStatus();
         }
         if (now - _lastDraw >= UI_FRAME_MS) {
             _lastDraw = now;
-            redraw();
+            redraw(now);
         }
     }
 }
 
 void DisplayUI::takeLatestState() {
+    uint8_t remoteFields = 0;
+    bool remote = false;
     portENTER_CRITICAL(&_stateMux);
     if (_stateDirty) {
         _state = _latest;
         _stateDirty = false;
     }
+    if (_remotePending) {
+        remoteFields = _remoteFields;
+        remote = true;
+        _remoteFields = 0;
+        _remotePending = false;
+    }
     portEXIT_CRITICAL(&_stateMux);
+
+    if (remote) {
+        _highlight.changed(remoteFields, millis());
+        _editor.remoteChanged(remoteFields);
+    }
 }
 
 void DisplayUI::apply(const EditCommand& command) {
@@ -119,16 +139,38 @@ void DisplayUI::pollNetStatus() {
 
 //drawing
 
-void DisplayUI::redraw() {
-    DashboardView view = {_state, _net, _editor.selected(), _editor.editing(), _editor.freqStepIndex()};
+void DisplayUI::redraw(uint32_t nowMs) {
+    DashboardView view = {_state, _net, _editor.selected(), _editor.editing(), _editor.freqStepIndex(),
+                          _highlight.flashing(nowMs), _highlight.badge(nowMs)};
     char key[AREA_KEY_LEN];
+
+    if (_editor.infoOpen()) {
+        drawInfo();
+    } else if (_infoKey[0]) {
+        //panel just closed: everything under it has to come back
+        _infoKey[0] = '\0';
+        _tft.fillRect(infoRect().x, infoRect().y, infoRect().w, infoRect().h, DASHBOARD_BG);
+        for (uint8_t area = 0; area < UI_FIELD_COUNT; area++) _drawnKey[area][0] = '\0';
+    }
+
     for (uint8_t area = 0; area < DASHBOARD_AREA_COUNT; area++) {
+        if (_editor.infoOpen() && area != STATUS_AREA) continue;
         areaKey(view, area, key, sizeof(key));
         if (strcmp(key, _drawnKey[area]) != 0) {
             drawArea(area, view);
             strncpy(_drawnKey[area], key, AREA_KEY_LEN);
         }
     }
+}
+
+void DisplayUI::drawInfo() {
+    char key[AREA_KEY_LEN];
+    infoKey(_net, key, sizeof(key));
+    if (strcmp(key, _infoKey) == 0) return;
+    strncpy(_infoKey, key, AREA_KEY_LEN);
+    Rect r = infoRect();
+    _tft.fillRect(r.x, r.y, r.w, r.h, DASHBOARD_BG);
+    renderInfo(_tft, r, _net);
 }
 
 void DisplayUI::drawArea(uint8_t area, const DashboardView& view) {

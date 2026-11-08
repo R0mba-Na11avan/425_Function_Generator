@@ -20,8 +20,16 @@ enum class INPUT_EVENT : uint8_t {
     TOUCH_TAP
 };
 
+//which physical control an event came from. there is one of each today, a
+//second encoder or dedicated buttons would get their own ids
+enum class INPUT_SOURCE : uint8_t {
+    MAIN_ENCODER,   //the rotary encoder and its push button
+    TOUCH
+};
+
 struct InputEvent {
     INPUT_EVENT type;
+    INPUT_SOURCE source;
     int16_t clicks; //ENCODER_DELTA: clicks turned (use to move a cursor)
     int16_t delta;  //ENCODER_DELTA: accelerated steps (use to change a value)
     int16_t x;      //TOUCH_TAP: screen pixel
@@ -56,6 +64,27 @@ class ButtonDebouncer {
         bool _longSent = false;
         uint32_t _rawSince = 0;
         uint32_t _pressedAt = 0;
+};
+
+enum class HOLD_STATE : uint8_t {
+    HOLDING,    //still pressed, not long enough yet
+    RELEASED,   //let go before the time was up
+    DONE        //held for the whole time
+};
+
+//times a press that has to be held for holdMs (the boot-time Wi-Fi reset).
+//a bounce shorter than BUTTON_DEBOUNCE_MS doesn't count as letting go
+class HoldTimer {
+    public:
+        HoldTimer(uint32_t holdMs, uint32_t startMs);
+        HOLD_STATE update(bool pressed, uint32_t nowMs);
+        uint32_t remainingMs(uint32_t nowMs) const;
+
+    private:
+        uint32_t _holdMs;
+        uint32_t _startMs;
+        bool _up = false;
+        uint32_t _upSince = 0;
 };
 
 struct TouchPoint {

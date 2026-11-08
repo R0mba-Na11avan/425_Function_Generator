@@ -71,8 +71,9 @@ static bool contains(const std::string& s, const char* part) {
     return s.find(part) != std::string::npos;
 }
 
-static void countingListener(const FuncGenState&, void* ctx) {
-    (*(int*)ctx)++;
+//counts MCP-tagged changes. a LOCAL one would make the LCD treat an agent's change as its own
+static void countingListener(const FuncGenState&, CHANGE_SOURCE source, void* ctx) {
+    if (source == CHANGE_SOURCE::MCP) (*(int*)ctx)++;
 }
 
 //lifecycle

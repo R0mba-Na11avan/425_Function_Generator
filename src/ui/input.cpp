@@ -136,6 +136,7 @@ void InputManager::pollButton(uint32_t nowMs) {
 
     InputEvent event = {};
     event.type = (e == BUTTON_EVENT::LONG) ? INPUT_EVENT::BUTTON_LONG : INPUT_EVENT::BUTTON_SHORT;
+    event.source = INPUT_SOURCE::MAIN_ENCODER;
     sendEvent(event);
 }
 
@@ -164,6 +165,7 @@ void InputManager::pollTouch(uint32_t nowMs) {
     if (_tap.update(touched, point, nowMs, tap)) {
         InputEvent event = {};
         event.type = INPUT_EVENT::TOUCH_TAP;
+        event.source = INPUT_SOURCE::TOUCH;
         event.x = tap.x;
         event.y = tap.y;
         sendEvent(event);
@@ -176,6 +178,7 @@ void InputManager::flushEncoder() {
 
     InputEvent event = {};
     event.type = INPUT_EVENT::ENCODER_DELTA;
+    event.source = INPUT_SOURCE::MAIN_ENCODER;
     event.clicks = clamp16(_pendingClicks);
     event.delta = clamp16(_pendingDelta);
     if (xQueueSend(_queue, &event, 0) == pdTRUE) {

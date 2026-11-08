@@ -231,8 +231,28 @@ void WifiManager::publishStatus() {
     }
 
     portENTER_CRITICAL(&_statusMux);
+    bool changed = s.state != _status.state || strcmp(s.ip, _status.ip) != 0 || strcmp(s.ssid, _status.ssid) != 0;
     _status = s;
     portEXIT_CRITICAL(&_statusMux);
+
+    //always on Serial (log_i is hidden at the default debug level), so the
+    //address can be found without the LCD
+    if (!changed) return;
+    switch (s.state) {
+        case WIFI_STATE::CONNECTING:
+            Serial.printf("wifi: connecting to %s\n", s.ssid);
+            break;
+        case WIFI_STATE::CONNECTED:
+            Serial.printf("wifi: connected to %s, MCP at http://%s.local%s (http://%s%s)\n",
+                          s.ssid, s.hostname, MCP_PATH, s.ip, MCP_PATH);
+            break;
+        case WIFI_STATE::AP_MODE:
+            if (s.ip[0]) Serial.printf("wifi: setup mode, join %s and open http://%s\n", s.ssid, s.ip);
+            break;
+        case WIFI_STATE::IDLE:
+        default:
+            break;
+    }
 }
 
 bool WifiManager::loadCredentials() {

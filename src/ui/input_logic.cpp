@@ -43,6 +43,28 @@ BUTTON_EVENT ButtonDebouncer::update(bool pressed, uint32_t nowMs) {
     return BUTTON_EVENT::NONE;
 }
 
+//HoldTimer
+
+HoldTimer::HoldTimer(uint32_t holdMs, uint32_t startMs) : _holdMs(holdMs), _startMs(startMs) {}
+
+HOLD_STATE HoldTimer::update(bool pressed, uint32_t nowMs) {
+    if (pressed) {
+        _up = false;
+    } else if (!_up) {
+        _up = true;
+        _upSince = nowMs;
+    } else if (nowMs - _upSince >= BUTTON_DEBOUNCE_MS) {
+        return HOLD_STATE::RELEASED;
+    }
+    if (!_up && nowMs - _startMs >= _holdMs) return HOLD_STATE::DONE;
+    return HOLD_STATE::HOLDING;
+}
+
+uint32_t HoldTimer::remainingMs(uint32_t nowMs) const {
+    uint32_t held = nowMs - _startMs;
+    return (held >= _holdMs) ? 0 : _holdMs - held;
+}
+
 TouchCalibration defaultTouchCalibration() {
     return TouchCalibration{
         TOUCH_RAW_X_MIN, TOUCH_RAW_X_MAX,

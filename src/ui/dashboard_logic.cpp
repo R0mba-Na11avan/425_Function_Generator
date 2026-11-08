@@ -8,6 +8,8 @@
 
 static const Rect STATUS_RECT = {0, 0, LCD_WIDTH, 20};
 static const Rect BLE_SLOT_RECT = {LCD_WIDTH - 20, 2, 16, 16};
+static const Rect MCP_BADGE_RECT = {LCD_WIDTH - 56, 3, 32, 14};
+static const Rect INFO_RECT = {0, 20, LCD_WIDTH, LCD_HEIGHT - 20};
 
 static const Rect FIELD_RECTS[UI_FIELD_COUNT] = {
     {2, 22, 156, 70},       //WAVEFORM
@@ -27,6 +29,14 @@ Rect statusRect() {
 
 Rect bleSlotRect() {
     return BLE_SLOT_RECT;
+}
+
+Rect mcpBadgeRect() {
+    return MCP_BADGE_RECT;
+}
+
+Rect infoRect() {
+    return INFO_RECT;
 }
 
 Rect fieldRect(UI_FIELD field) {
@@ -173,13 +183,80 @@ void formatNetLine(const NetStatus& net, char* out, size_t len) {
             snprintf(out, len, "%s.local  %s", net.hostname, net.ip);
             break;
         case WIFI_STATE::AP_MODE:
-            snprintf(out, len, "Setup: join %s  http://%s", net.ssid, net.ip);
+            snprintf(out, len, "Setup: join %s  %s", net.ssid, net.ip);
             break;
         case WIFI_STATE::IDLE:
         default:
             snprintf(out, len, "Wi-Fi off");
             break;
     }
+}
+
+uint8_t formatInfoLines(const NetStatus& net, char lines[][INFO_LINE_LEN], uint8_t maxLines) {
+    uint8_t n = 0;
+    #define INFO_LINE(...) do { if (n < maxLines) snprintf(lines[n++], INFO_LINE_LEN, __VA_ARGS__); } while (0)
+
+    switch (net.state) {
+        case WIFI_STATE::CONNECTED:
+            INFO_LINE("Connected to %s", net.ssid);
+            INFO_LINE("IP address  %s", net.ip);
+            INFO_LINE("MCP  http://%s.local/mcp", net.hostname);
+            INFO_LINE("     http://%s/mcp", net.ip);
+            break;
+        case WIFI_STATE::CONNECTING:
+            INFO_LINE("Connecting to %s...", net.ssid);
+            INFO_LINE("Goes to setup mode if it can't join.");
+            break;
+        case WIFI_STATE::AP_MODE:
+            INFO_LINE("Setup mode");
+            INFO_LINE("1. Join the Wi-Fi %s", net.ssid);
+            INFO_LINE("2. Open http://%s", net.ip);
+            INFO_LINE("3. Pick your network and save");
+            break;
+        case WIFI_STATE::IDLE:
+        default:
+            INFO_LINE("Wi-Fi off");
+            break;
+    }
+    INFO_LINE(" ");
+    INFO_LINE("To change Wi-Fi, hold the knob");
+    INFO_LINE("button while powering on.");
+    INFO_LINE("Firmware %s", FIRMWARE_VERSION);
+    #undef INFO_LINE
+    return n;
+}
+
+uint8_t changedFields(const FuncGenState& a, const FuncGenState& b) {
+    uint8_t mask = 0;
+    if (a.waveform != b.waveform) mask |= fieldBit(UI_FIELD::WAVEFORM);
+    if (a.outputEnabled != b.outputEnabled) mask |= fieldBit(UI_FIELD::OUTPUT_ENABLE);
+    if (a.frequency != b.frequency) mask |= fieldBit(UI_FIELD::FREQUENCY);
+    if (a.amplitude != b.amplitude) mask |= fieldBit(UI_FIELD::AMPLITUDE);
+    if (a.dcOffset != b.dcOffset) mask |= fieldBit(UI_FIELD::OFFSET);
+    return mask;
+}
+
+//remote highlight
+
+void RemoteHighlight::changed(uint8_t fields, uint32_t nowMs) {
+    for (uint8_t i = 0; i < UI_FIELD_COUNT; i++) {
+        if (fields & (1u << i)) _fieldAt[i] = nowMs;
+    }
+    _fields |= fields;
+    _badgeAt = nowMs;
+    _badge = true;
+}
+
+uint8_t RemoteHighlight::flashing(uint32_t nowMs) const {
+    uint8_t mask = 0;
+    for (uint8_t i = 0; i < UI_FIELD_COUNT; i++) {
+        if ((_fields & (1u << i)) && nowMs - _fieldAt[i] < UI_REMOTE_FLASH_MS) mask |= (uint8_t)(1u << i);
+    }
+    return mask;
+}
+
+bool RemoteHighlight::badge(uint32_t nowMs) const {
+    return _badge && nowMs - _badgeAt < UI_REMOTE_BADGE_MS;
 }
 
 //editor
@@ -216,9 +293,23 @@ static EditCommand outputCommand(bool enabled) {
 }
 
 DashboardEditor::DashboardEditor()
-    : _selected(UI_FIELD::FREQUENCY), _editing(false), _stepIndex(UI_FREQ_STEP_DEFAULT) {}
+    : _selected(UI_FIELD::FREQUENCY), _editing(false), _stepIndex(UI_FREQ_STEP_DEFAULT), _infoOpen(false),
+      _lastInputMs(0) {}
 
-EditCommand DashboardEditor::handle(const InputEvent& event, const FuncGenState& state, const FuncGenLimits& limits) {
+EditCommand DashboardEditor::handle(const InputEvent& event, const FuncGenState& state, const FuncGenLimits& limits,
+                                    uint32_t nowMs) {
+    _lastInputMs = nowMs;
+
+    if (_infoOpen) {
+        if (event.type != INPUT_EVENT::ENCODER_DELTA) _infoOpen = false;
+        return noCommand();
+    }
+    if (event.type == INPUT_EVENT::TOUCH_TAP && statusRect().contains(event.x, event.y)) {
+        _infoOpen = true;
+        _editing = false;
+        return noCommand();
+    }
+
     switch (event.type) {
         case INPUT_EVENT::ENCODER_DELTA: return onEncoder(event, state, limits);
         case INPUT_EVENT::BUTTON_SHORT: return onShortPress(state);
@@ -226,6 +317,15 @@ EditCommand DashboardEditor::handle(const InputEvent& event, const FuncGenState&
         case INPUT_EVENT::TOUCH_TAP: return onTap(event, state);
         default: return noCommand();
     }
+}
+
+void DashboardEditor::tick(uint32_t nowMs) {
+    if (_editing && nowMs - _lastInputMs >= UI_EDIT_TIMEOUT_MS) _editing = false;
+}
+
+void DashboardEditor::remoteChanged(uint8_t fields) {
+    //the agent's value wins, the next turn starts from it
+    if (_editing && (fields & fieldBit(_selected))) _editing = false;
 }
 
 EditCommand DashboardEditor::onEncoder(const InputEvent& event, const FuncGenState& state, const FuncGenLimits& limits) {

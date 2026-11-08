@@ -3,46 +3,46 @@
 FuncGenController::FuncGenController(FunctionGenerator& funcGen)
     : _funcGen(funcGen), _lock(xSemaphoreCreateMutex()), _listenerCount(0) {}
 
-void FuncGenController::setWaveform(WAVEFORM waveform) {
+void FuncGenController::setWaveform(WAVEFORM waveform, CHANGE_SOURCE source) {
     xSemaphoreTake(_lock, portMAX_DELAY);
     _funcGen.setWaveform(waveform);
     xSemaphoreGive(_lock);
-    notify();
+    notify(source);
 }
 
-void FuncGenController::setFrequency(float frequency) {
+void FuncGenController::setFrequency(float frequency, CHANGE_SOURCE source) {
     xSemaphoreTake(_lock, portMAX_DELAY);
     _funcGen.setFrequency(frequency);
     xSemaphoreGive(_lock);
-    notify();
+    notify(source);
 }
 
-void FuncGenController::setPhase(float phase) {
+void FuncGenController::setPhase(float phase, CHANGE_SOURCE source) {
     xSemaphoreTake(_lock, portMAX_DELAY);
     _funcGen.setPhase(phase);
     xSemaphoreGive(_lock);
-    notify();
+    notify(source);
 }
 
-void FuncGenController::setAmplitude(float amplitude) {
+void FuncGenController::setAmplitude(float amplitude, CHANGE_SOURCE source) {
     xSemaphoreTake(_lock, portMAX_DELAY);
     _funcGen.setAmplitude(amplitude);
     xSemaphoreGive(_lock);
-    notify();
+    notify(source);
 }
 
-void FuncGenController::setDCOffset(float dcOffset) {
+void FuncGenController::setDCOffset(float dcOffset, CHANGE_SOURCE source) {
     xSemaphoreTake(_lock, portMAX_DELAY);
     _funcGen.setDCOffset(dcOffset);
     xSemaphoreGive(_lock);
-    notify();
+    notify(source);
 }
 
-void FuncGenController::setOutputEnabled(bool enabled) {
+void FuncGenController::setOutputEnabled(bool enabled, CHANGE_SOURCE source) {
     xSemaphoreTake(_lock, portMAX_DELAY);
     _funcGen.setOutput(enabled);
     xSemaphoreGive(_lock);
-    notify();
+    notify(source);
 }
 
 FuncGenState FuncGenController::state() {
@@ -71,10 +71,10 @@ bool FuncGenController::addListener(Listener listener, void* ctx) {
     return true;
 }
 
-void FuncGenController::notify() {
+void FuncGenController::notify(CHANGE_SOURCE source) {
     FuncGenState s = state();
     for (uint8_t i = 0; i < _listenerCount; i++) {
-        _listeners[i](s, _listenerCtx[i]);
+        _listeners[i](s, source, _listenerCtx[i]);
     }
 }
 

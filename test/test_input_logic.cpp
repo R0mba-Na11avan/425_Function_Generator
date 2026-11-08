@@ -274,3 +274,34 @@ TEST(tap_two_taps) {
     CHECK_EQ(c.taps, 2);
     CHECK_EQ(c.last.x, 300);
 }
+
+//hold at boot
+
+TEST(hold_timer_done_after_full_hold) {
+    HoldTimer h(BOOT_HOLD_MS, 100);
+    uint32_t now = 100;
+    for (; now < 100 + BOOT_HOLD_MS; now += 10) {
+        CHECK(h.update(true, now) == HOLD_STATE::HOLDING);
+    }
+    CHECK(h.update(true, now) == HOLD_STATE::DONE);
+    CHECK_EQ(h.remainingMs(now), 0);
+}
+
+TEST(hold_timer_release_cancels) {
+    HoldTimer h(BOOT_HOLD_MS, 0);
+    CHECK(h.update(true, 500) == HOLD_STATE::HOLDING);
+    CHECK_EQ(h.remainingMs(500), BOOT_HOLD_MS - 500);
+    CHECK(h.update(false, 600) == HOLD_STATE::HOLDING); //could be a bounce
+    CHECK(h.update(false, 600 + BUTTON_DEBOUNCE_MS - 1) == HOLD_STATE::HOLDING);
+    CHECK(h.update(false, 600 + BUTTON_DEBOUNCE_MS) == HOLD_STATE::RELEASED);
+}
+
+TEST(hold_timer_ignores_bounces) {
+    HoldTimer h(BOOT_HOLD_MS, 0);
+    h.update(true, 0);
+    h.update(false, 1000); //contact bounce
+    h.update(false, 1005);
+    CHECK(h.update(true, 1010) == HOLD_STATE::HOLDING);
+    CHECK(h.update(false, BOOT_HOLD_MS) == HOLD_STATE::HOLDING); //up at the deadline: not done yet
+    CHECK(h.update(true, BOOT_HOLD_MS + 5) == HOLD_STATE::DONE);
+}

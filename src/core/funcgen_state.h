@@ -18,6 +18,14 @@ struct FuncGenState {
     bool outputEnabled;
 };
 
+//who asked for a change. listeners use it to show remote changes (e.g. the LCD
+//flashes a field an agent changed)
+enum class CHANGE_SOURCE : uint8_t {
+    LOCAL,  //LCD, encoder, touch
+    MCP,
+    BLE
+};
+
 //every valid range, in one struct so the LCD, MCP schemas and get_limits
 //all read the same numbers
 struct FuncGenLimits {

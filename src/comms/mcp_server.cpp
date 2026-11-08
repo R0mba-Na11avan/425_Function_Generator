@@ -107,12 +107,12 @@ static ValueRange amplitudeRange(const FuncGenLimits& l, const FuncGenState* sta
     return r;
 }
 
-static void runSetWaveform(FuncGenController& c, const ToolArg& a, JsonObject out) { c.setWaveform(a.waveform); writeState(c, out); }
-static void runSetFrequency(FuncGenController& c, const ToolArg& a, JsonObject out) { c.setFrequency(a.number); writeState(c, out); }
-static void runSetAmplitude(FuncGenController& c, const ToolArg& a, JsonObject out) { c.setAmplitude(a.number); writeState(c, out); }
-static void runSetPhase(FuncGenController& c, const ToolArg& a, JsonObject out) { c.setPhase(a.number); writeState(c, out); }
-static void runSetDCOffset(FuncGenController& c, const ToolArg& a, JsonObject out) { c.setDCOffset(a.number); writeState(c, out); }
-static void runSetOutput(FuncGenController& c, const ToolArg& a, JsonObject out) { c.setOutputEnabled(a.boolean); writeState(c, out); }
+static void runSetWaveform(FuncGenController& c, const ToolArg& a, JsonObject out) { c.setWaveform(a.waveform, CHANGE_SOURCE::MCP); writeState(c, out); }
+static void runSetFrequency(FuncGenController& c, const ToolArg& a, JsonObject out) { c.setFrequency(a.number, CHANGE_SOURCE::MCP); writeState(c, out); }
+static void runSetAmplitude(FuncGenController& c, const ToolArg& a, JsonObject out) { c.setAmplitude(a.number, CHANGE_SOURCE::MCP); writeState(c, out); }
+static void runSetPhase(FuncGenController& c, const ToolArg& a, JsonObject out) { c.setPhase(a.number, CHANGE_SOURCE::MCP); writeState(c, out); }
+static void runSetDCOffset(FuncGenController& c, const ToolArg& a, JsonObject out) { c.setDCOffset(a.number, CHANGE_SOURCE::MCP); writeState(c, out); }
+static void runSetOutput(FuncGenController& c, const ToolArg& a, JsonObject out) { c.setOutputEnabled(a.boolean, CHANGE_SOURCE::MCP); writeState(c, out); }
 static void runGetState(FuncGenController& c, const ToolArg&, JsonObject out) { writeState(c, out); }
 static void runGetLimits(FuncGenController& c, const ToolArg&, JsonObject out) { writeLimits(c, out); }
 

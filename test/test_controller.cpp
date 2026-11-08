@@ -13,18 +13,20 @@ struct ListenerLog {
     FuncGenState last;
     FuncGenController* controller = nullptr;
     int heldDuringCall = 0; //calls that ran with a mutex still held
+    CHANGE_SOURCE lastSource = CHANGE_SOURCE::BLE;
 };
 
-static void recordListener(const FuncGenState& state, void* ctx) {
+static void recordListener(const FuncGenState& state, CHANGE_SOURCE source, void* ctx) {
     ListenerLog* log = (ListenerLog*)ctx;
     log->calls++;
     log->last = state;
+    log->lastSource = source;
     if (fakeMutexesHeld()) log->heldDuringCall++;
     //listeners may read state() (README: "calls listeners outside the lock")
     if (log->controller) log->controller->state();
 }
 
-static void noopListener(const FuncGenState&, void*) {}
+static void noopListener(const FuncGenState&, CHANGE_SOURCE, void*) {}
 
 //generator + controller, already begun
 struct Rig {
@@ -126,4 +128,22 @@ TEST(state_reflects_generator_after_setters) {
     CHECK_NEAR(s.frequency, 2500, 1e-3);
     CHECK(s.outputEnabled);
     CHECK_NEAR(s.amplitude, rig.gen.amplitude(), 0);
+}
+
+TEST(listener_gets_change_source) {
+    Rig rig;
+    ListenerLog log;
+    rig.ctl.addListener(recordListener, &log);
+    rig.ctl.setFrequency(500);
+    CHECK(log.lastSource == CHANGE_SOURCE::LOCAL); //default
+    rig.ctl.setAmplitude(1.0f, CHANGE_SOURCE::MCP);
+    CHECK(log.lastSource == CHANGE_SOURCE::MCP);
+    rig.ctl.setWaveform(WAVEFORM::SQUARE, CHANGE_SOURCE::BLE);
+    CHECK(log.lastSource == CHANGE_SOURCE::BLE);
+    rig.ctl.setOutputEnabled(true, CHANGE_SOURCE::MCP);
+    CHECK(log.lastSource == CHANGE_SOURCE::MCP);
+    rig.ctl.setPhase(10);
+    CHECK(log.lastSource == CHANGE_SOURCE::LOCAL);
+    rig.ctl.setDCOffset(0.5f, CHANGE_SOURCE::MCP);
+    CHECK(log.lastSource == CHANGE_SOURCE::MCP);
 }

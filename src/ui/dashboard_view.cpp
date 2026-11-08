@@ -5,6 +5,7 @@
 #include <string.h>
 
 #include "../libs/Adafruit_GFX/Fonts/DigitalWF24pt7b.h"
+#include "../libs/Adafruit_GFX/Fonts/FreeSans9pt7b.h"
 #include "../libs/Adafruit_GFX/Fonts/FreeSansBold9pt7b.h"
 #include "../libs/Adafruit_GFX/Fonts/FreeSansBold12pt7b.h"
 #include "../libs/Adafruit_GFX/Fonts/FreeSansBold18pt7b.h"
@@ -21,9 +22,10 @@ static const uint16_t COLOR_OFF = 0x8000;        //dark red
 static const uint16_t COLOR_AXIS = 0x2104;
 static const uint16_t COLOR_STATUS_BG = 0x18E3;
 static const uint16_t COLOR_AP_BG = 0xFD20;      //orange, so setup mode stands out
+static const uint16_t COLOR_REMOTE = 0xF81F;     //magenta: changed by an agent
 
 static const int16_t VALUE_BASELINE = 52;        //amplitude/offset digits, from the field top
-static const uint8_t NET_LINE_CHARS = 48;        //built-in font is 6 px wide, stops before the BLE slot
+static const uint8_t NET_LINE_CHARS = 42;        //built-in font is 6 px wide, stops before the MCP badge
 
 //waveform preview polylines: x 0..1, y -1..1, two periods
 static const uint8_t SINE_POINTS = 33;
@@ -55,10 +57,12 @@ static void drawLabel(Adafruit_GFX& g, Rect r, const char* text, uint16_t color)
     g.print(text);
 }
 
-static void drawFrame(Adafruit_GFX& g, Rect r, bool selected, bool editing) {
-    uint16_t color = editing ? COLOR_EDITING : (selected ? COLOR_SELECTED : COLOR_FRAME);
+//a field an agent just changed gets a thick magenta frame, over any selection color
+static void drawFrame(Adafruit_GFX& g, Rect r, bool selected, bool editing, bool remote) {
+    uint16_t color = remote ? COLOR_REMOTE : (editing ? COLOR_EDITING : (selected ? COLOR_SELECTED : COLOR_FRAME));
     g.drawRoundRect(r.x, r.y, r.w, r.h, 4, color);
-    if (selected) g.drawRoundRect(r.x + 1, r.y + 1, r.w - 2, r.h - 2, 3, color);
+    if (selected || remote) g.drawRoundRect(r.x + 1, r.y + 1, r.w - 2, r.h - 2, 3, color);
+    if (remote) g.drawRoundRect(r.x + 2, r.y + 2, r.w - 4, r.h - 4, 2, color);
 }
 
 //bounding box of text in a GFX font
@@ -127,11 +131,21 @@ static void renderStatus(Adafruit_GFX& g, Rect r, const DashboardView& v) {
     g.setCursor(r.x + 4, r.y + 6);
     g.print(line);
 
+    if (v.remoteBadge) {
+        Rect b = mcpBadgeRect();
+        b.x += r.x - statusRect().x;
+        b.y += r.y - statusRect().y;
+        g.fillRoundRect(b.x, b.y, b.w, b.h, 3, COLOR_REMOTE);
+        g.setTextColor(COLOR_TEXT);
+        g.setCursor(b.x + (b.w - 3 * 6) / 2, b.y + (b.h - 8) / 2);
+        g.print("MCP");
+    }
+
     //bleSlotRect() is reserved for a BLE status icon, left blank until BLE exists
 }
 
-static void renderWaveform(Adafruit_GFX& g, Rect r, const DashboardView& v, bool selected, bool editing) {
-    drawFrame(g, r, selected, editing);
+static void renderWaveform(Adafruit_GFX& g, Rect r, const DashboardView& v, bool selected, bool editing, bool remote) {
+    drawFrame(g, r, selected, editing, remote);
     drawLabel(g, r, "WAVEFORM", editing ? COLOR_EDITING : COLOR_LABEL);
 
     const char* name = waveformName(v.state.waveform);
@@ -147,8 +161,8 @@ static void renderWaveform(Adafruit_GFX& g, Rect r, const DashboardView& v, bool
     drawPreview(g, box, v.state.waveform, v.state.outputEnabled ? COLOR_ON : COLOR_LABEL);
 }
 
-static void renderOutput(Adafruit_GFX& g, Rect r, const DashboardView& v, bool selected) {
-    drawFrame(g, r, selected, false);
+static void renderOutput(Adafruit_GFX& g, Rect r, const DashboardView& v, bool selected, bool remote) {
+    drawFrame(g, r, selected, false, remote);
     drawLabel(g, r, "OUTPUT", COLOR_LABEL);
 
     bool on = v.state.outputEnabled;
@@ -164,8 +178,8 @@ static void renderOutput(Adafruit_GFX& g, Rect r, const DashboardView& v, bool s
     g.print(text);
 }
 
-static void renderFrequency(Adafruit_GFX& g, Rect r, const DashboardView& v, bool selected, bool editing) {
-    drawFrame(g, r, selected, editing);
+static void renderFrequency(Adafruit_GFX& g, Rect r, const DashboardView& v, bool selected, bool editing, bool remote) {
+    drawFrame(g, r, selected, editing, remote);
     drawLabel(g, r, "FREQUENCY", editing ? COLOR_EDITING : COLOR_LABEL);
 
     //step, right aligned in the label row
@@ -196,9 +210,9 @@ static void renderFrequency(Adafruit_GFX& g, Rect r, const DashboardView& v, boo
     }
 }
 
-static void renderValue(Adafruit_GFX& g, Rect r, bool selected, bool editing,
+static void renderValue(Adafruit_GFX& g, Rect r, bool selected, bool editing, bool remote,
                         const char* label, const char* value, const char* unit) {
-    drawFrame(g, r, selected, editing);
+    drawFrame(g, r, selected, editing, remote);
     drawLabel(g, r, label, editing ? COLOR_EDITING : COLOR_LABEL);
 
     int16_t x = r.x + 10;
@@ -221,7 +235,7 @@ void areaKey(const DashboardView& v, uint8_t area, char* key, size_t len) {
     if (area == STATUS_AREA) {
         char line[NET_LINE_CHARS + 1];
         formatNetLine(v.net, line, sizeof(line));
-        snprintf(key, len, "%d|%s", (int)v.net.state, line);
+        snprintf(key, len, "%d|%d|%s", (int)v.net.state, v.remoteBadge, line);
         return;
     }
 
@@ -249,7 +263,8 @@ void areaKey(const DashboardView& v, uint8_t area, char* key, size_t len) {
             formatOffset(v.state.dcOffset, value, sizeof(value));
             break;
     }
-    snprintf(key, len, "%d|%d|%s", selected, editing, value);
+    bool remote = v.remoteFlash & fieldBit(field);
+    snprintf(key, len, "%d|%d|%d|%s", selected, editing, remote, value);
 }
 
 void renderArea(Adafruit_GFX& g, uint8_t area, Rect r, const DashboardView& v) {
@@ -261,25 +276,96 @@ void renderArea(Adafruit_GFX& g, uint8_t area, Rect r, const DashboardView& v) {
     UI_FIELD field = (UI_FIELD)area;
     bool selected = v.selected == field;
     bool editing = selected && v.editing;
+    bool remote = v.remoteFlash & fieldBit(field);
     char value[16];
 
     switch (field) {
         case UI_FIELD::WAVEFORM:
-            renderWaveform(g, r, v, selected, editing);
+            renderWaveform(g, r, v, selected, editing, remote);
             break;
         case UI_FIELD::OUTPUT_ENABLE:
-            renderOutput(g, r, v, selected);
+            renderOutput(g, r, v, selected, remote);
             break;
         case UI_FIELD::FREQUENCY:
-            renderFrequency(g, r, v, selected, editing);
+            renderFrequency(g, r, v, selected, editing, remote);
             break;
         case UI_FIELD::AMPLITUDE:
             formatAmplitude(v.state.amplitude, value, sizeof(value));
-            renderValue(g, r, selected, editing, "AMPLITUDE", value, "Vpp");
+            renderValue(g, r, selected, editing, remote, "AMPLITUDE", value, "Vpp");
             break;
         case UI_FIELD::OFFSET:
             formatOffset(v.state.dcOffset, value, sizeof(value));
-            renderValue(g, r, selected, editing, "OFFSET", value, "V");
+            renderValue(g, r, selected, editing, remote, "OFFSET", value, "V");
             break;
     }
+}
+
+//info panel
+
+static const int16_t INFO_LINE_H = 19;
+
+void infoKey(const NetStatus& net, char* key, size_t len) {
+    snprintf(key, len, "info|%d|%s|%s", (int)net.state, net.ssid, net.ip);
+}
+
+void renderInfo(Adafruit_GFX& g, Rect r, const NetStatus& net) {
+    g.drawRoundRect(r.x + 2, r.y + 2, r.w - 4, r.h - 4, 4, COLOR_SELECTED);
+    drawLabel(g, Rect{(int16_t)(r.x + 4), (int16_t)(r.y + 2), r.w, r.h}, "NETWORK", COLOR_LABEL);
+    g.setFont(nullptr);
+    g.setTextColor(COLOR_LABEL);
+    g.setCursor(r.x + r.w - 10 - 12 * 6, r.y + 8);
+    g.print("tap to close");
+
+    char lines[INFO_MAX_LINES][INFO_LINE_LEN];
+    uint8_t n = formatInfoLines(net, lines, INFO_MAX_LINES);
+    g.setFont(&FreeSans9pt7b);
+    g.setTextColor(COLOR_TEXT);
+    int16_t baseline = r.y + 36;
+    for (uint8_t i = 0; i < n; i++, baseline += INFO_LINE_H) {
+        g.setCursor(r.x + 12, baseline);
+        g.print(lines[i]);
+    }
+}
+
+//boot screens
+
+void renderBootHold(Adafruit_GFX& g, uint8_t secondsLeft) {
+    g.fillScreen(COLOR_BG);
+    g.setFont(&FreeSansBold12pt7b);
+    g.setTextColor(COLOR_TEXT);
+    const char* title = "Keep holding to";
+    const char* title2 = "forget Wi-Fi";
+    int16_t x1, y1;
+    uint16_t w, h;
+    textBounds(g, &FreeSansBold12pt7b, title, x1, y1, w, h);
+    g.setCursor((LCD_WIDTH - w) / 2 - x1, 60);
+    g.print(title);
+    textBounds(g, &FreeSansBold12pt7b, title2, x1, y1, w, h);
+    g.setCursor((LCD_WIDTH - w) / 2 - x1, 90);
+    g.print(title2);
+
+    char count[4];
+    snprintf(count, sizeof(count), "%u", secondsLeft);
+    int16_t cw = numTextWidth(count);
+    drawNumber(g, (LCD_WIDTH - cw) / 2, 160, count, COLOR_AP_BG);
+
+    const char* hint = "Let go to start normally";
+    textBounds(g, &FreeSans9pt7b, hint, x1, y1, w, h);
+    g.setTextColor(COLOR_LABEL);
+    g.setCursor((LCD_WIDTH - w) / 2 - x1, 210);
+    g.print(hint);
+}
+
+void renderBootMessage(Adafruit_GFX& g, const char* title, const char* detail) {
+    g.fillScreen(COLOR_BG);
+    int16_t x1, y1;
+    uint16_t w, h;
+    textBounds(g, &FreeSansBold12pt7b, title, x1, y1, w, h);
+    g.setTextColor(COLOR_TEXT);
+    g.setCursor((LCD_WIDTH - w) / 2 - x1, 105);
+    g.print(title);
+    textBounds(g, &FreeSans9pt7b, detail, x1, y1, w, h);
+    g.setTextColor(COLOR_LABEL);
+    g.setCursor((LCD_WIDTH - w) / 2 - x1, 140);
+    g.print(detail);
 }

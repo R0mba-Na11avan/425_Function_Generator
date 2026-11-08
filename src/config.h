@@ -109,6 +109,14 @@
 #define UI_AMP_STEP_V           0.05f
 #define UI_OFFSET_STEP_V        0.05f
 
+#define UI_EDIT_TIMEOUT_MS      10000   //edit mode ends after this long without input
+#define UI_REMOTE_FLASH_MS      1000    //a field an agent changed is highlighted this long
+#define UI_REMOTE_BADGE_MS      5000    //"MCP" shows in the status bar this long after an agent change
+
+//hold the encoder button this long while powering on to forget the saved Wi-Fi
+//and restart into setup mode
+#define BOOT_HOLD_MS            3000
+
 //touch calibration: raw XPT2046 readings (0..4095) at the left/right and
 //top/bottom screen edges, after the optional X/Y swap. if an axis is mirrored,
 //just put the bigger number in _MIN. PLACEHOLDERS: set TOUCH_CALIBRATION_MODE

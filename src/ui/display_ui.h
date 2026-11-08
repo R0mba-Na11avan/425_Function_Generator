@@ -34,6 +34,15 @@
     Editing: see DashboardEditor in dashboard_logic.h. every change goes through
     controller.setX(), and the screen only changes when the listener fires, so
     it always shows what was actually applied (also when an agent changed it)
+
+    Remote changes: the listener gets the change source. for MCP/BLE changes it
+    works out which fields changed (against the last state it saw) and the UI
+    task flashes them, shows the MCP badge and ends edit mode if the field being
+    edited was one of them (RemoteHighlight, DashboardEditor::remoteChanged)
+
+    Info panel: while it is open (tap on the status bar) it is drawn instead of
+    the fields, straight to the panel since it rarely changes. closing it
+    redraws every field
 */
 
 #ifndef DISPLAY_UI_H
@@ -67,7 +76,7 @@ class DisplayUI {
         bool begin();
 
     private:
-        static void onStateChanged(const FuncGenState& state, void* ctx);
+        static void onStateChanged(const FuncGenState& state, CHANGE_SOURCE source, void* ctx);
         static void taskEntry(void* arg);
         void run();
 
@@ -75,8 +84,9 @@ class DisplayUI {
         void apply(const EditCommand& command);
         void pollNetStatus();
 
-        void redraw();
+        void redraw(uint32_t nowMs);
         void drawArea(uint8_t area, const DashboardView& view);
+        void drawInfo();
 
         Adafruit_ILI9341 _tft;
         FuncGenController& _controller;
@@ -91,16 +101,21 @@ class DisplayUI {
         portMUX_TYPE _stateMux;
         FuncGenState _latest;
         bool _stateDirty;
+        FuncGenState _lastSeen;     //state after the previous change, to find what a remote change touched
+        uint8_t _remoteFields;      //fields changed remotely since the UI task last looked
+        bool _remotePending;
 
         //UI task only
         FuncGenState _state;
         FuncGenLimits _limits;
         DashboardEditor _editor;
+        RemoteHighlight _highlight;
         uint32_t _lastNetPoll;
         uint32_t _lastDraw;
 
         GFXcanvas16* _canvas[DASHBOARD_AREA_COUNT];
         char _drawnKey[DASHBOARD_AREA_COUNT][AREA_KEY_LEN];
+        char _infoKey[AREA_KEY_LEN];  //empty while the panel isn't shown
 };
 
 #endif

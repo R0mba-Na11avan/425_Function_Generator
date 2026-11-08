@@ -25,6 +25,10 @@ BLE (last). Read `README.md` for the architecture and status. Each stub header i
   callback the `.ino` passes to `DisplayUI::setNetStatusSource`.
 - Controller listeners are called from whatever task made the change. A listener
   must only copy state / set a flag. It must not draw, block, or call a setter.
+- Setters take a `CHANGE_SOURCE` (default `LOCAL`). MCP (and later BLE) pass
+  their own source so the LCD can flash what an agent changed.
+- Input events carry an `INPUT_SOURCE` (which encoder/button/touch), so new
+  controls are added as new sources in `InputManager`.
 - All pins, limits, task settings and network constants live in `src/config.h`.
   The pins there are temporary placeholders until the wiring is confirmed. Never
   hardcode a pin elsewhere.
