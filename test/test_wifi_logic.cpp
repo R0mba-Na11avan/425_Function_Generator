@@ -184,6 +184,85 @@ TEST(wifi_ap_retry_aborts_when_someone_joins_the_ap) {
     CHECK(s.update(inputs(false), t + 600) == WIFI_ACTION::NONE); //waits a full period again
 }
 
+//the info panel's Change Wi-Fi / Back to <network>
+
+static void goOnline(WifiSupervisor& s, uint32_t t = 0) {
+    s.begin(true, t);
+    s.update(inputs(true), t + 100);
+}
+
+TEST(wifi_open_setup_from_online) {
+    WifiSupervisor s;
+    goOnline(s);
+    CHECK(s.state() == WIFI_STATE::CONNECTED);
+    CHECK(s.openSetup(1000) == WIFI_ACTION::AP_START);
+    CHECK(s.state() == WIFI_STATE::AP_MODE);
+    //a connected flag from before the switch doesn't bring it back online
+    CHECK(s.update(inputs(true), 1100) == WIFI_ACTION::NONE);
+    CHECK(s.state() == WIFI_STATE::AP_MODE);
+    //the saved network is tried again like after any fallback
+    CHECK(s.update(inputs(false), 1000 + AP_STA_RETRY_MS - 1) == WIFI_ACTION::NONE);
+    CHECK(s.update(inputs(false), 1000 + AP_STA_RETRY_MS) == WIFI_ACTION::STA_BEGIN);
+}
+
+TEST(wifi_open_setup_from_other_phases) {
+    WifiSupervisor joining;
+    joining.begin(true, 0);
+    CHECK(joining.openSetup(500) == WIFI_ACTION::AP_START);
+    CHECK(joining.state() == WIFI_STATE::AP_MODE);
+
+    //already in setup mode: nothing to do
+    WifiSupervisor ap;
+    uint32_t t = fallBackToAp(ap);
+    CHECK(ap.openSetup(t + 100) == WIFI_ACTION::NONE);
+
+    //retrying the saved network from setup mode: stop trying, the AP is up already
+    CHECK(ap.update(inputs(false), t + AP_STA_RETRY_MS) == WIFI_ACTION::STA_BEGIN);
+    CHECK(ap.openSetup(t + AP_STA_RETRY_MS + 100) == WIFI_ACTION::STA_ABORT);
+    CHECK(ap.state() == WIFI_STATE::AP_MODE);
+    //and the retry period starts over
+    CHECK(ap.update(inputs(false), t + 2 * AP_STA_RETRY_MS) == WIFI_ACTION::NONE);
+}
+
+TEST(wifi_leave_setup_joins_saved_network) {
+    WifiSupervisor s;
+    goOnline(s);
+    s.openSetup(1000);
+    CHECK(s.leaveSetup(2000) == WIFI_ACTION::LEAVE_AP);
+    CHECK(s.state() == WIFI_STATE::CONNECTING);
+    //someone still on the setup Wi-Fi doesn't stop it, the user asked for this
+    CHECK(s.update(inputs(false, false, 1), 2100) == WIFI_ACTION::NONE);
+    CHECK(s.update(inputs(true), 3000) == WIFI_ACTION::STA_ONLINE);
+    CHECK(s.state() == WIFI_STATE::CONNECTED);
+}
+
+TEST(wifi_leave_setup_falls_back_if_join_fails) {
+    WifiSupervisor s;
+    uint32_t t = fallBackToAp(s);
+    CHECK(s.leaveSetup(t) == WIFI_ACTION::LEAVE_AP);
+    CHECK(s.update(inputs(false), t + STA_CONNECT_TIMEOUT_MS - 1) == WIFI_ACTION::NONE);
+    //the AP was stopped, so it has to be started again
+    CHECK(s.update(inputs(false), t + STA_CONNECT_TIMEOUT_MS) == WIFI_ACTION::AP_START);
+    CHECK(s.state() == WIFI_STATE::AP_MODE);
+}
+
+TEST(wifi_leave_setup_only_from_setup_mode_with_a_saved_network) {
+    WifiSupervisor noCreds;
+    noCreds.begin(false, 0);
+    CHECK(noCreds.leaveSetup(100) == WIFI_ACTION::NONE);
+    CHECK(noCreds.state() == WIFI_STATE::AP_MODE);
+
+    WifiSupervisor online;
+    goOnline(online);
+    CHECK(online.leaveSetup(1000) == WIFI_ACTION::NONE);
+    CHECK(online.state() == WIFI_STATE::CONNECTED);
+
+    WifiSupervisor retrying;
+    uint32_t t = fallBackToAp(retrying);
+    retrying.update(inputs(false), t + AP_STA_RETRY_MS);
+    CHECK(retrying.leaveSetup(t + AP_STA_RETRY_MS + 100) == WIFI_ACTION::NONE);
+}
+
 TEST(wifi_timers_survive_millis_wrap) {
     WifiSupervisor s;
     uint32_t start = 0xFFFFFFFFu - 500; //the first retry is due after millis() wraps

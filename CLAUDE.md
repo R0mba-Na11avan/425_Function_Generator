@@ -24,7 +24,10 @@ BLE (last). Read `README.md` for the architecture and status. Each stub header i
 - Wi-Fi status reaches the UI as a `NetStatus` (`core/net_status.h`) through a
   callback the `.ino` passes to `DisplayUI::setNetStatusSource`. BLE status
   (`core/ble_status.h`) and the pairing-cancel call go the same way through
-  `DisplayUI::setBleSource`.
+  `DisplayUI::setBleSource`. Info panel buttons come back from the editor as
+  `EDIT_ACTION::DEVICE` and reach the radios as a `DEVICE_ACTION`
+  (`core/device_actions.h`) through `DisplayUI::setActionHandler`; the handler
+  only sets a flag and wakes the radio's task.
 - Controller listeners are called from whatever task made the change. A listener
   must only copy state / set a flag. It must not draw, block, or call a setter.
 - Setters take a `CHANGE_SOURCE` (default `LOCAL`). MCP (and later BLE) pass

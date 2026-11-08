@@ -24,6 +24,7 @@ static void formatIp(const IPAddress& ip, char* out, size_t len) {
 WifiManager::WifiManager(HttpServer& http)
     : _http(http), _provisioning(http), _task(nullptr), _hasCredentials(false),
       _apRunning(false), _scanRunning(false), _mdnsStarted(false), _attemptFailed(false),
+      _setupRequested(false), _leaveSetupRequested(false),
       _statusMux(portMUX_INITIALIZER_UNLOCKED) {
     memset(&_creds, 0, sizeof(_creds));
     memset(&_status, 0, sizeof(_status));
@@ -53,6 +54,16 @@ NetStatus WifiManager::status() const {
 
 WIFI_STATE WifiManager::state() const {
     return status().state;
+}
+
+void WifiManager::requestSetup() {
+    _setupRequested = true;
+    if (_task) xTaskNotifyGive(_task);
+}
+
+void WifiManager::requestLeaveSetup() {
+    _leaveSetupRequested = true;
+    if (_task) xTaskNotifyGive(_task);
 }
 
 bool WifiManager::forgetCredentials() {
@@ -88,6 +99,9 @@ void WifiManager::run() {
     for (;;) {
         ulTaskNotifyTake(pdTRUE, pdMS_TO_TICKS(WIFI_POLL_MS));
 
+        if (_setupRequested.exchange(false)) apply(_supervisor.openSetup(millis()));
+        if (_leaveSetupRequested.exchange(false)) apply(_supervisor.leaveSetup(millis()));
+
         WifiInputs in;
         in.connected = WiFi.status() == WL_CONNECTED;
         in.attemptFailed = _attemptFailed.exchange(false);
@@ -115,6 +129,11 @@ void WifiManager::apply(WIFI_ACTION action) {
         case WIFI_ACTION::AP_START:
             startAp();
             break;
+        case WIFI_ACTION::LEAVE_AP:
+            stopAp();
+            restartServices();  //the MCP routes are served while joining too
+            beginSta();
+            break;
         case WIFI_ACTION::NONE:
         default:
             break;
@@ -128,17 +147,20 @@ void WifiManager::beginSta() {
 }
 
 void WifiManager::goOnline() {
-    if (_apRunning) {
-        _http.stop(); //no handler may be running while the setup routes go away
-        _provisioning.disable();
-        WiFi.softAPdisconnect(true);
-        _apRunning = false;
-        _scanRunning = false;
-    }
+    stopAp();
     restartServices();
     char ip[16];
     formatIp(WiFi.localIP(), ip, sizeof(ip));
     log_i("joined %s, http://%s.local (%s)", _creds.ssid, MDNS_HOSTNAME, ip);
+}
+
+void WifiManager::stopAp() {
+    if (!_apRunning) return;
+    _http.stop(); //no handler may be running while the setup routes go away
+    _provisioning.disable();
+    WiFi.softAPdisconnect(true);
+    _apRunning = false;
+    _scanRunning = false;
 }
 
 void WifiManager::startAp() {
@@ -213,6 +235,7 @@ void WifiManager::publishStatus() {
     NetStatus s = {};
     s.state = _supervisor.state();
     snprintf(s.hostname, sizeof(s.hostname), "%s", MDNS_HOSTNAME);
+    if (_hasCredentials) snprintf(s.savedSsid, sizeof(s.savedSsid), "%s", _creds.ssid);
     switch (s.state) {
         case WIFI_STATE::AP_MODE:
             snprintf(s.ssid, sizeof(s.ssid), "%s", _apSsid);

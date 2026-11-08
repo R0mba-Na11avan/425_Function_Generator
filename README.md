@@ -57,7 +57,7 @@ headers, so include across folders with relative paths (`"../core/..."`).
 | `FunctionGenerator` (AD9833 + MCP4131) | done (incl. output enable and limit getters), amplitude mapping is a placeholder |
 | `FuncGenController` / `FuncGenState` | done |
 | `ui/input` (encoder via PCNT, button, XPT2046 touch) | done, not tried on hardware yet, touch calibration is a placeholder |
-| `ui/display_ui` (dashboard, editing, info panel, remote-change flash, pairing popup) | done, not tried on hardware yet |
+| `ui/display_ui` (dashboard, editing, info panel with Wi-Fi/phone buttons, remote-change flash, pairing popup) | done, not tried on hardware yet |
 | `425_Function_Generator.ino` (wiring, boot-time Wi-Fi + phones reset) | done, compiled, not tried on hardware yet |
 | `comms/http_server` (shared esp_http_server + route table) | done, host-tested against a fake httpd, not tried on hardware yet |
 | `comms/wifi_manager` (STA, AP fallback, setup page, mDNS, NVS) | done, state machine and setup routes host-tested, radio part only compiled, not tried on hardware yet |
@@ -77,8 +77,10 @@ AP fallback + provisioning page) -> MCP server -> BLE.
   Credentials are stored in NVS and the device is reachable at `funcgen.local`.
   The setup routes only exist in AP mode. In AP mode with saved credentials it
   tries the saved network again every 5 minutes while nobody is on the AP.
-  To change networks from STA mode, hold the knob at boot (a runtime "Change
-  Wi-Fi" button in the info panel is planned next).
+  To change networks, "Change Wi-Fi" in the info panel opens setup mode while
+  running (the old network stays saved until a new one is saved). The page is
+  never served on the normal network, so a change always needs someone at the
+  device.
 - **MCP:** Streamable HTTP at `POST /mcp`, stateless, basic tools, **no auth**
   (trusted bench network). Revisit if it is ever exposed more widely.
   Out-of-range values are rejected with a tool error (the LCD clamps instead).
@@ -120,10 +122,17 @@ setup routes and the MCP server, include it as
   connected. When a new phone pairs, a full-screen popup shows the code to type
   on the phone; press or tap to cancel (it cancels itself after 30 s).
 - **Power-on:** sine, 1 Hz, minimum amplitude, output OFF.
-- **Change Wi-Fi / forget phones:** hold the knob button while powering on, keep
-  holding through the 3 s countdown. The saved network and the paired phones are
-  forgotten and the generator restarts in setup mode (see the info panel for the
-  steps).
+- **Info panel buttons:** turn the knob to highlight "Change Wi-Fi", "Forget
+  phones" or "close" and press, or tap them.
+  - *Change Wi-Fi* (asks first) opens setup mode; the info panel then shows the
+    steps. The current network stays saved until you save a new one. In setup
+    mode the button becomes *Back to <network>*, which goes straight back. With
+    nobody on the setup Wi-Fi it also goes back by itself after 5 minutes.
+  - *Forget phones* (asks first) forgets every paired phone and disconnects the
+    connected ones. Also remove FuncGen from each phone's Bluetooth settings.
+- **Backup reset:** if the screen or touch isn't usable, hold the knob button
+  while powering on, through the 3 s countdown. The saved network and the paired
+  phones are forgotten and the generator restarts in setup mode.
 - **Serial (115200):** prints the firmware version, every network address
   change and BLE pairing results.
 

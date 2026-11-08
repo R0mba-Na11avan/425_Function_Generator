@@ -15,6 +15,7 @@
 #include "../core/funcgen_state.h"
 #include "../core/net_status.h"
 #include "../core/ble_status.h"
+#include "../core/device_actions.h"
 #include "input_logic.h"
 
 struct Rect {
@@ -55,6 +56,8 @@ Rect statusRect();
 Rect bleSlotRect();     //status bar, right end: Bluetooth icon while a phone is connected
 Rect mcpBadgeRect();    //status bar, left of the BLE slot: "MCP"/"BLE" after a remote change
 Rect infoRect();        //the info panel, covers everything below the status bar
+Rect infoCloseRect();   //info panel, top right: "close"
+Rect infoButtonRect(uint8_t slot);  //info panel, bottom row: 0 left, 1 right (also the confirm buttons)
 Rect fieldRect(UI_FIELD field);
 //field under a screen point, false if none
 bool fieldAt(int16_t x, int16_t y, UI_FIELD& field);
@@ -100,9 +103,50 @@ const char* waveformName(WAVEFORM waveform);
 void formatNetLine(const NetStatus& net, char* out, size_t len);
 
 //text of the info panel (opened by tapping the status bar), one line each
-static const uint8_t INFO_MAX_LINES = 10;
+static const uint8_t INFO_MAX_LINES = 8;
 static const uint8_t INFO_LINE_LEN = 64;   //fits the longest SSID and hostname (a long line is clipped on screen)
 uint8_t formatInfoLines(const NetStatus& net, const BleStatus& ble, char lines[][INFO_LINE_LEN], uint8_t maxLines);
+
+/*
+    Info panel buttons (bottom row) and their confirm dialogs.
+        - left: "Change Wi-Fi" (opens setup mode, after a confirm), or in setup
+          mode with a saved network "Back to <network>" (no confirm). none in
+          setup mode without a saved network
+        - right: "Forget phones" (after a confirm), only while BLE is running
+        - top right: "close"
+    The knob moves a highlight over the buttons and "close" (starts on close,
+    so a press closes the panel like before), a press activates. Tapping a
+    button activates it, tapping anywhere else closes. In a confirm dialog the
+    knob picks Cancel (left, the default) or OK (right), tapping elsewhere
+    cancels.
+*/
+enum class WIFI_BUTTON : uint8_t {
+    NONE,
+    CHANGE_NETWORK, //DEVICE_ACTION::OPEN_WIFI_SETUP after a confirm
+    BACK_TO_SAVED   //DEVICE_ACTION::LEAVE_WIFI_SETUP
+};
+
+//which buttons exist right now
+struct InfoButtons {
+    WIFI_BUTTON wifi;
+    bool phones;
+};
+
+InfoButtons infoButtons(const NetStatus& net, const BleStatus& ble);
+void formatWifiButton(const NetStatus& net, WIFI_BUTTON button, char* out, size_t len);  //"Back to Lab", needs 41 bytes
+
+//what the knob highlights, in knob order
+enum class INFO_ITEM : uint8_t {
+    WIFI,
+    PHONES,
+    CLOSE
+};
+
+enum class INFO_CONFIRM : uint8_t {
+    NONE,
+    OPEN_WIFI_SETUP,
+    FORGET_PHONES
+};
 
 //fields are passed around as bit masks: bit (uint8_t)field
 inline uint8_t fieldBit(UI_FIELD field) { return (uint8_t)(1u << (uint8_t)field); }
@@ -171,7 +215,8 @@ enum class EDIT_ACTION : uint8_t {
     SET_FREQUENCY,
     SET_AMPLITUDE,
     SET_DC_OFFSET,
-    SET_OUTPUT
+    SET_OUTPUT,
+    DEVICE          //an info panel button: pass device on to the radios
 };
 
 struct EditCommand {
@@ -179,6 +224,7 @@ struct EditCommand {
     WAVEFORM waveform;  //SET_WAVEFORM
     float value;        //SET_FREQUENCY / SET_AMPLITUDE / SET_DC_OFFSET
     bool enabled;       //SET_OUTPUT
+    DEVICE_ACTION device;   //DEVICE
 };
 
 /*
@@ -192,8 +238,7 @@ struct EditCommand {
         - tap: selects a field, tapping the selected one toggles edit mode,
           tapping OUTPUT toggles the output, tapping a frequency digit makes
           that digit the step and starts editing
-        - tap on the status bar: opens the info panel. while it is open the
-          encoder does nothing and any press or tap closes it
+        - tap on the status bar: opens the info panel (buttons: see above)
         - edit mode ends after UI_EDIT_TIMEOUT_MS without input (tick), and
           when an agent changes the field being edited (remoteChanged)
     It only returns commands. The values shown always come from the
@@ -203,8 +248,9 @@ class DashboardEditor {
     public:
         DashboardEditor();
 
+        //buttons: what the info panel offers right now (infoButtons())
         EditCommand handle(const InputEvent& event, const FuncGenState& state, const FuncGenLimits& limits,
-                           uint32_t nowMs);
+                           uint32_t nowMs, InfoButtons buttons = InfoButtons{WIFI_BUTTON::NONE, false});
 
         //call regularly: ends edit mode after UI_EDIT_TIMEOUT_MS without input
         void tick(uint32_t nowMs);
@@ -216,17 +262,27 @@ class DashboardEditor {
         bool editing() const { return _editing; }
         uint8_t freqStepIndex() const { return _stepIndex; }
         bool infoOpen() const { return _infoOpen; }
+        //the highlighted item, CLOSE if the highlighted button no longer exists
+        INFO_ITEM infoFocus(InfoButtons buttons) const;
+        INFO_CONFIRM infoConfirm() const { return _confirm; }
+        bool confirmOk() const { return _confirmOk; }   //knob is on OK rather than Cancel
 
     private:
         EditCommand onEncoder(const InputEvent& event, const FuncGenState& state, const FuncGenLimits& limits);
         EditCommand onShortPress(const FuncGenState& state);
         void onLongPress();
         EditCommand onTap(const InputEvent& event, const FuncGenState& state);
+        EditCommand onInfo(const InputEvent& event, InfoButtons buttons);
+        EditCommand onConfirm(const InputEvent& event);
+        EditCommand activate(INFO_ITEM item, InfoButtons buttons);
 
         UI_FIELD _selected;
         bool _editing;
         uint8_t _stepIndex;
         bool _infoOpen;
+        INFO_ITEM _infoFocus;
+        INFO_CONFIRM _confirm;
+        bool _confirmOk;
         uint32_t _lastInputMs;
 };
 

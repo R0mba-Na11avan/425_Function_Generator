@@ -13,6 +13,7 @@
 #include "../src/ui/dashboard_view.h"
 #include "../src/core/func_gen.h"
 #include "../src/libs/Adafruit_GFX/Fonts/FreeSans9pt7b.h" //the info panel's font, to measure its lines
+#include "../src/libs/Adafruit_GFX/Fonts/FreeSansBold12pt7b.h" //confirm dialog titles
 
 //set by run_tests.sh, which also creates the folder
 #ifndef SCREENS_DIR
@@ -401,6 +402,19 @@ static BleStatus bleConnected() {
     return b;
 }
 
+static InfoView infoView(const NetStatus& n, const BleStatus& ble, INFO_ITEM focus = INFO_ITEM::CLOSE,
+                         INFO_CONFIRM confirm = INFO_CONFIRM::NONE, bool ok = false) {
+    return InfoView{infoButtons(n, ble), focus, confirm, ok};
+}
+
+static int16_t textWidth(GFXcanvas16& g, const GFXfont* font, const char* text) {
+    g.setFont(font);
+    int16_t x1, y1;
+    uint16_t w, h;
+    g.getTextBounds(text, 0, 0, &x1, &y1, &w, &h);
+    return x1 + w;
+}
+
 TEST(info_panel_stays_inside_and_lines_fit) {
     GFXcanvas16 screen(LCD_WIDTH, LCD_HEIGHT);
     NetStatus nets[] = {connectedNet(), apNet()};
@@ -409,7 +423,7 @@ TEST(info_panel_stays_inside_and_lines_fit) {
         Rect r = infoRect();
         screen.fillScreen(SENTINEL);
         screen.fillRect(r.x, r.y, r.w, r.h, DASHBOARD_BG);
-        renderInfo(screen, r, n, ble);
+        renderInfo(screen, r, n, ble, infoView(n, ble));
         int outside = 0;
         for (int y = 0; y < LCD_HEIGHT; y++)
             for (int x = 0; x < LCD_WIDTH; x++)
@@ -428,18 +442,109 @@ TEST(info_panel_stays_inside_and_lines_fit) {
             if (x1 + w > r.w - 24) printf("    info line too wide: \"%s\" (%u px)\n", lines[i], w);
             CHECK(x1 + w <= r.w - 24);
         }
+        //the last line ends above the buttons (baseline + FreeSans9 descent)
+        CHECK(r.y + 36 + (count - 1) * 18 + 5 < infoButtonRect(0).y);
     }
+}
+
+TEST(info_button_and_dialog_text_fits) {
+    GFXcanvas16 screen(LCD_WIDTH, LCD_HEIGHT);
+    Rect b = infoButtonRect(0);
+    NetStatus n = apNet();
+    strcpy(n.savedSsid, "WWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWW");   //widest letters, cut to fit
+    char full[48], label[48];
+    formatWifiButton(n, WIFI_BUTTON::BACK_TO_SAVED, full, sizeof(full));
+    fitButtonLabel(screen, full, label, sizeof(label));
+    CHECK(strncmp(label, "Back to WW", 10) == 0);
+    CHECK(strcmp(label + strlen(label) - 2, "..") == 0);
+    //short labels are left alone
+    char same[48];
+    fitButtonLabel(screen, "Back to Lab", same, sizeof(same));
+    CHECK(strcmp(same, "Back to Lab") == 0);
+
+    const char* labels[] = {"Change Wi-Fi", "Forget phones", "Cancel", label,
+                            confirmOkLabel(INFO_CONFIRM::OPEN_WIFI_SETUP), confirmOkLabel(INFO_CONFIRM::FORGET_PHONES)};
+    for (const char* text : labels) {
+        int16_t w = textWidth(screen, &FreeSans9pt7b, text);
+        if (w > b.w - 8) printf("    button label too wide: \"%s\" (%d px)\n", text, w);
+        CHECK(w <= b.w - 8);
+    }
+
+    INFO_CONFIRM confirms[] = {INFO_CONFIRM::OPEN_WIFI_SETUP, INFO_CONFIRM::FORGET_PHONES};
+    Rect r = infoRect();
+    for (INFO_CONFIRM c : confirms) {
+        CHECK(textWidth(screen, &FreeSansBold12pt7b, confirmTitle(c)) <= r.w - 20);
+        for (uint8_t i = 0; i < CONFIRM_LINES; i++) {
+            int16_t w = textWidth(screen, &FreeSans9pt7b, confirmLine(c, i));
+            if (w > r.w - 28) printf("    confirm line too wide: \"%s\" (%d px)\n", confirmLine(c, i), w);
+            CHECK(w <= r.w - 28);
+            CHECK(confirmLine(c, i)[0] != '\0');
+        }
+    }
+    CHECK(strcmp(confirmTitle(INFO_CONFIRM::OPEN_WIFI_SETUP), confirmTitle(INFO_CONFIRM::FORGET_PHONES)) != 0);
+}
+
+//pixels of a colour inside one rect of the screen
+static int countColorIn(GFXcanvas16& c, Rect r, uint16_t color) {
+    int n = 0;
+    for (int y = r.y; y < r.y + r.h; y++)
+        for (int x = r.x; x < r.x + r.w; x++)
+            if (c.getPixel(x, y) == color) n++;
+    return n;
+}
+
+TEST(info_focus_highlight_follows_the_knob) {
+    GFXcanvas16 screen(LCD_WIDTH, LCD_HEIGHT);
+    NetStatus n = connectedNet();
+    BleStatus ble = bleConnected();
+    const uint16_t YELLOW = 0xFFE0;
+    struct Case { INFO_ITEM focus; Rect lit; };
+    Case cases[] = {{INFO_ITEM::WIFI, infoButtonRect(0)}, {INFO_ITEM::PHONES, infoButtonRect(1)},
+                    {INFO_ITEM::CLOSE, infoCloseRect()}};
+    for (const Case& c : cases) {
+        screen.fillScreen(DASHBOARD_BG);
+        renderInfo(screen, infoRect(), n, ble, infoView(n, ble, c.focus));
+        CHECK(countColorIn(screen, c.lit, YELLOW) > 40);
+        CHECK_EQ(countColor(screen, YELLOW), countColorIn(screen, c.lit, YELLOW));   //nowhere else
+    }
+
+    //in a dialog the highlight is on Cancel or OK
+    screen.fillScreen(DASHBOARD_BG);
+    renderInfo(screen, infoRect(), n, ble, infoView(n, ble, INFO_ITEM::PHONES, INFO_CONFIRM::FORGET_PHONES, false));
+    CHECK(countColorIn(screen, infoButtonRect(0), YELLOW) > 40);
+    CHECK_EQ(countColorIn(screen, infoButtonRect(1), YELLOW), 0);
+    screen.fillScreen(DASHBOARD_BG);
+    renderInfo(screen, infoRect(), n, ble, infoView(n, ble, INFO_ITEM::PHONES, INFO_CONFIRM::FORGET_PHONES, true));
+    CHECK_EQ(countColorIn(screen, infoButtonRect(0), YELLOW), 0);
+    CHECK(countColorIn(screen, infoButtonRect(1), YELLOW) > 40);
+}
+
+TEST(info_missing_buttons_are_not_drawn) {
+    GFXcanvas16 a(LCD_WIDTH, LCD_HEIGHT), b(LCD_WIDTH, LCD_HEIGHT);
+    NetStatus n = apNet();     //no saved network: no Wi-Fi button
+    BleStatus off = {};
+    off.state = BLE_STATE::OFF;
+    a.fillScreen(DASHBOARD_BG);
+    renderInfo(a, infoRect(), n, off, infoView(n, off));
+    CHECK_EQ(countColorIn(a, infoButtonRect(0), DASHBOARD_BG), infoButtonRect(0).w * infoButtonRect(0).h);
+    CHECK_EQ(countColorIn(a, infoButtonRect(1), DASHBOARD_BG), infoButtonRect(1).w * infoButtonRect(1).h);
+
+    strcpy(n.savedSsid, "Lab");
+    b.fillScreen(DASHBOARD_BG);
+    renderInfo(b, infoRect(), n, off, infoView(n, off));
+    CHECK(countColorIn(b, infoButtonRect(0), DASHBOARD_BG) < infoButtonRect(0).w * infoButtonRect(0).h / 2);
 }
 
 TEST(info_key_tracks_network) {
     char a[AREA_KEY_LEN], b[AREA_KEY_LEN];
     NetStatus n = connectedNet();
     BleStatus ble = bleConnected();
-    infoKey(n, ble, a, sizeof(a));
-    infoKey(n, ble, b, sizeof(b));
+    InfoView v = infoView(n, ble);
+    infoKey(n, ble, v, a, sizeof(a));
+    infoKey(n, ble, v, b, sizeof(b));
     CHECK(strcmp(a, b) == 0);
     strcpy(n.ip, "192.168.1.200");
-    infoKey(n, ble, b, sizeof(b));
+    infoKey(n, ble, v, b, sizeof(b));
     CHECK(strcmp(a, b) != 0);
 
     //and Bluetooth
@@ -449,9 +554,29 @@ TEST(info_key_tracks_network) {
     changes[1].connected = 1;
     changes[2].bonded = 1;
     for (const BleStatus& c : changes) {
-        infoKey(n, c, b, sizeof(b));
+        infoKey(n, c, v, b, sizeof(b));
         CHECK(strcmp(a, b) != 0);
     }
+
+    //and the buttons, highlight and dialog, even with the longest SSIDs in front
+    strcpy(n.ssid, "SSID-that-is-32-characters-long!");
+    strcpy(n.savedSsid, "SSID-that-is-32-characters-long!");
+    infoKey(n, ble, v, a, sizeof(a));
+    InfoView views[6] = {v, v, v, v, v, v};
+    views[0].focus = INFO_ITEM::WIFI;
+    views[1].confirm = INFO_CONFIRM::FORGET_PHONES;
+    views[2].confirmOk = true;
+    views[3].buttons.phones = false;
+    views[4].buttons.wifi = WIFI_BUTTON::BACK_TO_SAVED;
+    views[5].confirm = INFO_CONFIRM::OPEN_WIFI_SETUP;
+    for (const InfoView& w : views) {
+        infoKey(n, ble, w, b, sizeof(b));
+        CHECK(strcmp(a, b) != 0);
+    }
+    NetStatus saved = n;
+    strcpy(saved.savedSsid, "Other");
+    infoKey(saved, ble, v, b, sizeof(b));
+    CHECK(strcmp(a, b) != 0);
 }
 
 //pairing popup
@@ -509,9 +634,15 @@ TEST(save_extra_screens_as_bmp) {
     GFXcanvas16 screen(LCD_WIDTH, LCD_HEIGHT);
     char path[128];
 
-    NetStatus nets[] = {connectedNet(), apNet()};
-    const char* names[] = {"info_connected", "info_ap_mode"};
-    for (int i = 0; i < 2; i++) {
+    NetStatus apSaved = apNet();
+    strcpy(apSaved.savedSsid, "ECE425-Lab");
+    NetStatus nets[] = {connectedNet(), apNet(), apSaved, connectedNet(), connectedNet()};
+    const char* names[] = {"info_connected", "info_ap_mode", "info_ap_back_to_saved", "confirm_change_wifi",
+                           "confirm_forget_phones"};
+    INFO_ITEM focus[] = {INFO_ITEM::PHONES, INFO_ITEM::CLOSE, INFO_ITEM::WIFI, INFO_ITEM::WIFI, INFO_ITEM::PHONES};
+    INFO_CONFIRM confirm[] = {INFO_CONFIRM::NONE, INFO_CONFIRM::NONE, INFO_CONFIRM::NONE,
+                              INFO_CONFIRM::OPEN_WIFI_SETUP, INFO_CONFIRM::FORGET_PHONES};
+    for (int i = 0; i < 5; i++) {
         DashboardView v = baseView();
         v.net = nets[i];
         screen.fillScreen(DASHBOARD_BG);
@@ -519,7 +650,8 @@ TEST(save_extra_screens_as_bmp) {
         GFXcanvas16 status(sr.w, sr.h);
         renderToCanvas(status, STATUS_AREA, v);
         screen.drawRGBBitmap(sr.x, sr.y, status.getBuffer(), sr.w, sr.h);
-        renderInfo(screen, infoRect(), v.net, bleConnected());
+        renderInfo(screen, infoRect(), v.net, bleConnected(),
+                   infoView(v.net, bleConnected(), focus[i], confirm[i], i == 4));
         snprintf(path, sizeof(path), "%s/%s.bmp", SCREENS_DIR, names[i]);
         saveBmp(path, screen);
     }

@@ -327,18 +327,108 @@ void renderArea(Adafruit_GFX& g, uint8_t area, Rect r, const DashboardView& v) {
 
 static const int16_t INFO_LINE_H = 18;
 
-void infoKey(const NetStatus& net, const BleStatus& ble, char* key, size_t len) {
-    snprintf(key, len, "info|%d|%s|%s|%d|%u|%u", (int)net.state, net.ssid, net.ip, (int)ble.state, ble.connected,
-             ble.bonded);
+void infoKey(const NetStatus& net, const BleStatus& ble, const InfoView& v, char* key, size_t len) {
+    //short fields first, so a long SSID can never push them out of the key
+    snprintf(key, len, "info|%d|%d|%u|%u|%d|%d|%d|%d|%d|%s|%s|%s", (int)net.state, (int)ble.state, ble.connected,
+             ble.bonded, (int)v.buttons.wifi, v.buttons.phones, (int)v.focus, (int)v.confirm, v.confirmOk, net.ip,
+             net.ssid, net.savedSsid);
 }
 
-void renderInfo(Adafruit_GFX& g, Rect r, const NetStatus& net, const BleStatus& ble) {
-    g.drawRoundRect(r.x + 2, r.y + 2, r.w - 4, r.h - 4, 4, COLOR_SELECTED);
-    drawLabel(g, Rect{(int16_t)(r.x + 4), (int16_t)(r.y + 2), r.w, r.h}, "NETWORK", COLOR_LABEL);
-    g.setFont(nullptr);
+//the confirm dialogs
+
+const char* confirmTitle(INFO_CONFIRM confirm) {
+    return confirm == INFO_CONFIRM::FORGET_PHONES ? "Forget all phones?" : "Change Wi-Fi?";
+}
+
+const char* confirmLine(INFO_CONFIRM confirm, uint8_t line) {
+    static const char* const WIFI[CONFIRM_LINES] = {
+        "Opens setup mode to pick a new",
+        "network. MCP stops until then.",
+        "The current network stays saved."
+    };
+    static const char* const PHONES[CONFIRM_LINES] = {
+        "Every paired phone is disconnected",
+        "and has to pair again. Also remove",
+        "FuncGen in each phone's settings."
+    };
+    if (line >= CONFIRM_LINES) return "";
+    return confirm == INFO_CONFIRM::FORGET_PHONES ? PHONES[line] : WIFI[line];
+}
+
+const char* confirmOkLabel(INFO_CONFIRM confirm) {
+    return confirm == INFO_CONFIRM::FORGET_PHONES ? "Forget" : "Open setup";
+}
+
+static bool labelFits(Adafruit_GFX& g, const char* text) {
+    int16_t x1, y1;
+    uint16_t w, h;
+    textBounds(g, &FreeSans9pt7b, text, x1, y1, w, h);
+    return x1 + (int16_t)w <= infoButtonRect(0).w - 8;
+}
+
+void fitButtonLabel(Adafruit_GFX& g, const char* text, char* out, size_t len) {
+    snprintf(out, len, "%s", text);
+    for (int n = (int)strlen(out) - 1; n > 0 && !labelFits(g, out); n--) {
+        snprintf(out, len, "%.*s..", n, text);
+    }
+}
+
+//a rounded button with centered text, thick yellow border when the knob is on it
+static void drawButton(Adafruit_GFX& g, Rect b, const char* label, bool focused, uint16_t fill) {
+    char text[48];
+    fitButtonLabel(g, label, text, sizeof(text));
+    g.fillRoundRect(b.x, b.y, b.w, b.h, 6, fill);
+    uint16_t border = focused ? COLOR_SELECTED : COLOR_LABEL;
+    g.drawRoundRect(b.x, b.y, b.w, b.h, 6, border);
+    if (focused) g.drawRoundRect(b.x + 1, b.y + 1, b.w - 2, b.h - 2, 5, border);
+
+    int16_t x1, y1;
+    uint16_t w, h;
+    textBounds(g, &FreeSans9pt7b, text, x1, y1, w, h);
+    g.setTextColor(COLOR_TEXT);
+    g.setCursor(b.x + (b.w - w) / 2 - x1, b.y + (b.h - h) / 2 - y1);
+    g.print(text);
+}
+
+static void renderConfirm(Adafruit_GFX& g, Rect r, const InfoView& v) {
+    const char* title = confirmTitle(v.confirm);
+    int16_t x1, y1;
+    uint16_t w, h;
+    textBounds(g, &FreeSansBold12pt7b, title, x1, y1, w, h);
+    g.setTextColor(COLOR_TEXT);
+    g.setCursor(r.x + (r.w - w) / 2 - x1, r.y + 44);
+    g.print(title);
+
+    g.setFont(&FreeSans9pt7b);
     g.setTextColor(COLOR_LABEL);
-    g.setCursor(r.x + r.w - 10 - 12 * 6, r.y + 8);
-    g.print("tap to close");
+    for (uint8_t i = 0; i < CONFIRM_LINES; i++) {
+        g.setCursor(r.x + 14, r.y + 88 + i * 22);
+        g.print(confirmLine(v.confirm, i));
+    }
+
+    uint16_t okFill = v.confirm == INFO_CONFIRM::FORGET_PHONES ? COLOR_OFF : COLOR_STATUS_BG;
+    drawButton(g, infoButtonRect(0), "Cancel", !v.confirmOk, COLOR_STATUS_BG);
+    drawButton(g, infoButtonRect(1), confirmOkLabel(v.confirm), v.confirmOk, okFill);
+}
+
+void renderInfo(Adafruit_GFX& g, Rect r, const NetStatus& net, const BleStatus& ble, const InfoView& v) {
+    //gray frame: yellow means "the knob is here"
+    g.drawRoundRect(r.x + 2, r.y + 2, r.w - 4, r.h - 4, 4, COLOR_LABEL);
+    if (v.confirm != INFO_CONFIRM::NONE) {
+        renderConfirm(g, r, v);
+        return;
+    }
+
+    drawLabel(g, Rect{(int16_t)(r.x + 4), (int16_t)(r.y + 2), r.w, r.h}, "NETWORK", COLOR_LABEL);
+    Rect c = infoCloseRect();
+    g.setFont(nullptr);
+    g.setTextColor(COLOR_TEXT);
+    g.setCursor(c.x + (c.w - 5 * 6) / 2, c.y + (c.h - 8) / 2);
+    g.print("close");
+    if (v.focus == INFO_ITEM::CLOSE) {
+        g.drawRoundRect(c.x, c.y, c.w, c.h, 4, COLOR_SELECTED);
+        g.drawRoundRect(c.x + 1, c.y + 1, c.w - 2, c.h - 2, 3, COLOR_SELECTED);
+    }
 
     char lines[INFO_MAX_LINES][INFO_LINE_LEN];
     uint8_t n = formatInfoLines(net, ble, lines, INFO_MAX_LINES);
@@ -349,6 +439,13 @@ void renderInfo(Adafruit_GFX& g, Rect r, const NetStatus& net, const BleStatus& 
         g.setCursor(r.x + 12, baseline);
         g.print(lines[i]);
     }
+
+    if (v.buttons.wifi != WIFI_BUTTON::NONE) {
+        char label[48];
+        formatWifiButton(net, v.buttons.wifi, label, sizeof(label));
+        drawButton(g, infoButtonRect(0), label, v.focus == INFO_ITEM::WIFI, COLOR_STATUS_BG);
+    }
+    if (v.buttons.phones) drawButton(g, infoButtonRect(1), "Forget phones", v.focus == INFO_ITEM::PHONES, COLOR_STATUS_BG);
 }
 
 //boot screens

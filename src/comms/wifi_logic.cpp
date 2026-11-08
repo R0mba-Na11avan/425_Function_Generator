@@ -64,6 +64,28 @@ WIFI_ACTION WifiSupervisor::update(const WifiInputs& in, uint32_t nowMs) {
     }
 }
 
+WIFI_ACTION WifiSupervisor::openSetup(uint32_t nowMs) {
+    switch (_phase) {
+        case PHASE::AP:
+            return WIFI_ACTION::NONE;
+        case PHASE::AP_JOINING:
+            return enterAp(nowMs, WIFI_ACTION::STA_ABORT);  //the AP is already up
+        case PHASE::IDLE:
+        case PHASE::JOINING:
+        case PHASE::ONLINE:
+        default:
+            return enterAp(nowMs, WIFI_ACTION::AP_START);
+    }
+}
+
+WIFI_ACTION WifiSupervisor::leaveSetup(uint32_t nowMs) {
+    //only from AP mode proper: AP_JOINING is already on its way
+    if (_phase != PHASE::AP || !_hasCredentials) return WIFI_ACTION::NONE;
+    _phase = PHASE::JOINING;
+    startJoining(nowMs, STA_CONNECT_TIMEOUT_MS);
+    return WIFI_ACTION::LEAVE_AP;
+}
+
 WIFI_STATE WifiSupervisor::state() const {
     switch (_phase) {
         case PHASE::JOINING: return WIFI_STATE::CONNECTING;

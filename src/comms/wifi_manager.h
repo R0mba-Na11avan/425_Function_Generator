@@ -18,6 +18,9 @@
           AP_STA_RETRY_MS while nobody is connected to it, so a router reboot
           doesn't leave the generator stuck in setup mode
         - after new credentials are saved the ESP32 restarts and tries STA
+        - the info panel can open setup mode while online (requestSetup, the
+          saved network stays saved) and go back to the saved network from it
+          (requestLeaveSetup)
 
     Who decides what
         - WifiSupervisor (wifi_logic.h) is the state machine: when to join,
@@ -37,8 +40,8 @@
     Other details
         - the AP is open by default (AP_PASSWORD). the password of the saved
           network is never logged, displayed or sent back
-        - Wi-Fi and (later) BLE share the radio on the S3. coexistence costs
-          throughput and adds latency, keep it in mind when BLE gets added
+        - Wi-Fi and BLE share the radio on the S3. coexistence costs
+          throughput and adds latency
 */
 
 #ifndef WIFI_MANAGER_H
@@ -65,8 +68,13 @@ class WifiManager {
         NetStatus status() const;
         WIFI_STATE state() const;
 
-        //clears the saved network. takes effect after the next restart
+        //clears the saved network. takes effect after the next restart (boot hold)
         bool forgetCredentials();
+
+        //from the info panel, any task: open the setup AP now (the saved
+        //network stays saved), or leave it and join the saved network
+        void requestSetup();
+        void requestLeaveSetup();
 
     private:
         static void taskEntry(void* arg);
@@ -74,6 +82,7 @@ class WifiManager {
 
         void apply(WIFI_ACTION action);
         void startAp();
+        void stopAp();
         void beginSta();
         void goOnline();
         void restartServices();
@@ -96,6 +105,8 @@ class WifiManager {
         bool _scanRunning;
         bool _mdnsStarted;
         std::atomic<bool> _attemptFailed; //set by the event callback
+        std::atomic<bool> _setupRequested;      //requestSetup / requestLeaveSetup, any task
+        std::atomic<bool> _leaveSetupRequested;
 
         mutable portMUX_TYPE _statusMux;
         NetStatus _status;

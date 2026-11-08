@@ -42,6 +42,7 @@ static ble_gatt_svc_def s_services[2];
 
 static ble_npl_event s_notifyEvent;
 static ble_npl_event s_cancelEvent;
+static ble_npl_event s_forgetEvent;
 
 BleService* BleService::_instance = nullptr;
 
@@ -101,8 +102,9 @@ static void buildTable(uint16_t* valueHandles, ble_gatt_access_fn* access) {
 BleService::BleService(FuncGenController& controller)
     : _controller(controller), _task(nullptr), _ownAddrType(BLE_OWN_ADDR_PUBLIC), _synced(false),
       _haveSent(false), _pairingConn(BLE_HS_CONN_HANDLE_NONE), _stateDirty(false), _cancelRequested(false),
-      _statusMux(portMUX_INITIALIZER_UNLOCKED) {
+      _forgetRequested(false), _statusMux(portMUX_INITIALIZER_UNLOCKED) {
     memset(_valueHandle, 0, sizeof(_valueHandle));
+    for (uint16_t& c : _conns) c = BLE_HS_CONN_HANDLE_NONE;
     memset(&_lastSent, 0, sizeof(_lastSent));
     memset(&_status, 0, sizeof(_status));
     _status.state = BLE_STATE::OFF;
@@ -147,6 +149,7 @@ bool BleService::begin() {
 
     ble_npl_event_init(&s_notifyEvent, onNotifyEvent, nullptr);
     ble_npl_event_init(&s_cancelEvent, onCancelEvent, nullptr);
+    ble_npl_event_init(&s_forgetEvent, onForgetEvent, nullptr);
     if (!_controller.addListener(onStateChanged, this)) return false;
 
     BaseType_t ok = xTaskCreatePinnedToCore(taskEntry, "ble", BLE_TASK_STACK, this, BLE_TASK_PRIO,
@@ -165,6 +168,11 @@ BleStatus BleService::status() const {
 
 void BleService::cancelPairing() {
     _cancelRequested = true;
+    if (_task) xTaskNotifyGive(_task);
+}
+
+void BleService::requestForgetPhones() {
+    _forgetRequested = true;
     if (_task) xTaskNotifyGive(_task);
 }
 
@@ -189,6 +197,7 @@ void BleService::run() {
         //an event that is still queued isn't queued twice, so bursts collapse
         if (_stateDirty.exchange(false)) ble_npl_eventq_put(queue, &s_notifyEvent);
         if (_cancelRequested.exchange(false)) ble_npl_eventq_put(queue, &s_cancelEvent);
+        if (_forgetRequested.exchange(false)) ble_npl_eventq_put(queue, &s_forgetEvent);
     }
 }
 
@@ -220,6 +229,7 @@ void BleService::onReset(int reason) {
     log_w("BLE host reset, reason %d", reason);
     self->_synced = false;
     self->_pairingConn = BLE_HS_CONN_HANDLE_NONE;
+    for (uint16_t& c : self->_conns) c = BLE_HS_CONN_HANDLE_NONE;
     portENTER_CRITICAL(&self->_statusMux);
     self->_status.state = BLE_STATE::OFF;
     self->_status.connected = 0;
@@ -235,6 +245,17 @@ void BleService::onCancelEvent(struct ble_npl_event*) {
     BleService* self = _instance;
     //the disconnect event then reports the pairing as failed
     if (self->_pairingConn != BLE_HS_CONN_HANDLE_NONE) ble_gap_terminate(self->_pairingConn, BLE_ERR_REM_USER_CONN_TERM);
+}
+
+void BleService::onForgetEvent(struct ble_npl_event*) {
+    BleService* self = _instance;
+    //bonds first, so a phone can't get back in on its old keys while it is being dropped
+    int rc = ble_store_clear();
+    for (uint16_t c : self->_conns) {
+        if (c != BLE_HS_CONN_HANDLE_NONE) ble_gap_terminate(c, BLE_ERR_REM_USER_CONN_TERM);
+    }
+    self->updateBondCount();
+    Serial.println(rc == 0 ? "ble: phones forgotten" : "ble: could not forget the phones");
 }
 
 void BleService::sendChanges() {
@@ -285,6 +306,7 @@ int BleService::onGapEvent(struct ble_gap_event* event, void*) {
         case BLE_GAP_EVENT_CONNECT:
             if (event->connect.status == 0) {
                 self->setConnected(1);
+                self->trackConnection(event->connect.conn_handle, true);
                 //bonded phones just re-encrypt, new ones get the passkey prompt
                 ble_gap_security_initiate(event->connect.conn_handle);
             }
@@ -293,6 +315,7 @@ int BleService::onGapEvent(struct ble_gap_event* event, void*) {
 
         case BLE_GAP_EVENT_DISCONNECT:
             self->setConnected(-1);
+            self->trackConnection(event->disconnect.conn.conn_handle, false);
             if (event->disconnect.conn.conn_handle == self->_pairingConn) {
                 self->pairingDone(self->_pairingConn, false);
             }
@@ -395,6 +418,15 @@ void BleService::updateBondCount() {
     portENTER_CRITICAL(&_statusMux);
     _status.bonded = (uint8_t)count;
     portEXIT_CRITICAL(&_statusMux);
+}
+
+void BleService::trackConnection(uint16_t connHandle, bool connected) {
+    for (uint16_t& c : _conns) {
+        if (connected ? c == BLE_HS_CONN_HANDLE_NONE : c == connHandle) {
+            c = connected ? connHandle : BLE_HS_CONN_HANDLE_NONE;
+            return;
+        }
+    }
 }
 
 void BleService::setConnected(int8_t delta) {

@@ -23,7 +23,8 @@
           authenticated link, so a phone can't pair without seeing the screen
         - bonds are kept in NVS (NimBLE's own "nimble_bond" namespace), up to
           CONFIG_BT_NIMBLE_MAX_BONDS (3). pairing a phone when full drops the
-          oldest. forgetPhones() clears them (boot hold)
+          oldest. forgetPhones() clears them (boot hold), requestForgetPhones()
+          while running (info panel), which also disconnects every phone
         - the popup can cancel a pairing (cancelPairing): the phone is
           disconnected
 
@@ -74,6 +75,10 @@ class BleService {
         //forgets every paired phone. call before begin() (boot hold)
         static bool forgetPhones();
 
+        //forgets every paired phone while running and disconnects the ones
+        //connected now (info panel). any task
+        void requestForgetPhones();
+
     private:
         static void taskEntry(void* arg);
         void run();
@@ -86,6 +91,7 @@ class BleService {
         static void onStateChanged(const FuncGenState& state, CHANGE_SOURCE source, void* ctx);
         static void onNotifyEvent(struct ble_npl_event* ev);
         static void onCancelEvent(struct ble_npl_event* ev);
+        static void onForgetEvent(struct ble_npl_event* ev);
 
         //NimBLE task only
         void startAdvertising();
@@ -93,6 +99,7 @@ class BleService {
         void pairingDone(uint16_t connHandle, bool ok);
         void updateBondCount();
         void setConnected(int8_t delta);
+        void trackConnection(uint16_t connHandle, bool connected);
 
         static BleService* _instance;
 
@@ -106,10 +113,12 @@ class BleService {
         bool _haveSent;
 
         uint16_t _pairingConn;      //connection showing a passkey, BLE_HS_CONN_HANDLE_NONE if none
+        uint16_t _conns[CONFIG_BT_NIMBLE_MAX_CONNECTIONS];  //open connections, NONE in free slots
 
         //set from any task, picked up by the BLE task
         std::atomic<bool> _stateDirty;
         std::atomic<bool> _cancelRequested;
+        std::atomic<bool> _forgetRequested;
 
         mutable portMUX_TYPE _statusMux;
         BleStatus _status;

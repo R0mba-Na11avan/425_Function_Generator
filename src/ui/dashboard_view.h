@@ -29,7 +29,7 @@ struct DashboardView {
 //areas: one per UI_FIELD (same index), then the status bar
 static const uint8_t STATUS_AREA = UI_FIELD_COUNT;
 static const uint8_t DASHBOARD_AREA_COUNT = UI_FIELD_COUNT + 1;
-static const uint8_t AREA_KEY_LEN = 64;
+static const uint8_t AREA_KEY_LEN = 128;    //fits the info panel key with the longest SSIDs
 
 static const uint16_t DASHBOARD_BG = 0x0000;
 
@@ -44,10 +44,28 @@ void areaKey(const DashboardView& view, uint8_t area, char* key, size_t len);
 //the area must already be cleared to DASHBOARD_BG
 void renderArea(Adafruit_GFX& g, uint8_t area, Rect r, const DashboardView& view);
 
+//the info panel's buttons and dialog state (from DashboardEditor)
+struct InfoView {
+    InfoButtons buttons;
+    INFO_ITEM focus;
+    INFO_CONFIRM confirm;
+    bool confirmOk;
+};
+
 //the info panel (infoRect()), drawn instead of the fields while it is open.
-//same rules as areaKey/renderArea
-void infoKey(const NetStatus& net, const BleStatus& ble, char* key, size_t len);
-void renderInfo(Adafruit_GFX& g, Rect r, const NetStatus& net, const BleStatus& ble);
+//same rules as areaKey/renderArea. r must be infoRect() (the buttons use
+//screen coordinates)
+void infoKey(const NetStatus& net, const BleStatus& ble, const InfoView& view, char* key, size_t len);
+void renderInfo(Adafruit_GFX& g, Rect r, const NetStatus& net, const BleStatus& ble, const InfoView& view);
+
+//text of the confirm dialogs, for drawing and for the tests
+static const uint8_t CONFIRM_LINES = 3;
+const char* confirmTitle(INFO_CONFIRM confirm);
+const char* confirmLine(INFO_CONFIRM confirm, uint8_t line);
+const char* confirmOkLabel(INFO_CONFIRM confirm);
+
+//a button label cut with ".." until it fits an info panel button
+void fitButtonLabel(Adafruit_GFX& g, const char* text, char* out, size_t len);
 
 //the pairing popup (whole screen), drawn over everything while it is shown.
 //same rules as areaKey/renderArea, but it clears the screen itself

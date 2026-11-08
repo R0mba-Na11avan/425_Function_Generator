@@ -10,6 +10,11 @@ static const Rect STATUS_RECT = {0, 0, LCD_WIDTH, 20};
 static const Rect BLE_SLOT_RECT = {LCD_WIDTH - 20, 2, 16, 16};
 static const Rect MCP_BADGE_RECT = {LCD_WIDTH - 56, 3, 32, 14};
 static const Rect INFO_RECT = {0, 20, LCD_WIDTH, LCD_HEIGHT - 20};
+static const Rect INFO_CLOSE_RECT = {LCD_WIDTH - 58, 24, 50, 18};
+static const Rect INFO_BUTTON_RECTS[2] = {
+    {10, 188, 145, 40},
+    {165, 188, 145, 40}
+};
 
 static const Rect FIELD_RECTS[UI_FIELD_COUNT] = {
     {2, 22, 156, 70},       //WAVEFORM
@@ -37,6 +42,14 @@ Rect mcpBadgeRect() {
 
 Rect infoRect() {
     return INFO_RECT;
+}
+
+Rect infoCloseRect() {
+    return INFO_CLOSE_RECT;
+}
+
+Rect infoButtonRect(uint8_t slot) {
+    return INFO_BUTTON_RECTS[slot ? 1 : 0];
 }
 
 Rect fieldRect(UI_FIELD field) {
@@ -224,12 +237,33 @@ uint8_t formatInfoLines(const NetStatus& net, const BleStatus& ble, char lines[]
         INFO_LINE("Bluetooth  %s", ble.name);
         INFO_LINE("Phones  %u connected, %u paired", ble.connected, ble.bonded);
     }
-    INFO_LINE(" ");
-    INFO_LINE("To forget Wi-Fi and phones, hold");
-    INFO_LINE("the knob button while powering on.");
     INFO_LINE("Firmware %s", FIRMWARE_VERSION);
     #undef INFO_LINE
     return n;
+}
+
+InfoButtons infoButtons(const NetStatus& net, const BleStatus& ble) {
+    InfoButtons b;
+    if (net.state == WIFI_STATE::AP_MODE) b.wifi = net.savedSsid[0] ? WIFI_BUTTON::BACK_TO_SAVED : WIFI_BUTTON::NONE;
+    else b.wifi = WIFI_BUTTON::CHANGE_NETWORK;
+    b.phones = ble.state != BLE_STATE::OFF;
+    return b;
+}
+
+void formatWifiButton(const NetStatus& net, WIFI_BUTTON button, char* out, size_t len) {
+    //a long name is cut to the button's width when it is drawn (fitButtonLabel)
+    switch (button) {
+        case WIFI_BUTTON::CHANGE_NETWORK:
+            snprintf(out, len, "Change Wi-Fi");
+            break;
+        case WIFI_BUTTON::BACK_TO_SAVED:
+            snprintf(out, len, "Back to %s", net.savedSsid);
+            break;
+        case WIFI_BUTTON::NONE:
+        default:
+            if (len) out[0] = '\0';
+            break;
+    }
 }
 
 uint8_t changedFields(const FuncGenState& a, const FuncGenState& b) {
@@ -333,7 +367,23 @@ static float stepSnapped(float v, int32_t delta, float step, ValueRange r) {
 }
 
 static EditCommand noCommand() {
-    return EditCommand{EDIT_ACTION::NONE, WAVEFORM::SINE, 0.0f, false};
+    return EditCommand{EDIT_ACTION::NONE, WAVEFORM::SINE, 0.0f, false, DEVICE_ACTION::OPEN_WIFI_SETUP};
+}
+
+static EditCommand deviceCommand(DEVICE_ACTION action) {
+    EditCommand c = noCommand();
+    c.action = EDIT_ACTION::DEVICE;
+    c.device = action;
+    return c;
+}
+
+static bool itemAvailable(INFO_ITEM item, InfoButtons buttons) {
+    switch (item) {
+        case INFO_ITEM::WIFI: return buttons.wifi != WIFI_BUTTON::NONE;
+        case INFO_ITEM::PHONES: return buttons.phones;
+        case INFO_ITEM::CLOSE:
+        default: return true;
+    }
 }
 
 static EditCommand valueCommand(EDIT_ACTION action, float value, float current) {
@@ -353,18 +403,17 @@ static EditCommand outputCommand(bool enabled) {
 
 DashboardEditor::DashboardEditor()
     : _selected(UI_FIELD::FREQUENCY), _editing(false), _stepIndex(UI_FREQ_STEP_DEFAULT), _infoOpen(false),
-      _lastInputMs(0) {}
+      _infoFocus(INFO_ITEM::CLOSE), _confirm(INFO_CONFIRM::NONE), _confirmOk(false), _lastInputMs(0) {}
 
 EditCommand DashboardEditor::handle(const InputEvent& event, const FuncGenState& state, const FuncGenLimits& limits,
-                                    uint32_t nowMs) {
+                                    uint32_t nowMs, InfoButtons buttons) {
     _lastInputMs = nowMs;
 
-    if (_infoOpen) {
-        if (event.type != INPUT_EVENT::ENCODER_DELTA) _infoOpen = false;
-        return noCommand();
-    }
+    if (_infoOpen) return onInfo(event, buttons);
     if (event.type == INPUT_EVENT::TOUCH_TAP && statusRect().contains(event.x, event.y)) {
         _infoOpen = true;
+        _infoFocus = INFO_ITEM::CLOSE;
+        _confirm = INFO_CONFIRM::NONE;
         _editing = false;
         return noCommand();
     }
@@ -376,6 +425,88 @@ EditCommand DashboardEditor::handle(const InputEvent& event, const FuncGenState&
         case INPUT_EVENT::TOUCH_TAP: return onTap(event, state);
         default: return noCommand();
     }
+}
+
+INFO_ITEM DashboardEditor::infoFocus(InfoButtons buttons) const {
+    return itemAvailable(_infoFocus, buttons) ? _infoFocus : INFO_ITEM::CLOSE;
+}
+
+EditCommand DashboardEditor::onInfo(const InputEvent& event, InfoButtons buttons) {
+    if (_confirm != INFO_CONFIRM::NONE) return onConfirm(event);
+    _infoFocus = infoFocus(buttons);
+
+    switch (event.type) {
+        case INPUT_EVENT::ENCODER_DELTA: {
+            //step through the items that exist, wrapping around
+            const uint8_t count = 3;
+            int32_t steps = event.clicks;
+            int32_t i = (int32_t)_infoFocus;
+            while (steps != 0) {
+                i = (i + (steps > 0 ? 1 : count - 1)) % count;
+                if (itemAvailable((INFO_ITEM)i, buttons)) steps += steps > 0 ? -1 : 1;
+            }
+            _infoFocus = (INFO_ITEM)i;
+            return noCommand();
+        }
+        case INPUT_EVENT::BUTTON_SHORT:
+            return activate(_infoFocus, buttons);
+        case INPUT_EVENT::BUTTON_LONG:
+            _infoOpen = false;
+            return noCommand();
+        case INPUT_EVENT::TOUCH_TAP:
+            if (buttons.wifi != WIFI_BUTTON::NONE && infoButtonRect(0).contains(event.x, event.y)) {
+                return activate(INFO_ITEM::WIFI, buttons);
+            }
+            if (buttons.phones && infoButtonRect(1).contains(event.x, event.y)) {
+                return activate(INFO_ITEM::PHONES, buttons);
+            }
+            _infoOpen = false;
+            return noCommand();
+        default:
+            return noCommand();
+    }
+}
+
+EditCommand DashboardEditor::activate(INFO_ITEM item, InfoButtons buttons) {
+    _infoFocus = item;
+    switch (item) {
+        case INFO_ITEM::WIFI:
+            if (buttons.wifi == WIFI_BUTTON::BACK_TO_SAVED) return deviceCommand(DEVICE_ACTION::LEAVE_WIFI_SETUP);
+            _confirm = INFO_CONFIRM::OPEN_WIFI_SETUP;
+            _confirmOk = false;
+            return noCommand();
+        case INFO_ITEM::PHONES:
+            _confirm = INFO_CONFIRM::FORGET_PHONES;
+            _confirmOk = false;
+            return noCommand();
+        case INFO_ITEM::CLOSE:
+        default:
+            _infoOpen = false;
+            return noCommand();
+    }
+}
+
+EditCommand DashboardEditor::onConfirm(const InputEvent& event) {
+    bool ok = false;
+    switch (event.type) {
+        case INPUT_EVENT::ENCODER_DELTA:
+            //Cancel on the left, OK on the right
+            if (event.clicks != 0) _confirmOk = event.clicks > 0;
+            return noCommand();
+        case INPUT_EVENT::BUTTON_SHORT:
+            ok = _confirmOk;
+            break;
+        case INPUT_EVENT::TOUCH_TAP:
+            ok = infoButtonRect(1).contains(event.x, event.y);
+            break;
+        case INPUT_EVENT::BUTTON_LONG:
+        default:
+            break;
+    }
+    DEVICE_ACTION action = _confirm == INFO_CONFIRM::FORGET_PHONES ? DEVICE_ACTION::FORGET_PHONES
+                                                                    : DEVICE_ACTION::OPEN_WIFI_SETUP;
+    _confirm = INFO_CONFIRM::NONE;
+    return ok ? deviceCommand(action) : noCommand();
 }
 
 void DashboardEditor::tick(uint32_t nowMs) {

@@ -8,6 +8,7 @@
 DisplayUI::DisplayUI(FuncGenController& controller, InputManager& input, SPIClass& bus)
     : _tft(&bus, PIN_LCD_DC, PIN_LCD_CS, PIN_LCD_RST), _controller(controller), _input(input), _bus(bus),
       _netFn(nullptr), _netCtx(nullptr), _bleFn(nullptr), _bleCancelFn(nullptr), _bleCtx(nullptr),
+      _actionFn(nullptr), _actionCtx(nullptr),
       _stateMux(portMUX_INITIALIZER_UNLOCKED), _stateDirty(false), _remoteFields(0), _remotePending(false),
       _remoteSource(CHANGE_SOURCE::MCP), _lastNetPoll(0), _lastDraw(0) {
     _infoKey[0] = '\0';
@@ -25,6 +26,11 @@ DisplayUI::DisplayUI(FuncGenController& controller, InputManager& input, SPIClas
 void DisplayUI::setNetStatusSource(NetStatusFn fn, void* ctx) {
     _netFn = fn;
     _netCtx = ctx;
+}
+
+void DisplayUI::setActionHandler(ActionFn fn, void* ctx) {
+    _actionFn = fn;
+    _actionCtx = ctx;
 }
 
 void DisplayUI::setBleSource(BleStatusFn status, BleCancelFn cancelPairing, void* ctx) {
@@ -94,7 +100,7 @@ void DisplayUI::run() {
                 if (_pairing.handle(event)) continue;
                 //the previous command's listener call has updated _latest by now
                 takeLatestState();
-                apply(_editor.handle(event, _state, _limits, millis()));
+                apply(_editor.handle(event, _state, _limits, millis(), infoButtons(_net, _ble)));
             } while (_input.receive(event, 0));
         }
 
@@ -144,6 +150,9 @@ void DisplayUI::apply(const EditCommand& command) {
         case EDIT_ACTION::SET_AMPLITUDE: _controller.setAmplitude(command.value); break;
         case EDIT_ACTION::SET_DC_OFFSET: _controller.setDCOffset(command.value); break;
         case EDIT_ACTION::SET_OUTPUT: _controller.setOutputEnabled(command.enabled); break;
+        case EDIT_ACTION::DEVICE:
+            if (_actionFn) _actionFn(command.device, _actionCtx);
+            break;
         case EDIT_ACTION::NONE:
         default: break;
     }
@@ -201,12 +210,14 @@ void DisplayUI::redraw(uint32_t nowMs) {
 
 void DisplayUI::drawInfo() {
     char key[AREA_KEY_LEN];
-    infoKey(_net, _ble, key, sizeof(key));
+    InfoButtons buttons = infoButtons(_net, _ble);
+    InfoView view = {buttons, _editor.infoFocus(buttons), _editor.infoConfirm(), _editor.confirmOk()};
+    infoKey(_net, _ble, view, key, sizeof(key));
     if (strcmp(key, _infoKey) == 0) return;
     strncpy(_infoKey, key, AREA_KEY_LEN);
     Rect r = infoRect();
     _tft.fillRect(r.x, r.y, r.w, r.h, DASHBOARD_BG);
-    renderInfo(_tft, r, _net, _ble);
+    renderInfo(_tft, r, _net, _ble, view);
 }
 
 void DisplayUI::drawPairing(uint32_t nowMs) {

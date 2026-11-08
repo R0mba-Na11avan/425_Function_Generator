@@ -23,6 +23,7 @@ struct NetStatus {
     char ssid[33];      //network being joined, or our own AP's SSID in AP_MODE
     char ip[16];        //dotted quad, empty until there is one
     char hostname[32];  //mDNS name without ".local"
+    char savedSsid[33]; //the saved network, empty if there is none
 };
 
 #endif

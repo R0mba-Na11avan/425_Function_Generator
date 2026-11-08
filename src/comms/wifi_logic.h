@@ -21,7 +21,8 @@ enum class WIFI_ACTION : uint8_t {
     STA_BEGIN,  //(re)start a connection attempt to the saved network. the AP stays up if it is running
     STA_ONLINE, //joined. stop the AP and its setup routes if they are running
     STA_ABORT,  //stop trying to join, keep the AP
-    AP_START    //stop trying to join, start the AP and the setup routes
+    AP_START,   //stop trying to join, start the AP and the setup routes
+    LEAVE_AP    //stop the AP and its setup routes, then start joining the saved network
 };
 
 //what the Wi-Fi driver reported since the last update
@@ -36,6 +37,14 @@ class WifiSupervisor {
     public:
         WIFI_ACTION begin(bool hasCredentials, uint32_t nowMs);
         WIFI_ACTION update(const WifiInputs& in, uint32_t nowMs);
+
+        //the user asked for the setup page (info panel). the saved network
+        //stays saved and is tried again as usual from AP mode
+        WIFI_ACTION openSetup(uint32_t nowMs);
+
+        //the user asked to go back to the saved network from setup mode. it is
+        //joined like at boot: falls back to the AP again if that fails
+        WIFI_ACTION leaveSetup(uint32_t nowMs);
 
         //IDLE, CONNECTING (also while the link is lost), CONNECTED or AP_MODE (also while retrying from it)
         WIFI_STATE state() const;

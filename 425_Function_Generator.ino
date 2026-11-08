@@ -20,6 +20,9 @@
         6. Wi-Fi task: joins the saved network or opens the setup AP
         7. BLE: advertises, phones pair with the passkey shown on the LCD
 
+    The info panel's buttons (Change Wi-Fi, Back to <network>, Forget phones)
+    reach WifiManager and BleService through runDeviceAction.
+
     Objects are created here and not as globals: global constructors run
     before the Arduino core is ready, and MCP4131's constructor already starts
     the SPI bus.
@@ -46,6 +49,23 @@ static BleStatus readBleStatus(void* ctx) {
 
 static void cancelBlePairing(void* ctx) {
     ((BleService*)ctx)->cancelPairing();
+}
+
+//what runDeviceAction needs, set once in setup()
+struct Radios {
+    WifiManager* wifi;
+    BleService* ble;
+};
+static Radios s_radios;
+
+//UI task: the requests only set a flag and wake the radio's own task
+static void runDeviceAction(DEVICE_ACTION action, void* ctx) {
+    Radios* r = (Radios*)ctx;
+    switch (action) {
+        case DEVICE_ACTION::OPEN_WIFI_SETUP: r->wifi->requestSetup(); break;
+        case DEVICE_ACTION::LEAVE_WIFI_SETUP: r->wifi->requestLeaveSetup(); break;
+        case DEVICE_ACTION::FORGET_PHONES: r->ble->requestForgetPhones(); break;
+    }
 }
 
 static void check(bool ok, const char* what) {
@@ -90,6 +110,8 @@ void setup() {
     DisplayUI* display = new DisplayUI(*controller, *input, *lcdBus);
     display->setNetStatusSource(readNetStatus, wifi);
     display->setBleSource(readBleStatus, cancelBlePairing, ble);
+    s_radios = Radios{wifi, ble};
+    display->setActionHandler(runDeviceAction, &s_radios);
     check(display->begin(), "display");
 
     check(wifi->begin(), "Wi-Fi");

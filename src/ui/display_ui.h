@@ -42,7 +42,9 @@
 
     Info panel: while it is open (tap on the status bar) it is drawn instead of
     the fields, straight to the panel since it rarely changes. closing it
-    redraws every field
+    redraws every field. its buttons (Change Wi-Fi / Back to <network>,
+    Forget phones) come back from the editor as EDIT_ACTION::DEVICE and go to
+    the handler from setActionHandler
 
     Pairing popup: when a phone starts pairing, BleStatus carries the passkey
     and PairingPrompt (dashboard_logic.h) covers the whole screen with it. it
@@ -62,6 +64,7 @@
 #include "../core/funcgen_controller.h"
 #include "../core/net_status.h"
 #include "../core/ble_status.h"
+#include "../core/device_actions.h"
 #include "../libs/Adafruit_ILI9341/Adafruit_ILI9341.h"
 #include "input.h"
 #include "dashboard_logic.h"
@@ -74,6 +77,8 @@ class DisplayUI {
         //Bluetooth status, and a way to cancel the pairing the popup shows. UI task
         using BleStatusFn = BleStatus (*)(void* ctx);
         using BleCancelFn = void (*)(void* ctx);
+        //an info panel button was confirmed. UI task: hand it over, don't block
+        using ActionFn = void (*)(DEVICE_ACTION action, void* ctx);
 
         //bus is the display's SPI bus (HSPI), shared with the touch controller
         DisplayUI(FuncGenController& controller, InputManager& input, SPIClass& bus);
@@ -83,6 +88,9 @@ class DisplayUI {
 
         //optional, call before begin(). without it Bluetooth reads "off" and no popup shows
         void setBleSource(BleStatusFn status, BleCancelFn cancelPairing, void* ctx = nullptr);
+
+        //optional, call before begin(). without it the info panel buttons do nothing
+        void setActionHandler(ActionFn fn, void* ctx = nullptr);
 
         //allocates the canvases, registers the listener and starts the UI task,
         //which initialises the panel and draws the first frame
@@ -116,6 +124,9 @@ class DisplayUI {
         BleCancelFn _bleCancelFn;
         void* _bleCtx;
         BleStatus _ble;
+
+        ActionFn _actionFn;
+        void* _actionCtx;
 
         //written by the listener (any task), read by the UI task
         portMUX_TYPE _stateMux;

@@ -397,6 +397,195 @@ TEST(editor_info_panel) {
     CHECK(c.action == EDIT_ACTION::NONE);
 }
 
+//info panel buttons
+
+static const InfoButtons ALL_BUTTONS = {WIFI_BUTTON::CHANGE_NETWORK, true};
+
+static InputEvent tapRect(Rect r) {
+    return tap(r.x + r.w / 2, r.y + r.h / 2);
+}
+
+static DashboardEditor openInfo() {
+    DashboardEditor ed;
+    Rect sr = statusRect();
+    ed.handle(tap(sr.x + 40, sr.y + 10), state(), limits(), 0, ALL_BUTTONS);
+    return ed;
+}
+
+TEST(info_buttons_follow_wifi_and_ble) {
+    NetStatus net = {};
+    BleStatus ble = {};
+    net.state = WIFI_STATE::CONNECTED;
+    strcpy(net.savedSsid, "Lab");
+    ble.state = BLE_STATE::ADVERTISING;
+    InfoButtons b = infoButtons(net, ble);
+    CHECK(b.wifi == WIFI_BUTTON::CHANGE_NETWORK);
+    CHECK(b.phones);
+
+    net.state = WIFI_STATE::AP_MODE;
+    CHECK(infoButtons(net, ble).wifi == WIFI_BUTTON::BACK_TO_SAVED);
+    net.savedSsid[0] = '\0';
+    CHECK(infoButtons(net, ble).wifi == WIFI_BUTTON::NONE);    //already in setup, nothing to go back to
+
+    net.state = WIFI_STATE::CONNECTING;
+    CHECK(infoButtons(net, ble).wifi == WIFI_BUTTON::CHANGE_NETWORK);
+    ble.state = BLE_STATE::OFF;
+    CHECK(!infoButtons(net, ble).phones);
+}
+
+TEST(wifi_button_label) {
+    NetStatus net = {};
+    char label[48];
+    formatWifiButton(net, WIFI_BUTTON::CHANGE_NETWORK, label, sizeof(label));
+    CHECK(strcmp(label, "Change Wi-Fi") == 0);
+    strcpy(net.savedSsid, "SSID-that-is-32-characters-long!");   //whole name, the view fits it
+    formatWifiButton(net, WIFI_BUTTON::BACK_TO_SAVED, label, sizeof(label));
+    CHECK(strcmp(label, "Back to SSID-that-is-32-characters-long!") == 0);
+    formatWifiButton(net, WIFI_BUTTON::NONE, label, sizeof(label));
+    CHECK(label[0] == '\0');
+}
+
+TEST(info_knob_moves_over_existing_items) {
+    DashboardEditor ed = openInfo();
+    FuncGenState s = state();
+    CHECK(ed.infoFocus(ALL_BUTTONS) == INFO_ITEM::CLOSE);  //a press closes, like before the buttons
+    ed.handle(encoder(1, 1), s, limits(), 0, ALL_BUTTONS);
+    CHECK(ed.infoFocus(ALL_BUTTONS) == INFO_ITEM::WIFI);
+    ed.handle(encoder(1, 1), s, limits(), 0, ALL_BUTTONS);
+    CHECK(ed.infoFocus(ALL_BUTTONS) == INFO_ITEM::PHONES);
+    ed.handle(encoder(-2, -2), s, limits(), 0, ALL_BUTTONS);
+    CHECK(ed.infoFocus(ALL_BUTTONS) == INFO_ITEM::CLOSE);
+    ed.handle(encoder(4, 4), s, limits(), 0, ALL_BUTTONS);     //wraps: wifi, phones, close, wifi
+    CHECK(ed.infoFocus(ALL_BUTTONS) == INFO_ITEM::WIFI);
+    CHECK(ed.infoOpen());
+    CHECK(ed.selected() == UI_FIELD::FREQUENCY);    //the dashboard selection didn't move
+
+    //missing buttons are skipped
+    InfoButtons phonesOnly = {WIFI_BUTTON::NONE, true};
+    DashboardEditor ed2 = openInfo();
+    ed2.handle(encoder(1, 1), s, limits(), 0, phonesOnly);
+    CHECK(ed2.infoFocus(phonesOnly) == INFO_ITEM::PHONES);
+    ed2.handle(encoder(1, 1), s, limits(), 0, phonesOnly);
+    CHECK(ed2.infoFocus(phonesOnly) == INFO_ITEM::CLOSE);
+    ed2.handle(encoder(-1, -1), s, limits(), 0, phonesOnly);
+    CHECK(ed2.infoFocus(phonesOnly) == INFO_ITEM::PHONES);
+}
+
+TEST(info_forget_phones_needs_a_confirm) {
+    DashboardEditor ed = openInfo();
+    FuncGenState s = state();
+    ed.handle(encoder(2, 2), s, limits(), 0, ALL_BUTTONS);
+    EditCommand c = ed.handle(button(INPUT_EVENT::BUTTON_SHORT), s, limits(), 0, ALL_BUTTONS);
+    CHECK(c.action == EDIT_ACTION::NONE);
+    CHECK(ed.infoConfirm() == INFO_CONFIRM::FORGET_PHONES);
+    CHECK(!ed.confirmOk());     //starts on Cancel
+
+    //turning right picks OK, left goes back to Cancel
+    ed.handle(encoder(1, 1), s, limits(), 0, ALL_BUTTONS);
+    CHECK(ed.confirmOk());
+    ed.handle(encoder(-1, -1), s, limits(), 0, ALL_BUTTONS);
+    CHECK(!ed.confirmOk());
+    ed.handle(encoder(3, 3), s, limits(), 0, ALL_BUTTONS);
+    CHECK(ed.confirmOk());
+
+    c = ed.handle(button(INPUT_EVENT::BUTTON_SHORT), s, limits(), 0, ALL_BUTTONS);
+    CHECK(c.action == EDIT_ACTION::DEVICE);
+    CHECK(c.device == DEVICE_ACTION::FORGET_PHONES);
+    CHECK(ed.infoConfirm() == INFO_CONFIRM::NONE);
+    CHECK(ed.infoOpen());       //back on the panel, which then shows 0 paired
+}
+
+TEST(info_confirm_cancel_paths) {
+    FuncGenState s = state();
+    InputEvent cancels[] = {button(INPUT_EVENT::BUTTON_SHORT), button(INPUT_EVENT::BUTTON_LONG),
+                            tapRect(infoButtonRect(0)), tap(160, 60)};
+    for (const InputEvent& e : cancels) {
+        DashboardEditor ed = openInfo();
+        ed.handle(tapRect(infoButtonRect(1)), s, limits(), 0, ALL_BUTTONS);
+        CHECK(ed.infoConfirm() == INFO_CONFIRM::FORGET_PHONES);
+        EditCommand c = ed.handle(e, s, limits(), 0, ALL_BUTTONS);
+        CHECK(c.action == EDIT_ACTION::NONE);
+        CHECK(ed.infoConfirm() == INFO_CONFIRM::NONE);
+        CHECK(ed.infoOpen());
+    }
+
+    //tapping OK confirms even with the knob on Cancel
+    DashboardEditor ed = openInfo();
+    ed.handle(tapRect(infoButtonRect(0)), s, limits(), 0, ALL_BUTTONS);
+    CHECK(ed.infoConfirm() == INFO_CONFIRM::OPEN_WIFI_SETUP);
+    EditCommand c = ed.handle(tapRect(infoButtonRect(1)), s, limits(), 0, ALL_BUTTONS);
+    CHECK(c.action == EDIT_ACTION::DEVICE);
+    CHECK(c.device == DEVICE_ACTION::OPEN_WIFI_SETUP);
+}
+
+TEST(info_back_to_saved_network_needs_no_confirm) {
+    InfoButtons back = {WIFI_BUTTON::BACK_TO_SAVED, true};
+    FuncGenState s = state();
+    DashboardEditor ed = openInfo();
+    ed.handle(encoder(1, 1), s, limits(), 0, back);
+    EditCommand c = ed.handle(button(INPUT_EVENT::BUTTON_SHORT), s, limits(), 0, back);
+    CHECK(c.action == EDIT_ACTION::DEVICE);
+    CHECK(c.device == DEVICE_ACTION::LEAVE_WIFI_SETUP);
+    CHECK(ed.infoConfirm() == INFO_CONFIRM::NONE);
+
+    c = ed.handle(tapRect(infoButtonRect(0)), s, limits(), 0, back);
+    CHECK(c.action == EDIT_ACTION::DEVICE);
+    CHECK(c.device == DEVICE_ACTION::LEAVE_WIFI_SETUP);
+}
+
+TEST(info_taps_and_missing_buttons) {
+    FuncGenState s = state();
+    //tapping where a missing button would be just closes the panel
+    InfoButtons none = {WIFI_BUTTON::NONE, false};
+    DashboardEditor ed = openInfo();
+    EditCommand c = ed.handle(tapRect(infoButtonRect(0)), s, limits(), 0, none);
+    CHECK(c.action == EDIT_ACTION::NONE);
+    CHECK(!ed.infoOpen());
+    CHECK(ed.infoConfirm() == INFO_CONFIRM::NONE);
+
+    ed = openInfo();
+    ed.handle(tapRect(infoButtonRect(1)), s, limits(), 0, none);
+    CHECK(!ed.infoOpen());
+
+    //"close" closes
+    ed = openInfo();
+    ed.handle(tapRect(infoCloseRect()), s, limits(), 0, ALL_BUTTONS);
+    CHECK(!ed.infoOpen());
+
+    //a highlighted button that goes away (BLE stopped) falls back to close
+    ed = openInfo();
+    ed.handle(encoder(2, 2), s, limits(), 0, ALL_BUTTONS);
+    CHECK(ed.infoFocus(ALL_BUTTONS) == INFO_ITEM::PHONES);
+    InfoButtons wifiOnly = {WIFI_BUTTON::CHANGE_NETWORK, false};
+    CHECK(ed.infoFocus(wifiOnly) == INFO_ITEM::CLOSE);
+    c = ed.handle(button(INPUT_EVENT::BUTTON_SHORT), s, limits(), 0, wifiOnly);
+    CHECK(c.action == EDIT_ACTION::NONE);
+    CHECK(!ed.infoOpen());
+    CHECK(ed.infoConfirm() == INFO_CONFIRM::NONE);
+
+    //opening again starts on close, with no dialog left over
+    ed = openInfo();
+    ed.handle(tapRect(infoButtonRect(1)), s, limits(), 0, ALL_BUTTONS);
+    ed.handle(button(INPUT_EVENT::BUTTON_LONG), s, limits(), 0, ALL_BUTTONS);   //cancels the dialog
+    ed.handle(button(INPUT_EVENT::BUTTON_LONG), s, limits(), 0, ALL_BUTTONS);   //closes the panel
+    CHECK(!ed.infoOpen());
+    Rect sr = statusRect();
+    ed.handle(tap(sr.x + 40, sr.y + 10), s, limits(), 0, ALL_BUTTONS);
+    CHECK(ed.infoFocus(ALL_BUTTONS) == INFO_ITEM::CLOSE);
+    CHECK(ed.infoConfirm() == INFO_CONFIRM::NONE);
+}
+
+TEST(info_buttons_are_inside_the_panel_and_apart) {
+    Rect panel = infoRect();
+    Rect rects[] = {infoButtonRect(0), infoButtonRect(1), infoCloseRect()};
+    for (const Rect& r : rects) {
+        CHECK(panel.contains(r.x, r.y) && panel.contains(r.x + r.w - 1, r.y + r.h - 1));
+        CHECK(r.w >= 40 && r.h >= 18);  //big enough to hit with a finger
+    }
+    Rect a = infoButtonRect(0), b = infoButtonRect(1);
+    CHECK(a.x + a.w < b.x);
+}
+
 TEST(changed_fields_mask) {
     FuncGenState a = state();
     FuncGenState b = a;
@@ -480,9 +669,8 @@ TEST(info_lines) {
     CHECK(anyLineContains(lines, count, "http://10.0.0.7/mcp"));
     CHECK(anyLineContains(lines, count, "Bluetooth  FuncGen-A1B2"));
     CHECK(anyLineContains(lines, count, "1 connected, 2 paired"));
-    CHECK(anyLineContains(lines, count, "Wi-Fi and phones"));
-    CHECK(anyLineContains(lines, count, "knob button"));
     CHECK(anyLineContains(lines, count, FIRMWARE_VERSION));   //last line, so nothing was cut off
+    CHECK(!anyLineContains(lines, count, "knob"));            //the buttons took the boot-hold hint's place
 
     n.state = WIFI_STATE::AP_MODE;
     strcpy(n.ssid, "FuncGen-A1B2");
