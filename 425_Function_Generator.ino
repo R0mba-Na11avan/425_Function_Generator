@@ -2,20 +2,23 @@
 *   Author: Parikshith Venkataraghavan
 *   Purpose: ECE 425 function generator. creates the modules, wires them
              together and starts their tasks. all the work happens in those
-             tasks (UI, input, Wi-Fi, HTTP), loop() isn't used
+             tasks (UI, input, Wi-Fi, HTTP, BLE), loop() isn't used
 **************************************************************************/
 
 /*
     Startup order
         1. Serial banner
         2. encoder button held at power-on: countdown on the LCD, after
-           BOOT_HOLD_MS the saved Wi-Fi is forgotten and the board restarts
-           into setup mode. let go early and it boots normally
+           BOOT_HOLD_MS the saved Wi-Fi and the paired phones are forgotten
+           and the board restarts into setup mode. let go early and it boots
+           normally
         3. generator + controller (output starts OFF, sine, 1 Hz, minimum amplitude)
         4. MCP routes on the shared HTTP server (it starts once Wi-Fi is up)
-        5. input + display. the network line reads WifiManager through a
-           function given to DisplayUI (ui and comms never include each other)
+        5. input + display. the network line and the BLE status/pairing popup
+           read WifiManager and BleService through functions given to
+           DisplayUI (ui and comms never include each other)
         6. Wi-Fi task: joins the saved network or opens the setup AP
+        7. BLE: advertises, phones pair with the passkey shown on the LCD
 
     Objects are created here and not as globals: global constructors run
     before the Arduino core is ready, and MCP4131's constructor already starts
@@ -28,12 +31,21 @@
 #include "src/comms/http_server.h"
 #include "src/comms/wifi_manager.h"
 #include "src/comms/mcp_server.h"
+#include "src/comms/ble_service.h"
 #include "src/ui/input.h"
 #include "src/ui/display_ui.h"
 #include "src/ui/boot_screen.h"
 
 static NetStatus readNetStatus(void* ctx) {
     return ((WifiManager*)ctx)->status();
+}
+
+static BleStatus readBleStatus(void* ctx) {
+    return ((BleService*)ctx)->status();
+}
+
+static void cancelBlePairing(void* ctx) {
+    ((BleService*)ctx)->cancelPairing();
 }
 
 static void check(bool ok, const char* what) {
@@ -51,10 +63,13 @@ void setup() {
 
     if (BootScreen::buttonHeld()) {
         BootScreen boot(*lcdBus);
-        if (boot.holdToForgetWifi()) {
-            bool forgot = wifi->forgetCredentials();
-            Serial.println(forgot ? "funcgen: Wi-Fi forgotten, restarting" : "funcgen: could not clear Wi-Fi");
-            boot.message(forgot ? "Wi-Fi forgotten" : "Could not clear Wi-Fi", "Restarting...");
+        if (boot.holdToForget()) {
+            bool wifiForgot = wifi->forgetCredentials();
+            bool phonesForgot = BleService::forgetPhones();
+            bool forgot = wifiForgot && phonesForgot;
+            Serial.println(forgot ? "funcgen: Wi-Fi and phones forgotten, restarting"
+                                  : "funcgen: could not clear Wi-Fi or phones");
+            boot.message(forgot ? "Wi-Fi and phones forgotten" : "Could not clear everything", "Restarting...");
             delay(1500);
             ESP.restart();
         }
@@ -67,14 +82,18 @@ void setup() {
     McpServer* mcp = new McpServer(*controller, *http);
     check(mcp->begin(), "MCP routes");
 
+    BleService* ble = new BleService(*controller);
+
     InputManager* input = new InputManager(*lcdBus);
     check(input->begin(), "input");
 
     DisplayUI* display = new DisplayUI(*controller, *input, *lcdBus);
     display->setNetStatusSource(readNetStatus, wifi);
+    display->setBleSource(readBleStatus, cancelBlePairing, ble);
     check(display->begin(), "display");
 
     check(wifi->begin(), "Wi-Fi");
+    check(ble->begin(), "Bluetooth");
 }
 
 void loop() {

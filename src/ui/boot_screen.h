@@ -1,7 +1,8 @@
 /**************************************************************************
 *   Author: Parikshith Venkataraghavan
 *   Purpose: what the LCD shows before the dashboard starts: the
-             hold-the-button-at-boot Wi-Fi reset countdown and short messages
+             hold-the-button-at-boot reset countdown (Wi-Fi + paired phones)
+             and short messages
 **************************************************************************/
 
 /*
@@ -10,7 +11,7 @@
     Adafruit_ILI9341 on the display bus. DisplayUI initialises the panel again
     afterwards, which is harmless.
 
-    It doesn't know about Wi-Fi (ui never includes comms): holdToForgetWifi()
+    It doesn't know about Wi-Fi or BLE (ui never includes comms): holdToForget()
     only reports that the button was held, the sketch does the forgetting.
 */
 
@@ -32,9 +33,9 @@ class BootScreen {
 
         //shows a countdown while the button stays down. true once it was held
         //for BOOT_HOLD_MS, false as soon as it is let go
-        bool holdToForgetWifi();
+        bool holdToForget();
 
-        //full-screen message, e.g. "Wi-Fi forgotten" / "restarting..."
+        //full-screen message, e.g. "Wi-Fi and phones forgotten" / "Restarting..."
         void message(const char* title, const char* detail);
 
     private:

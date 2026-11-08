@@ -1,6 +1,6 @@
 /**************************************************************************
 *   Author: Parikshith Venkataraghavan
-*   Purpose: boot-time Wi-Fi reset countdown and messages on the LCD
+*   Purpose: boot-time Wi-Fi + Bluetooth reset countdown and messages on the LCD
 **************************************************************************/
 
 #include "boot_screen.h"
@@ -28,7 +28,7 @@ void BootScreen::start() {
     _tft.setRotation(LCD_ROTATION);
 }
 
-bool BootScreen::holdToForgetWifi() {
+bool BootScreen::holdToForget() {
     start();
     HoldTimer hold(BOOT_HOLD_MS, millis());
     int shown = -1;

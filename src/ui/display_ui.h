@@ -11,8 +11,8 @@
         - talks to the generator ONLY through FuncGenController
         - only the UI task touches the display. the XPT2046 shares the bus,
           both libraries wrap every access in an SPI transaction
-        - network status comes from a function the sketch passes in
-          (setNetStatusSource), because ui never includes comms
+        - network and Bluetooth status come from functions the sketch passes
+          in (setNetStatusSource, setBleSource), because ui never includes comms
 
     Threading
         - the controller listener registered here only copies the state into
@@ -43,6 +43,12 @@
     Info panel: while it is open (tap on the status bar) it is drawn instead of
     the fields, straight to the panel since it rarely changes. closing it
     redraws every field
+
+    Pairing popup: when a phone starts pairing, BleStatus carries the passkey
+    and PairingPrompt (dashboard_logic.h) covers the whole screen with it. it
+    takes all input while shown. a press/tap or BLE_PAIR_TIMEOUT_MS cancels
+    the pairing through the cancel function from setBleSource. closing it
+    redraws the whole screen
 */
 
 #ifndef DISPLAY_UI_H
@@ -55,6 +61,7 @@
 #include "../config.h"
 #include "../core/funcgen_controller.h"
 #include "../core/net_status.h"
+#include "../core/ble_status.h"
 #include "../libs/Adafruit_ILI9341/Adafruit_ILI9341.h"
 #include "input.h"
 #include "dashboard_logic.h"
@@ -64,12 +71,18 @@ class DisplayUI {
     public:
         //returns the current network status. called from the UI task
         using NetStatusFn = NetStatus (*)(void* ctx);
+        //Bluetooth status, and a way to cancel the pairing the popup shows. UI task
+        using BleStatusFn = BleStatus (*)(void* ctx);
+        using BleCancelFn = void (*)(void* ctx);
 
         //bus is the display's SPI bus (HSPI), shared with the touch controller
         DisplayUI(FuncGenController& controller, InputManager& input, SPIClass& bus);
 
         //optional, call before begin(). without it the network line reads "Wi-Fi off"
         void setNetStatusSource(NetStatusFn fn, void* ctx = nullptr);
+
+        //optional, call before begin(). without it Bluetooth reads "off" and no popup shows
+        void setBleSource(BleStatusFn status, BleCancelFn cancelPairing, void* ctx = nullptr);
 
         //allocates the canvases, registers the listener and starts the UI task,
         //which initialises the panel and draws the first frame
@@ -83,10 +96,12 @@ class DisplayUI {
         void takeLatestState();
         void apply(const EditCommand& command);
         void pollNetStatus();
+        void pollBleStatus(uint32_t nowMs);
 
         void redraw(uint32_t nowMs);
         void drawArea(uint8_t area, const DashboardView& view);
         void drawInfo();
+        void drawPairing(uint32_t nowMs);
 
         Adafruit_ILI9341 _tft;
         FuncGenController& _controller;
@@ -97,6 +112,11 @@ class DisplayUI {
         void* _netCtx;
         NetStatus _net;
 
+        BleStatusFn _bleFn;
+        BleCancelFn _bleCancelFn;
+        void* _bleCtx;
+        BleStatus _ble;
+
         //written by the listener (any task), read by the UI task
         portMUX_TYPE _stateMux;
         FuncGenState _latest;
@@ -104,18 +124,21 @@ class DisplayUI {
         FuncGenState _lastSeen;     //state after the previous change, to find what a remote change touched
         uint8_t _remoteFields;      //fields changed remotely since the UI task last looked
         bool _remotePending;
+        CHANGE_SOURCE _remoteSource;    //of the latest remote change
 
         //UI task only
         FuncGenState _state;
         FuncGenLimits _limits;
         DashboardEditor _editor;
         RemoteHighlight _highlight;
+        PairingPrompt _pairing;
         uint32_t _lastNetPoll;
         uint32_t _lastDraw;
 
         GFXcanvas16* _canvas[DASHBOARD_AREA_COUNT];
         char _drawnKey[DASHBOARD_AREA_COUNT][AREA_KEY_LEN];
         char _infoKey[AREA_KEY_LEN];  //empty while the panel isn't shown
+        char _pairingKey[AREA_KEY_LEN];   //empty while the popup isn't shown
 };
 
 #endif

@@ -23,6 +23,7 @@ static const uint16_t COLOR_AXIS = 0x2104;
 static const uint16_t COLOR_STATUS_BG = 0x18E3;
 static const uint16_t COLOR_AP_BG = 0xFD20;      //orange, so setup mode stands out
 static const uint16_t COLOR_REMOTE = 0xF81F;     //magenta: changed by an agent
+static const uint16_t COLOR_BLE = 0x3D9F;        //light blue: Bluetooth icon
 
 static const int16_t VALUE_BASELINE = 52;        //amplitude/offset digits, from the field top
 static const uint8_t NET_LINE_CHARS = 42;        //built-in font is 6 px wide, stops before the MCP badge
@@ -117,6 +118,22 @@ static void drawPreview(Adafruit_GFX& g, Rect box, WAVEFORM waveform, uint16_t c
     }
 }
 
+//the Bluetooth rune, 2 px wide, in a size x size box
+static void drawBluetooth(Adafruit_GFX& g, int16_t x, int16_t y, int16_t size, uint16_t color) {
+    int16_t cx = x + size / 2 - 1;
+    int16_t top = y + 1;
+    int16_t bottom = y + size - 2;
+    int16_t arm = size / 4;
+    int16_t q = (bottom - top) / 4;
+    for (int16_t o = 0; o < 2; o++) {
+        g.drawLine(cx + o, top, cx + o, bottom, color);
+        g.drawLine(cx + o, top, cx + arm + o, top + q, color);                  //top-right bend
+        g.drawLine(cx + arm + o, top + q, cx - arm + o, bottom - q, color);     //down to the left
+        g.drawLine(cx + o, bottom, cx + arm + o, bottom - q, color);            //bottom-right bend
+        g.drawLine(cx + arm + o, bottom - q, cx - arm + o, top + q, color);     //up to the left
+    }
+}
+
 //areas
 
 static void renderStatus(Adafruit_GFX& g, Rect r, const DashboardView& v) {
@@ -131,17 +148,23 @@ static void renderStatus(Adafruit_GFX& g, Rect r, const DashboardView& v) {
     g.setCursor(r.x + 4, r.y + 6);
     g.print(line);
 
+    //both rects are in screen coordinates, r may be a canvas
+    int16_t dx = r.x - statusRect().x;
+    int16_t dy = r.y - statusRect().y;
     if (v.remoteBadge) {
         Rect b = mcpBadgeRect();
-        b.x += r.x - statusRect().x;
-        b.y += r.y - statusRect().y;
+        b.x += dx;
+        b.y += dy;
         g.fillRoundRect(b.x, b.y, b.w, b.h, 3, COLOR_REMOTE);
         g.setTextColor(COLOR_TEXT);
         g.setCursor(b.x + (b.w - 3 * 6) / 2, b.y + (b.h - 8) / 2);
-        g.print("MCP");
+        g.print(v.badgeSource == CHANGE_SOURCE::BLE ? "BLE" : "MCP");
     }
 
-    //bleSlotRect() is reserved for a BLE status icon, left blank until BLE exists
+    if (v.bleConnected) {
+        Rect b = bleSlotRect();
+        drawBluetooth(g, b.x + dx, b.y + dy, b.h, COLOR_BLE);
+    }
 }
 
 static void renderWaveform(Adafruit_GFX& g, Rect r, const DashboardView& v, bool selected, bool editing, bool remote) {
@@ -235,7 +258,7 @@ void areaKey(const DashboardView& v, uint8_t area, char* key, size_t len) {
     if (area == STATUS_AREA) {
         char line[NET_LINE_CHARS + 1];
         formatNetLine(v.net, line, sizeof(line));
-        snprintf(key, len, "%d|%d|%s", (int)v.net.state, v.remoteBadge, line);
+        snprintf(key, len, "%d|%d|%d|%d|%s", (int)v.net.state, v.remoteBadge, (int)v.badgeSource, v.bleConnected, line);
         return;
     }
 
@@ -302,13 +325,14 @@ void renderArea(Adafruit_GFX& g, uint8_t area, Rect r, const DashboardView& v) {
 
 //info panel
 
-static const int16_t INFO_LINE_H = 19;
+static const int16_t INFO_LINE_H = 18;
 
-void infoKey(const NetStatus& net, char* key, size_t len) {
-    snprintf(key, len, "info|%d|%s|%s", (int)net.state, net.ssid, net.ip);
+void infoKey(const NetStatus& net, const BleStatus& ble, char* key, size_t len) {
+    snprintf(key, len, "info|%d|%s|%s|%d|%u|%u", (int)net.state, net.ssid, net.ip, (int)ble.state, ble.connected,
+             ble.bonded);
 }
 
-void renderInfo(Adafruit_GFX& g, Rect r, const NetStatus& net) {
+void renderInfo(Adafruit_GFX& g, Rect r, const NetStatus& net, const BleStatus& ble) {
     g.drawRoundRect(r.x + 2, r.y + 2, r.w - 4, r.h - 4, 4, COLOR_SELECTED);
     drawLabel(g, Rect{(int16_t)(r.x + 4), (int16_t)(r.y + 2), r.w, r.h}, "NETWORK", COLOR_LABEL);
     g.setFont(nullptr);
@@ -317,7 +341,7 @@ void renderInfo(Adafruit_GFX& g, Rect r, const NetStatus& net) {
     g.print("tap to close");
 
     char lines[INFO_MAX_LINES][INFO_LINE_LEN];
-    uint8_t n = formatInfoLines(net, lines, INFO_MAX_LINES);
+    uint8_t n = formatInfoLines(net, ble, lines, INFO_MAX_LINES);
     g.setFont(&FreeSans9pt7b);
     g.setTextColor(COLOR_TEXT);
     int16_t baseline = r.y + 36;
@@ -333,8 +357,8 @@ void renderBootHold(Adafruit_GFX& g, uint8_t secondsLeft) {
     g.fillScreen(COLOR_BG);
     g.setFont(&FreeSansBold12pt7b);
     g.setTextColor(COLOR_TEXT);
-    const char* title = "Keep holding to";
-    const char* title2 = "forget Wi-Fi";
+    const char* title = "Keep holding to forget";
+    const char* title2 = "Wi-Fi and paired phones";
     int16_t x1, y1;
     uint16_t w, h;
     textBounds(g, &FreeSansBold12pt7b, title, x1, y1, w, h);
@@ -368,4 +392,54 @@ void renderBootMessage(Adafruit_GFX& g, const char* title, const char* detail) {
     g.setTextColor(COLOR_LABEL);
     g.setCursor((LCD_WIDTH - w) / 2 - x1, 140);
     g.print(detail);
+}
+
+//pairing popup
+
+static void printCentered(Adafruit_GFX& g, const GFXfont* font, const char* text, int16_t baseline, uint16_t color) {
+    int16_t x1, y1;
+    uint16_t w, h;
+    textBounds(g, font, text, x1, y1, w, h);
+    g.setTextColor(color);
+    g.setCursor((LCD_WIDTH - w) / 2 - x1, baseline);
+    g.print(text);
+}
+
+void pairingKey(PAIR_PROMPT shown, uint32_t passkey, uint8_t secondsLeft, char* key, size_t len) {
+    snprintf(key, len, "pair|%d|%06lu|%u", (int)shown, (unsigned long)passkey, secondsLeft);
+}
+
+void renderPairing(Adafruit_GFX& g, PAIR_PROMPT shown, uint32_t passkey, uint8_t secondsLeft) {
+    g.fillScreen(COLOR_BG);
+    g.drawRoundRect(2, 2, LCD_WIDTH - 4, LCD_HEIGHT - 4, 6, COLOR_BLE);
+    drawBluetooth(g, (LCD_WIDTH - 24) / 2, 16, 24, COLOR_BLE);
+
+    switch (shown) {
+        case PAIR_PROMPT::CODE: {
+            printCentered(g, &FreeSansBold12pt7b, "Bluetooth pairing", 70, COLOR_TEXT);
+            printCentered(g, &FreeSans9pt7b, "Enter this code on your phone", 98, COLOR_LABEL);
+
+            //"123 456", the gap makes it easier to read off
+            char code[8];
+            snprintf(code, sizeof(code), "%03lu %03lu", (unsigned long)(passkey / 1000 % 1000),
+                     (unsigned long)(passkey % 1000));
+            drawNumber(g, (LCD_WIDTH - numTextWidth(code)) / 2, 160, code, COLOR_TEXT);
+
+            char hint[48];
+            snprintf(hint, sizeof(hint), "Press or tap to cancel (%u s)", secondsLeft);
+            printCentered(g, &FreeSans9pt7b, hint, 212, COLOR_LABEL);
+            break;
+        }
+        case PAIR_PROMPT::PAIRED:
+            printCentered(g, &FreeSansBold18pt7b, "Paired", 130, COLOR_ON);
+            printCentered(g, &FreeSans9pt7b, "The phone is remembered", 170, COLOR_LABEL);
+            break;
+        case PAIR_PROMPT::FAILED:
+            printCentered(g, &FreeSansBold18pt7b, "Not paired", 130, COLOR_SELECTED);
+            printCentered(g, &FreeSans9pt7b, "Cancelled, timed out or wrong code", 170, COLOR_LABEL);
+            break;
+        case PAIR_PROMPT::HIDDEN:
+        default:
+            break;
+    }
 }

@@ -111,10 +111,11 @@
 
 #define UI_EDIT_TIMEOUT_MS      10000   //edit mode ends after this long without input
 #define UI_REMOTE_FLASH_MS      1000    //a field an agent changed is highlighted this long
-#define UI_REMOTE_BADGE_MS      5000    //"MCP" shows in the status bar this long after an agent change
+#define UI_REMOTE_BADGE_MS      5000    //"MCP"/"BLE" shows in the status bar this long after a remote change
+#define UI_PAIR_RESULT_MS       2000    //"Paired" / "Pairing failed" stays on screen this long
 
 //hold the encoder button this long while powering on to forget the saved Wi-Fi
-//and restart into setup mode
+//and the paired phones, and restart into setup mode
 #define BOOT_HOLD_MS            3000
 
 //touch calibration: raw XPT2046 readings (0..4095) at the left/right and
@@ -176,6 +177,10 @@
 #define HTTP_TASK_STACK     10240   //ArduinoJson parsing runs on this stack
 #define HTTP_TASK_CORE      0
 
+#define BLE_TASK_PRIO       1
+#define BLE_TASK_STACK      3072    //only hands work to the NimBLE task (core 0)
+#define BLE_TASK_CORE       0
+
 
 /*
     Network
@@ -209,5 +214,14 @@
 #define NVS_NAMESPACE           "wifi"
 #define NVS_KEY_SSID            "ssid"
 #define NVS_KEY_PASS            "pass"
+
+
+/*
+    Bluetooth (BLE). Advertised name = the setup AP's SSID (FuncGen-XXXX)
+*/
+
+#define BLE_ADV_INTERVAL_MS     100         //longer = less radio time taken from Wi-Fi, slower to find
+#define BLE_PAIR_TIMEOUT_MS     30000       //the passkey popup cancels a pairing after this long
+#define BLE_BOND_NVS_NAMESPACE  "nimble_bond"   //where NimBLE keeps paired phones. set by the stack, don't change
 
 #endif

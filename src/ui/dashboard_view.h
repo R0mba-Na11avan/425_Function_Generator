@@ -21,7 +21,9 @@ struct DashboardView {
     bool editing;
     uint8_t freqStepIndex;
     uint8_t remoteFlash;    //fields an agent just changed (mask of fieldBit)
-    bool remoteBadge;       //"MCP" in the status bar
+    bool remoteBadge;       //"MCP" or "BLE" in the status bar
+    CHANGE_SOURCE badgeSource;
+    bool bleConnected;      //Bluetooth icon in the status bar
 };
 
 //areas: one per UI_FIELD (same index), then the status bar
@@ -44,8 +46,13 @@ void renderArea(Adafruit_GFX& g, uint8_t area, Rect r, const DashboardView& view
 
 //the info panel (infoRect()), drawn instead of the fields while it is open.
 //same rules as areaKey/renderArea
-void infoKey(const NetStatus& net, char* key, size_t len);
-void renderInfo(Adafruit_GFX& g, Rect r, const NetStatus& net);
+void infoKey(const NetStatus& net, const BleStatus& ble, char* key, size_t len);
+void renderInfo(Adafruit_GFX& g, Rect r, const NetStatus& net, const BleStatus& ble);
+
+//the pairing popup (whole screen), drawn over everything while it is shown.
+//same rules as areaKey/renderArea, but it clears the screen itself
+void pairingKey(PAIR_PROMPT shown, uint32_t passkey, uint8_t secondsLeft, char* key, size_t len);
+void renderPairing(Adafruit_GFX& g, PAIR_PROMPT shown, uint32_t passkey, uint8_t secondsLeft);
 
 //boot screens (whole screen): the hold-to-forget-Wi-Fi countdown and a message
 void renderBootHold(Adafruit_GFX& g, uint8_t secondsLeft);

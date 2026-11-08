@@ -14,6 +14,7 @@
 #include "../config.h"
 #include "../core/funcgen_state.h"
 #include "../core/net_status.h"
+#include "../core/ble_status.h"
 #include "input_logic.h"
 
 struct Rect {
@@ -38,7 +39,7 @@ static const uint8_t UI_FIELD_COUNT = 5;
     Layout (320x240 landscape)
 
         +--------------------------------------------+
-        | network line                          [BLE] |  status bar
+        | network line                    [MCP] [ble] |  status bar
         +---------------------+----------------------+
         | WAVEFORM      SINE  | OUTPUT               |
         |   ~~ preview ~~     |      [  ON  ]        |
@@ -51,8 +52,8 @@ static const uint8_t UI_FIELD_COUNT = 5;
         +---------------------+----------------------+
 */
 Rect statusRect();
-Rect bleSlotRect();
-Rect mcpBadgeRect();    //status bar, left of the BLE slot: shown after an agent change
+Rect bleSlotRect();     //status bar, right end: Bluetooth icon while a phone is connected
+Rect mcpBadgeRect();    //status bar, left of the BLE slot: "MCP"/"BLE" after a remote change
 Rect infoRect();        //the info panel, covers everything below the status bar
 Rect fieldRect(UI_FIELD field);
 //field under a screen point, false if none
@@ -99,9 +100,9 @@ const char* waveformName(WAVEFORM waveform);
 void formatNetLine(const NetStatus& net, char* out, size_t len);
 
 //text of the info panel (opened by tapping the status bar), one line each
-static const uint8_t INFO_MAX_LINES = 9;
+static const uint8_t INFO_MAX_LINES = 10;
 static const uint8_t INFO_LINE_LEN = 64;   //fits the longest SSID and hostname (a long line is clipped on screen)
-uint8_t formatInfoLines(const NetStatus& net, char lines[][INFO_LINE_LEN], uint8_t maxLines);
+uint8_t formatInfoLines(const NetStatus& net, const BleStatus& ble, char lines[][INFO_LINE_LEN], uint8_t maxLines);
 
 //fields are passed around as bit masks: bit (uint8_t)field
 inline uint8_t fieldBit(UI_FIELD field) { return (uint8_t)(1u << (uint8_t)field); }
@@ -109,19 +110,58 @@ inline uint8_t fieldBit(UI_FIELD field) { return (uint8_t)(1u << (uint8_t)field)
 //fields whose shown value differs between two states (phase isn't on screen)
 uint8_t changedFields(const FuncGenState& before, const FuncGenState& after);
 
-//remembers recent agent (MCP/BLE) changes: which fields flash and whether
-//the status bar badge shows
+//remembers recent remote (MCP/BLE) changes: which fields flash and whether
+//the status bar badge shows, and for whom
 class RemoteHighlight {
     public:
-        void changed(uint8_t fields, uint32_t nowMs);
+        void changed(uint8_t fields, uint32_t nowMs, CHANGE_SOURCE source);
         uint8_t flashing(uint32_t nowMs) const;   //mask of fields still flashing
         bool badge(uint32_t nowMs) const;
+        CHANGE_SOURCE badgeSource() const { return _badgeSource; }   //who made the latest change
 
     private:
         uint32_t _fieldAt[UI_FIELD_COUNT] = {};
         uint8_t _fields = 0;
         uint32_t _badgeAt = 0;
         bool _badge = false;
+        CHANGE_SOURCE _badgeSource = CHANGE_SOURCE::MCP;
+};
+
+//what the pairing popup shows
+enum class PAIR_PROMPT : uint8_t {
+    HIDDEN,
+    CODE,       //the passkey, until the phone finishes, a press/tap cancels or BLE_PAIR_TIMEOUT_MS
+    PAIRED,     //result, for UI_PAIR_RESULT_MS or until a press/tap
+    FAILED
+};
+
+/*
+    The full-screen pairing popup. Fed with every BleStatus: a new pairing
+    attempt (new pairingId showing a passkey) opens it. While it is up it
+    takes every input event, so nothing underneath is edited. Cancelling
+    (press, tap or timeout) closes it and asks BLE to drop the phone
+    (takeCancel). A cancelled attempt is not shown again.
+*/
+class PairingPrompt {
+    public:
+        void update(const BleStatus& ble, uint32_t nowMs);
+
+        //true if the popup took the event (always while it is shown)
+        bool handle(const InputEvent& event);
+
+        //true once after the popup cancelled a pairing
+        bool takeCancel();
+
+        PAIR_PROMPT shown() const { return _shown; }
+        uint32_t passkey() const { return _passkey; }
+        uint8_t secondsLeft(uint32_t nowMs) const;  //CODE: until it cancels itself
+
+    private:
+        PAIR_PROMPT _shown = PAIR_PROMPT::HIDDEN;
+        uint16_t _id = 0;           //pairingId of the attempt last shown
+        uint32_t _passkey = 0;
+        uint32_t _sinceMs = 0;      //when the current screen appeared
+        bool _cancel = false;
 };
 
 //what the editor wants the controller to do

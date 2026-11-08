@@ -419,7 +419,7 @@ TEST(remote_highlight_timing) {
     CHECK_EQ(h.flashing(0), 0);
     CHECK(!h.badge(0));
 
-    h.changed(fieldBit(UI_FIELD::FREQUENCY), 1000);
+    h.changed(fieldBit(UI_FIELD::FREQUENCY), 1000, CHANGE_SOURCE::MCP);
     CHECK_EQ(h.flashing(1000), fieldBit(UI_FIELD::FREQUENCY));
     CHECK_EQ(h.flashing(1000 + UI_REMOTE_FLASH_MS - 1), fieldBit(UI_FIELD::FREQUENCY));
     CHECK_EQ(h.flashing(1000 + UI_REMOTE_FLASH_MS), 0);
@@ -427,16 +427,26 @@ TEST(remote_highlight_timing) {
     CHECK(!h.badge(1000 + UI_REMOTE_BADGE_MS));
 
     //a second change flashes its own field and keeps the badge up
-    h.changed(fieldBit(UI_FIELD::AMPLITUDE), 1500);
+    h.changed(fieldBit(UI_FIELD::AMPLITUDE), 1500, CHANGE_SOURCE::MCP);
     CHECK_EQ(h.flashing(1600), fieldBit(UI_FIELD::FREQUENCY) | fieldBit(UI_FIELD::AMPLITUDE));
     CHECK_EQ(h.flashing(1000 + UI_REMOTE_FLASH_MS), fieldBit(UI_FIELD::AMPLITUDE));
     CHECK(h.badge(1000 + UI_REMOTE_BADGE_MS));
 
     //an agent call that changed nothing still shows the badge
     RemoteHighlight quiet;
-    quiet.changed(0, 50);
+    quiet.changed(0, 50, CHANGE_SOURCE::MCP);
     CHECK_EQ(quiet.flashing(50), 0);
     CHECK(quiet.badge(50));
+}
+
+TEST(remote_highlight_badge_names_the_latest_source) {
+    RemoteHighlight h;
+    h.changed(fieldBit(UI_FIELD::FREQUENCY), 0, CHANGE_SOURCE::MCP);
+    CHECK(h.badgeSource() == CHANGE_SOURCE::MCP);
+    h.changed(fieldBit(UI_FIELD::AMPLITUDE), 10, CHANGE_SOURCE::BLE);
+    CHECK(h.badgeSource() == CHANGE_SOURCE::BLE);
+    h.changed(0, 20, CHANGE_SOURCE::MCP);
+    CHECK(h.badgeSource() == CHANGE_SOURCE::MCP);
 }
 
 static bool anyLineContains(char lines[][INFO_LINE_LEN], uint8_t n, const char* part) {
@@ -446,30 +456,152 @@ static bool anyLineContains(char lines[][INFO_LINE_LEN], uint8_t n, const char* 
     return false;
 }
 
+static BleStatus bleOn() {
+    BleStatus b = {};
+    b.state = BLE_STATE::CONNECTED;
+    strcpy(b.name, "FuncGen-A1B2");
+    b.connected = 1;
+    b.bonded = 2;
+    return b;
+}
+
 TEST(info_lines) {
     char lines[INFO_MAX_LINES][INFO_LINE_LEN];
+    BleStatus ble = bleOn();
     NetStatus n = {};
     n.state = WIFI_STATE::CONNECTED;
     strcpy(n.ssid, "Lab");
     strcpy(n.ip, "10.0.0.7");
     strcpy(n.hostname, "funcgen");
-    uint8_t count = formatInfoLines(n, lines, INFO_MAX_LINES);
+    uint8_t count = formatInfoLines(n, ble, lines, INFO_MAX_LINES);
     CHECK(count <= INFO_MAX_LINES);
     CHECK(anyLineContains(lines, count, "Lab"));
     CHECK(anyLineContains(lines, count, "http://funcgen.local/mcp"));
     CHECK(anyLineContains(lines, count, "http://10.0.0.7/mcp"));
-    CHECK(anyLineContains(lines, count, "hold the knob"));
-    CHECK(anyLineContains(lines, count, FIRMWARE_VERSION));
+    CHECK(anyLineContains(lines, count, "Bluetooth  FuncGen-A1B2"));
+    CHECK(anyLineContains(lines, count, "1 connected, 2 paired"));
+    CHECK(anyLineContains(lines, count, "Wi-Fi and phones"));
+    CHECK(anyLineContains(lines, count, "knob button"));
+    CHECK(anyLineContains(lines, count, FIRMWARE_VERSION));   //last line, so nothing was cut off
 
     n.state = WIFI_STATE::AP_MODE;
     strcpy(n.ssid, "FuncGen-A1B2");
     strcpy(n.ip, "192.168.4.1");
-    count = formatInfoLines(n, lines, INFO_MAX_LINES);
-    CHECK(anyLineContains(lines, count, "FuncGen-A1B2"));
+    count = formatInfoLines(n, ble, lines, INFO_MAX_LINES);
+    CHECK(anyLineContains(lines, count, "Join the Wi-Fi FuncGen-A1B2"));
     CHECK(anyLineContains(lines, count, "http://192.168.4.1"));
     CHECK(!anyLineContains(lines, count, "/mcp"));
+    CHECK(anyLineContains(lines, count, FIRMWARE_VERSION));
+
+    ble.state = BLE_STATE::OFF;
+    count = formatInfoLines(n, ble, lines, INFO_MAX_LINES);
+    CHECK(anyLineContains(lines, count, "Bluetooth off"));
+    CHECK(!anyLineContains(lines, count, "paired"));
 
     //never writes more lines than asked for
-    count = formatInfoLines(n, lines, 2);
+    count = formatInfoLines(n, ble, lines, 2);
     CHECK_EQ(count, 2);
+}
+
+//pairing popup
+
+static BleStatus pairingStatus(PAIRING pairing, uint16_t id, uint32_t passkey = 123456) {
+    BleStatus b = bleOn();
+    b.pairing = pairing;
+    b.pairingId = id;
+    b.passkey = passkey;
+    return b;
+}
+
+static InputEvent event(INPUT_EVENT type) {
+    InputEvent e = {};
+    e.type = type;
+    e.source = type == INPUT_EVENT::TOUCH_TAP ? INPUT_SOURCE::TOUCH : INPUT_SOURCE::MAIN_ENCODER;
+    e.clicks = 1;
+    return e;
+}
+
+TEST(pairing_prompt_shows_code_then_result) {
+    PairingPrompt p;
+    CHECK(p.shown() == PAIR_PROMPT::HIDDEN);
+    CHECK(!p.handle(event(INPUT_EVENT::BUTTON_SHORT)));     //hidden: events go to the dashboard
+    p.update(pairingStatus(PAIRING::NONE, 0), 0);
+    CHECK(p.shown() == PAIR_PROMPT::HIDDEN);
+
+    p.update(pairingStatus(PAIRING::SHOW_PASSKEY, 1, 42), 1000);
+    CHECK(p.shown() == PAIR_PROMPT::CODE);
+    CHECK_EQ(p.passkey(), 42);
+    CHECK_EQ(p.secondsLeft(1000), BLE_PAIR_TIMEOUT_MS / 1000);
+
+    //turning the knob is swallowed but doesn't cancel
+    CHECK(p.handle(event(INPUT_EVENT::ENCODER_DELTA)));
+    CHECK(p.shown() == PAIR_PROMPT::CODE);
+    p.update(pairingStatus(PAIRING::SHOW_PASSKEY, 1, 42), 2000);
+    CHECK(p.shown() == PAIR_PROMPT::CODE);
+
+    p.update(pairingStatus(PAIRING::PAIRED, 1), 3000);
+    CHECK(p.shown() == PAIR_PROMPT::PAIRED);
+    p.update(pairingStatus(PAIRING::PAIRED, 1), 3000 + UI_PAIR_RESULT_MS - 1);
+    CHECK(p.shown() == PAIR_PROMPT::PAIRED);
+    p.update(pairingStatus(PAIRING::PAIRED, 1), 3000 + UI_PAIR_RESULT_MS);
+    CHECK(p.shown() == PAIR_PROMPT::HIDDEN);
+    CHECK(!p.takeCancel());
+
+    //the phone failing shows FAILED
+    p.update(pairingStatus(PAIRING::SHOW_PASSKEY, 2), 10000);
+    CHECK(p.shown() == PAIR_PROMPT::CODE);
+    p.update(pairingStatus(PAIRING::FAILED, 2), 11000);
+    CHECK(p.shown() == PAIR_PROMPT::FAILED);
+    CHECK(!p.takeCancel());
+}
+
+TEST(pairing_prompt_press_or_tap_cancels) {
+    InputEvent cancels[] = {event(INPUT_EVENT::BUTTON_SHORT), event(INPUT_EVENT::BUTTON_LONG),
+                            event(INPUT_EVENT::TOUCH_TAP)};
+    for (const InputEvent& e : cancels) {
+        PairingPrompt p;
+        p.update(pairingStatus(PAIRING::SHOW_PASSKEY, 7), 0);
+        CHECK(p.handle(e));
+        CHECK(p.shown() == PAIR_PROMPT::HIDDEN);
+        CHECK(p.takeCancel());
+        CHECK(!p.takeCancel());     //only once
+
+        //the cancelled attempt doesn't come back, nor does its result
+        p.update(pairingStatus(PAIRING::SHOW_PASSKEY, 7), 100);
+        CHECK(p.shown() == PAIR_PROMPT::HIDDEN);
+        p.update(pairingStatus(PAIRING::FAILED, 7), 200);
+        CHECK(p.shown() == PAIR_PROMPT::HIDDEN);
+
+        //the next attempt does
+        p.update(pairingStatus(PAIRING::SHOW_PASSKEY, 8), 300);
+        CHECK(p.shown() == PAIR_PROMPT::CODE);
+    }
+}
+
+TEST(pairing_prompt_times_out) {
+    PairingPrompt p;
+    p.update(pairingStatus(PAIRING::SHOW_PASSKEY, 1), 1000);
+    p.update(pairingStatus(PAIRING::SHOW_PASSKEY, 1), 1000 + BLE_PAIR_TIMEOUT_MS - 1);
+    CHECK(p.shown() == PAIR_PROMPT::CODE);
+    CHECK_EQ(p.secondsLeft(1000 + BLE_PAIR_TIMEOUT_MS - 1), 1);
+    CHECK(!p.takeCancel());
+
+    p.update(pairingStatus(PAIRING::SHOW_PASSKEY, 1), 1000 + BLE_PAIR_TIMEOUT_MS);
+    CHECK(p.shown() == PAIR_PROMPT::FAILED);
+    CHECK(p.takeCancel());
+    CHECK_EQ(p.secondsLeft(1000 + BLE_PAIR_TIMEOUT_MS), 0);
+
+    //a press on the result just closes it
+    CHECK(p.handle(event(INPUT_EVENT::BUTTON_SHORT)));
+    CHECK(p.shown() == PAIR_PROMPT::HIDDEN);
+    CHECK(!p.takeCancel());
+}
+
+TEST(pairing_prompt_timeout_survives_millis_wrap) {
+    PairingPrompt p;
+    uint32_t start = 0xFFFFFFFFu - 1000;
+    p.update(pairingStatus(PAIRING::SHOW_PASSKEY, 1), start);
+    p.update(pairingStatus(PAIRING::SHOW_PASSKEY, 1), start + 5000);    //wrapped
+    CHECK(p.shown() == PAIR_PROMPT::CODE);
+    CHECK_EQ(p.secondsLeft(start + 5000), (BLE_PAIR_TIMEOUT_MS - 5000) / 1000);
 }

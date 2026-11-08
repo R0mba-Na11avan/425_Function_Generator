@@ -22,7 +22,9 @@ BLE (last). Read `README.md` for the architecture and status. Each stub header i
   other.
 - `ui` and `comms` talk only to `FuncGenController`, never `FunctionGenerator`.
 - Wi-Fi status reaches the UI as a `NetStatus` (`core/net_status.h`) through a
-  callback the `.ino` passes to `DisplayUI::setNetStatusSource`.
+  callback the `.ino` passes to `DisplayUI::setNetStatusSource`. BLE status
+  (`core/ble_status.h`) and the pairing-cancel call go the same way through
+  `DisplayUI::setBleSource`.
 - Controller listeners are called from whatever task made the change. A listener
   must only copy state / set a flag. It must not draw, block, or call a setter.
 - Setters take a `CHANGE_SOURCE` (default `LOCAL`). MCP (and later BLE) pass
@@ -35,7 +37,10 @@ BLE (last). Read `README.md` for the architecture and status. Each stub header i
 - Valid ranges are defined in one place so the LCD, MCP schemas and `get_limits`
   can't disagree.
 - No LVGL. The UI is drawn directly with Adafruit GFX + ILI9341.
-- BLE is implemented last and is not needed for anything else.
+- BLE uses NimBLE's C API (not the Arduino BLE wrapper, which can't reject
+  writes). All NimBLE calls happen on the NimBLE host task. The GATT layout and
+  encoding live in `comms/ble_logic.*` (host-tested); keep the README table in
+  sync. Never call `WiFi.setSleep(false)`: with BLE on it aborts.
 
 ## Code style
 

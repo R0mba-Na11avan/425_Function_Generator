@@ -192,7 +192,7 @@ void formatNetLine(const NetStatus& net, char* out, size_t len) {
     }
 }
 
-uint8_t formatInfoLines(const NetStatus& net, char lines[][INFO_LINE_LEN], uint8_t maxLines) {
+uint8_t formatInfoLines(const NetStatus& net, const BleStatus& ble, char lines[][INFO_LINE_LEN], uint8_t maxLines) {
     uint8_t n = 0;
     #define INFO_LINE(...) do { if (n < maxLines) snprintf(lines[n++], INFO_LINE_LEN, __VA_ARGS__); } while (0)
 
@@ -218,9 +218,15 @@ uint8_t formatInfoLines(const NetStatus& net, char lines[][INFO_LINE_LEN], uint8
             INFO_LINE("Wi-Fi off");
             break;
     }
+    if (ble.state == BLE_STATE::OFF) {
+        INFO_LINE("Bluetooth off");
+    } else {
+        INFO_LINE("Bluetooth  %s", ble.name);
+        INFO_LINE("Phones  %u connected, %u paired", ble.connected, ble.bonded);
+    }
     INFO_LINE(" ");
-    INFO_LINE("To change Wi-Fi, hold the knob");
-    INFO_LINE("button while powering on.");
+    INFO_LINE("To forget Wi-Fi and phones, hold");
+    INFO_LINE("the knob button while powering on.");
     INFO_LINE("Firmware %s", FIRMWARE_VERSION);
     #undef INFO_LINE
     return n;
@@ -238,13 +244,14 @@ uint8_t changedFields(const FuncGenState& a, const FuncGenState& b) {
 
 //remote highlight
 
-void RemoteHighlight::changed(uint8_t fields, uint32_t nowMs) {
+void RemoteHighlight::changed(uint8_t fields, uint32_t nowMs, CHANGE_SOURCE source) {
     for (uint8_t i = 0; i < UI_FIELD_COUNT; i++) {
         if (fields & (1u << i)) _fieldAt[i] = nowMs;
     }
     _fields |= fields;
     _badgeAt = nowMs;
     _badge = true;
+    _badgeSource = source;
 }
 
 uint8_t RemoteHighlight::flashing(uint32_t nowMs) const {
@@ -257,6 +264,58 @@ uint8_t RemoteHighlight::flashing(uint32_t nowMs) const {
 
 bool RemoteHighlight::badge(uint32_t nowMs) const {
     return _badge && nowMs - _badgeAt < UI_REMOTE_BADGE_MS;
+}
+
+//pairing popup
+
+void PairingPrompt::update(const BleStatus& ble, uint32_t nowMs) {
+    if (ble.pairing == PAIRING::SHOW_PASSKEY && ble.pairingId != _id) {
+        _id = ble.pairingId;
+        _passkey = ble.passkey;
+        _shown = PAIR_PROMPT::CODE;
+        _sinceMs = nowMs;
+        return;
+    }
+
+    switch (_shown) {
+        case PAIR_PROMPT::CODE:
+            if (ble.pairing == PAIRING::PAIRED || ble.pairing == PAIRING::FAILED) {
+                _shown = ble.pairing == PAIRING::PAIRED ? PAIR_PROMPT::PAIRED : PAIR_PROMPT::FAILED;
+                _sinceMs = nowMs;
+            } else if (nowMs - _sinceMs >= BLE_PAIR_TIMEOUT_MS) {
+                _cancel = true;
+                _shown = PAIR_PROMPT::FAILED;
+                _sinceMs = nowMs;
+            }
+            break;
+        case PAIR_PROMPT::PAIRED:
+        case PAIR_PROMPT::FAILED:
+            if (nowMs - _sinceMs >= UI_PAIR_RESULT_MS) _shown = PAIR_PROMPT::HIDDEN;
+            break;
+        case PAIR_PROMPT::HIDDEN:
+        default:
+            break;
+    }
+}
+
+bool PairingPrompt::handle(const InputEvent& event) {
+    if (_shown == PAIR_PROMPT::HIDDEN) return false;
+    if (event.type == INPUT_EVENT::ENCODER_DELTA) return true;
+    if (_shown == PAIR_PROMPT::CODE) _cancel = true;
+    _shown = PAIR_PROMPT::HIDDEN;
+    return true;
+}
+
+bool PairingPrompt::takeCancel() {
+    bool cancel = _cancel;
+    _cancel = false;
+    return cancel;
+}
+
+uint8_t PairingPrompt::secondsLeft(uint32_t nowMs) const {
+    uint32_t elapsed = nowMs - _sinceMs;
+    if (_shown != PAIR_PROMPT::CODE || elapsed >= BLE_PAIR_TIMEOUT_MS) return 0;
+    return (uint8_t)((BLE_PAIR_TIMEOUT_MS - elapsed + 999) / 1000);
 }
 
 //editor
