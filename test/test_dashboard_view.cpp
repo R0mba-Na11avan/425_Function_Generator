@@ -223,6 +223,28 @@ TEST(output_badge_colour_follows_state) {
     CHECK(countColor(canvas, 0x07E0) > 1000); //green badge
 }
 
+TEST(frequency_underline_shows_the_step_really_used) {
+    //0.1 Hz isn't on screen in MHz, so the knob uses 1 Hz there and the last
+    //digit gets the underline
+    DashboardView v = baseView();
+    v.state.frequency = 5000000.0f;
+    v.freqStepIndex = 0;
+    v.editing = true;
+    uint8_t area = (uint8_t)UI_FIELD::FREQUENCY;
+    Rect r = areaRect(area);
+    GFXcanvas16 canvas(r.w, r.h);
+    renderToCanvas(canvas, area, v);
+
+    FrequencyText f = formatFrequency(v.state.frequency);
+    int8_t last = (int8_t)strlen(f.text) - 1;
+    int16_t x0 = numCharX(f.text, freqTextStartX(f.text), last);
+    int ink = 0;
+    for (int16_t y = FREQ_BASELINE + 12; y < FREQ_BASELINE + 15; y++)
+        for (int16_t x = x0; x < x0 + numCharWidth(f.text[last]); x++)
+            if (canvas.getPixel(x, y) != DASHBOARD_BG) ink++;
+    CHECK(ink > 0);
+}
+
 TEST(ap_mode_status_bar_stands_out) {
     DashboardView v = baseView();
     Rect r = statusRect();
