@@ -93,9 +93,15 @@ float digitPlace(const char* text, int8_t index);
 //index of the digit whose place value is stepHz, -1 if it isn't shown
 int8_t stepDigitIndex(const FrequencyText& f, float stepHz);
 
-static const uint8_t FREQ_STEP_COUNT = 7;  //1 Hz .. 1 MHz
+static const uint8_t FREQ_STEP_COUNT = 8;  //0.1 Hz .. 1 MHz, powers of 10
 float freqStepHz(uint8_t index);
 void formatFreqStep(uint8_t index, char* out, size_t len);   //"1 kHz"
+//smallest digit the readout shows at hz: 0.1 Hz below 1 MHz, 1 Hz in MHz
+float freqResolutionHz(float hz);
+//the step really used at hz: index, or the smallest one the readout shows
+uint8_t freqStepShown(float hz, uint8_t index);
+//the step after index (next power of 10 up, wrapping to the smallest shown one)
+uint8_t nextFreqStep(float hz, uint8_t index);
 
 void formatAmplitude(float vpp, char* out, size_t len);       //"2.50"
 void formatOffset(float volts, char* out, size_t len);        //"+0.25"
@@ -230,11 +236,15 @@ struct EditCommand {
 /*
     Selection + edit mode.
         - not editing: encoder turns move the selection
-        - short press: enter/leave edit mode (on OUTPUT it toggles the output)
-        - editing: encoder turns change the value (frequency by the step,
-          amplitude/offset by UI_*_STEP_V snapped to that grid, clamped to the
-          limits, waveform cycles)
-        - long press on frequency: next step
+        - short press: enter edit mode (on OUTPUT it toggles the output). on
+          amplitude/offset/waveform a second press leaves edit mode
+        - editing frequency: short press moves the step to the next power of
+          10 (0.1 Hz .. 1 MHz, then back to the smallest), turns change the
+          value by the step, starting from the value on screen
+        - editing: encoder turns change the value (amplitude/offset by
+          UI_*_STEP_V snapped to that grid, clamped to the limits including
+          the peak rule, waveform cycles)
+        - long press: leave edit mode (any field)
         - tap: selects a field, tapping the selected one toggles edit mode,
           tapping OUTPUT toggles the output, tapping a frequency digit makes
           that digit the step and starts editing

@@ -91,14 +91,18 @@ static void writeLimits(FuncGenController& c, JsonObject out) {
     JsonObject amp = out["amplitude_vpp"].to<JsonObject>();
     for (uint8_t i = 0; i < WAVEFORM_COUNT; i++) writeRange(amp[WAVEFORM_NAMES[i]].to<JsonObject>(), l.amplitude[i]);
     writeRange(out["dc_offset_v"].to<JsonObject>(), l.dcOffset);
+    out["output_peak_v"] = l.outputPeak;
 }
 
 static ValueRange frequencyRange(const FuncGenLimits& l, const FuncGenState*) { return l.frequency; }
 static ValueRange phaseRange(const FuncGenLimits& l, const FuncGenState*) { return l.phase; }
-static ValueRange dcOffsetRange(const FuncGenLimits& l, const FuncGenState*) { return l.dcOffset; }
+//with a state: what may be set right now (peak rule, the other setting held where it is)
+static ValueRange dcOffsetRange(const FuncGenLimits& l, const FuncGenState* state) {
+    return state ? l.dcOffsetFor(*state) : l.dcOffset;
+}
 
 static ValueRange amplitudeRange(const FuncGenLimits& l, const FuncGenState* state) {
-    if (state) return l.amplitude[(uint8_t)state->waveform];
+    if (state) return l.amplitudeFor(*state);
     ValueRange r = l.amplitude[0];
     for (uint8_t i = 1; i < WAVEFORM_COUNT; i++) {
         if (l.amplitude[i].min < r.min) r.min = l.amplitude[i].min;
@@ -124,19 +128,19 @@ static const Tool TOOLS[] = {
     {"set_frequency", "Set frequency", "Set the output frequency in Hz.",
      PARAM::NUMBER, "hz", "Frequency in Hz", "Hz", frequencyRange, false, false, runSetFrequency},
     {"set_amplitude", "Set amplitude",
-     "Set the peak-to-peak amplitude in volts. The valid range depends on the current waveform (see get_limits).",
+     "Set the peak-to-peak amplitude in volts. The valid range depends on the current waveform and DC offset: amplitude / 2 + |offset| must stay at or below output_peak_v (see get_limits). The offset is never changed by this call.",
      PARAM::NUMBER, "vpp", "Amplitude in volts peak-to-peak", "Vpp", amplitudeRange, false, false, runSetAmplitude},
     {"set_phase", "Set phase", "Set the phase offset in degrees, from 0 up to (not including) 360.",
      PARAM::NUMBER, "degrees", "Phase in degrees", "degrees", phaseRange, true, false, runSetPhase},
     {"set_dc_offset", "Set DC offset",
-     "Set the DC offset in volts. Note: the value is stored and reported, but the output hardware does not apply it yet.",
+     "Set the DC offset in volts. The valid range depends on the current amplitude: amplitude / 2 + |offset| must stay at or below output_peak_v (see get_limits). The amplitude is never changed by this call.",
      PARAM::NUMBER, "volts", "DC offset in volts", "V", dcOffsetRange, false, false, runSetDCOffset},
     {"set_output", "Enable/disable output", "Turn the signal output on or off.",
      PARAM::BOOLEAN, "enabled", "true = output on", nullptr, nullptr, false, false, runSetOutput},
     {"get_state", "Get state", "Read the current settings.",
      PARAM::NONE, nullptr, nullptr, nullptr, nullptr, false, true, runGetState},
     {"get_limits", "Get limits",
-     "Read the valid range of every setting (amplitude per waveform). Values outside these ranges are rejected.",
+     "Read the valid range of every setting (amplitude per waveform) and output_peak_v. Amplitude and DC offset also share one limit: amplitude / 2 + |offset| <= output_peak_v. Values outside these ranges are rejected.",
      PARAM::NONE, nullptr, nullptr, nullptr, nullptr, false, true, runGetLimits},
 };
 
@@ -224,8 +228,16 @@ static bool readArgument(const Tool& t, JsonObjectConst args, const FuncGenLimit
                 formatNumber(r.min, lo, sizeof(lo));
                 formatNumber(r.max, hi, sizeof(hi));
                 formatNumber(d, got, sizeof(got));
-                char forWave[32] = "";
-                if (t.range == amplitudeRange) snprintf(forWave, sizeof(forWave), " for the %s waveform", waveformName(state.waveform));
+                //amplitude and offset ranges depend on the current settings, so say which
+                char forWave[64] = "";
+                char other[24];
+                if (t.range == amplitudeRange) {
+                    formatNumber(state.dcOffset, other, sizeof(other));
+                    snprintf(forWave, sizeof(forWave), " for the %s waveform at %s V offset", waveformName(state.waveform), other);
+                } else if (t.range == dcOffsetRange) {
+                    formatNumber(state.amplitude, other, sizeof(other));
+                    snprintf(forWave, sizeof(forWave), " at %s Vpp amplitude", other);
+                }
                 if (t.maxExclusive) {
                     snprintf(err, len, "'%s' must be at least %s and less than %s %s, got %s", t.paramName, lo, hi, t.unit, got);
                 } else {

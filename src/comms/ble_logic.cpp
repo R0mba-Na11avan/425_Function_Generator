@@ -153,7 +153,7 @@ BLE_WRITE bleDecode(BLE_FIELD field, const uint8_t* data, size_t len, const Func
             c.number = (float)(v / FREQ_SCALE);
             break;
         case BLE_FIELD::AMPLITUDE:
-            if (!inRange(v, limits.amplitude[(uint8_t)state.waveform], AMP_SCALE, false)) return BLE_WRITE::OUT_OF_RANGE;
+            if (!inRange(v, limits.amplitudeFor(state), AMP_SCALE, false)) return BLE_WRITE::OUT_OF_RANGE;
             c.number = (float)(v / AMP_SCALE);
             break;
         case BLE_FIELD::PHASE:
@@ -162,7 +162,7 @@ BLE_WRITE bleDecode(BLE_FIELD field, const uint8_t* data, size_t len, const Func
             break;
         case BLE_FIELD::DC_OFFSET: {
             int16_t raw = (int16_t)(uint16_t)v;
-            if (!inRange(raw, limits.dcOffset, OFFSET_SCALE, false)) return BLE_WRITE::OUT_OF_RANGE;
+            if (!inRange(raw, limits.dcOffsetFor(state), OFFSET_SCALE, false)) return BLE_WRITE::OUT_OF_RANGE;
             c.number = (float)(raw / OFFSET_SCALE);
             break;
         }

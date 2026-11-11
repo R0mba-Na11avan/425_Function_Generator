@@ -60,6 +60,7 @@ FuncGenLimits FuncGenController::limits() const {
         l.amplitude[i] = FunctionGenerator::amplitudeRange((WAVEFORM)i);
     }
     l.dcOffset = FunctionGenerator::dcOffsetRange();
+    l.outputPeak = FunctionGenerator::outputPeakMax();
     return l;
 }
 

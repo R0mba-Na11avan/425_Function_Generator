@@ -15,7 +15,7 @@ static FuncGenState sampleState() {
 }
 
 static FuncGenLimits configLimits() {
-    FunctionGenerator gen(PIN_AD9833_CS, PIN_MCP4131_CS);
+    FunctionGenerator gen(PIN_AD9833_CS, PIN_AMP_DAC_CS, PIN_OFFSET_DAC_CS, PIN_WAVE_SWITCH);
     FuncGenController ctl(gen);
     return ctl.limits();
 }
@@ -171,22 +171,26 @@ TEST(ble_decode_range_edges) {
     ValueRange amp = configLimits().amplitude[(uint8_t)WAVEFORM::TRIANGLE];
     uint32_t ampMin = (uint32_t)lround(amp.min * 1000.0);
     uint32_t ampMax = (uint32_t)lround(amp.max * 1000.0);
-    CHECK(write(BLE_FIELD::AMPLITUDE, ampMin - 1) == BLE_WRITE::OUT_OF_RANGE);
-    CHECK(write(BLE_FIELD::AMPLITUDE, ampMin) == BLE_WRITE::OK);
-    CHECK(write(BLE_FIELD::AMPLITUDE, ampMax) == BLE_WRITE::OK);
-    CHECK(write(BLE_FIELD::AMPLITUDE, ampMax + 1) == BLE_WRITE::OUT_OF_RANGE);
-    CHECK(write(BLE_FIELD::AMPLITUDE, 0) == BLE_WRITE::OUT_OF_RANGE);
+    FuncGenState zeroOffset = sampleState();
+    zeroOffset.dcOffset = 0.0f; //so only the waveform range applies
+    if (ampMin > 0) CHECK(write(BLE_FIELD::AMPLITUDE, ampMin - 1, zeroOffset) == BLE_WRITE::OUT_OF_RANGE);
+    CHECK(write(BLE_FIELD::AMPLITUDE, ampMin, zeroOffset) == BLE_WRITE::OK);
+    CHECK(write(BLE_FIELD::AMPLITUDE, ampMax, zeroOffset) == BLE_WRITE::OK);
+    CHECK(write(BLE_FIELD::AMPLITUDE, ampMax + 1, zeroOffset) == BLE_WRITE::OUT_OF_RANGE);
 
     //phase, 0.01 deg, max exclusive
     CHECK(write(BLE_FIELD::PHASE, 0) == BLE_WRITE::OK);
     CHECK(write(BLE_FIELD::PHASE, 35999) == BLE_WRITE::OK);
     CHECK(write(BLE_FIELD::PHASE, 36000) == BLE_WRITE::OUT_OF_RANGE);
 
-    //offset, signed mV
-    CHECK(write(BLE_FIELD::DC_OFFSET, (uint16_t)-2500) == BLE_WRITE::OK);
-    CHECK(write(BLE_FIELD::DC_OFFSET, (uint16_t)-2501) == BLE_WRITE::OUT_OF_RANGE);
-    CHECK(write(BLE_FIELD::DC_OFFSET, 2500) == BLE_WRITE::OK);
-    CHECK(write(BLE_FIELD::DC_OFFSET, 2501) == BLE_WRITE::OUT_OF_RANGE);
+    //offset, signed mV, within what the sample state's amplitude leaves (peak rule)
+    ValueRange off = configLimits().dcOffsetFor(sampleState());
+    int32_t offMin = (int32_t)lround(off.min * 1000.0);
+    int32_t offMax = (int32_t)lround(off.max * 1000.0);
+    CHECK(write(BLE_FIELD::DC_OFFSET, (uint16_t)(int16_t)offMin) == BLE_WRITE::OK);
+    CHECK(write(BLE_FIELD::DC_OFFSET, (uint16_t)(int16_t)(offMin - 1)) == BLE_WRITE::OUT_OF_RANGE);
+    CHECK(write(BLE_FIELD::DC_OFFSET, (uint16_t)(int16_t)offMax) == BLE_WRITE::OK);
+    CHECK(write(BLE_FIELD::DC_OFFSET, (uint16_t)(int16_t)(offMax + 1)) == BLE_WRITE::OUT_OF_RANGE);
     CHECK(write(BLE_FIELD::DC_OFFSET, 0x8000) == BLE_WRITE::OUT_OF_RANGE);   //-32768
     BleCommand c;
     CHECK(write(BLE_FIELD::DC_OFFSET, (uint16_t)-1250, sampleState(), c) == BLE_WRITE::OK);
@@ -210,6 +214,30 @@ TEST(ble_amplitude_range_follows_the_waveform) {
     s.waveform = WAVEFORM::SQUARE;
     CHECK(write(BLE_FIELD::AMPLITUDE, 3500, s, c, limits) == BLE_WRITE::OUT_OF_RANGE);
     CHECK(write(BLE_FIELD::AMPLITUDE, 3000, s, c, limits) == BLE_WRITE::OK);
+}
+
+TEST(ble_amplitude_and_offset_share_the_peak_limit) {
+    FuncGenLimits limits = configLimits();
+    limits.outputPeak = 5.0f;
+    limits.amplitude[(uint8_t)WAVEFORM::SINE] = ValueRange{0.0f, 12.0f};
+    limits.dcOffset = ValueRange{-10.0f, 10.0f};
+    FuncGenState s = sampleState();
+    s.waveform = WAVEFORM::SINE;
+    BleCommand c;
+
+    //offset 2 V leaves 2 * (5 - 2) = 6 Vpp
+    s.dcOffset = 2.0f;
+    CHECK(write(BLE_FIELD::AMPLITUDE, 6000, s, c, limits) == BLE_WRITE::OK);
+    CHECK(write(BLE_FIELD::AMPLITUDE, 6001, s, c, limits) == BLE_WRITE::OUT_OF_RANGE);
+    s.dcOffset = -2.0f;
+    CHECK(write(BLE_FIELD::AMPLITUDE, 6001, s, c, limits) == BLE_WRITE::OUT_OF_RANGE);
+
+    //amplitude 4 Vpp leaves +-3 V of offset
+    s.amplitude = 4.0f;
+    CHECK(write(BLE_FIELD::DC_OFFSET, 3000, s, c, limits) == BLE_WRITE::OK);
+    CHECK(write(BLE_FIELD::DC_OFFSET, 3001, s, c, limits) == BLE_WRITE::OUT_OF_RANGE);
+    CHECK(write(BLE_FIELD::DC_OFFSET, (uint16_t)-3000, s, c, limits) == BLE_WRITE::OK);
+    CHECK(write(BLE_FIELD::DC_OFFSET, (uint16_t)-3001, s, c, limits) == BLE_WRITE::OUT_OF_RANGE);
 }
 
 TEST(ble_rejected_write_leaves_command_alone) {
@@ -253,7 +281,7 @@ static void recordSource(const FuncGenState&, CHANGE_SOURCE source, void*) {
 }
 
 TEST(ble_apply_goes_through_the_controller_as_ble) {
-    FunctionGenerator gen(PIN_AD9833_CS, PIN_MCP4131_CS);
+    FunctionGenerator gen(PIN_AD9833_CS, PIN_AMP_DAC_CS, PIN_OFFSET_DAC_CS, PIN_WAVE_SWITCH);
     gen.begin();
     FuncGenController ctl(gen);
     ctl.addListener(recordSource);
@@ -297,7 +325,7 @@ TEST(ble_apply_goes_through_the_controller_as_ble) {
 }
 
 TEST(ble_minimum_amplitude_write_lands_on_the_limit) {
-    FunctionGenerator gen(PIN_AD9833_CS, PIN_MCP4131_CS);
+    FunctionGenerator gen(PIN_AD9833_CS, PIN_AMP_DAC_CS, PIN_OFFSET_DAC_CS, PIN_WAVE_SWITCH);
     gen.begin();
     FuncGenController ctl(gen);
     ValueRange r = ctl.limits().amplitude[(uint8_t)ctl.state().waveform];

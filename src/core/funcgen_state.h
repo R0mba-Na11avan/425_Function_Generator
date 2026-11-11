@@ -31,8 +31,18 @@ enum class CHANGE_SOURCE : uint8_t {
 struct FuncGenLimits {
     ValueRange frequency;                   //Hz
     ValueRange phase;                       //degrees, max is exclusive (wraps to 0)
-    ValueRange amplitude[WAVEFORM_COUNT];   //Vpp, indexed by (uint8_t)WAVEFORM
-    ValueRange dcOffset;                    //V
+    ValueRange amplitude[WAVEFORM_COUNT];   //Vpp, indexed by (uint8_t)WAVEFORM. widest range
+    ValueRange dcOffset;                    //V. widest range
+    float outputPeak;                       //V. amplitude / 2 + |offset| must stay at or below it
+
+    //what a change may set right now, with the other setting held where it is
+    //(the peak rule, see func_gen.h). use these to check or clamp a new value
+    ValueRange amplitudeFor(const FuncGenState& state) const {
+        return peakLimitedAmplitude(amplitude[(uint8_t)state.waveform], state.dcOffset, outputPeak);
+    }
+    ValueRange dcOffsetFor(const FuncGenState& state) const {
+        return peakLimitedOffset(dcOffset, state.amplitude, outputPeak);
+    }
 };
 
 #endif

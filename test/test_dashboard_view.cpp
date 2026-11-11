@@ -100,11 +100,21 @@ static DashboardView scenario(int i, const char*& name) {
             v.net.state = WIFI_STATE::CONNECTING;
             strcpy(v.net.ssid, "a-really-long-network-name-32chr");
             break;
+        case 6:
+            //widest numbers the limits allow (the peak rule never allows both at
+            //once, but the view has to fit each one)
+            name = "widest_amplitude_and_offset";
+            v.state.amplitude = AMP_MAX_VPP_SINE;
+            v.state.dcOffset = DC_OFFSET_MIN_V;
+            v.state.outputEnabled = true;
+            v.selected = UI_FIELD::OFFSET;
+            v.editing = true;
+            break;
     }
     return v;
 }
 
-static const int SCENARIO_COUNT = 6;
+static const int SCENARIO_COUNT = 7;
 
 //one area through the canvas path, like DisplayUI with PSRAM
 static void renderToCanvas(GFXcanvas16& canvas, uint8_t area, const DashboardView& v) {

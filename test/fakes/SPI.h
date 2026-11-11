@@ -2,7 +2,7 @@
 *   Author: Parikshith Venkataraghavan
 *   Purpose: host-test stand-in for the ESP32 SPIClass. records every
              transaction (chip select, mode, clock, bytes) so tests can decode
-             what was sent to the AD9833 and MCP4131
+             what was sent to the AD9833 and AD5452s
 **************************************************************************/
 
 #ifndef FAKE_SPI_H

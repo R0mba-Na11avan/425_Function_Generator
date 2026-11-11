@@ -10,13 +10,20 @@
 //pins
 static int pinModes[FAKE_PIN_COUNT];
 static int pinLevels[FAKE_PIN_COUNT];
+//the pin most recently driven LOW: the chip select of the transfer that follows.
+//other outputs can sit LOW too (e.g. the waveform path switch), so "the first
+//LOW output" isn't enough
+static int lastLowPin = -1;
 
 void pinMode(uint8_t pin, uint8_t mode) {
     if (pin < FAKE_PIN_COUNT) pinModes[pin] = mode;
 }
 
 void digitalWrite(uint8_t pin, uint8_t value) {
-    if (pin < FAKE_PIN_COUNT) pinLevels[pin] = value;
+    if (pin < FAKE_PIN_COUNT) {
+        pinLevels[pin] = value;
+        if (value == LOW) lastLowPin = pin;
+    }
 }
 
 int digitalRead(uint8_t pin) {
@@ -36,6 +43,7 @@ void fakeResetPins() {
         pinModes[pin] = INPUT;
         pinLevels[pin] = LOW;
     }
+    lastLowPin = -1;
 }
 
 //SPI
@@ -86,6 +94,9 @@ void SPIClass::endTransaction() {
 uint8_t SPIClass::transfer(uint8_t data) {
     if (frames.empty()) frames.push_back(SpiFrame{-1, 0, 0, {}}); //transfer outside a transaction
     SpiFrame& frame = frames.back();
+    if (frame.csPin < 0 && lastLowPin >= 0 && pinModes[lastLowPin] == OUTPUT && pinLevels[lastLowPin] == LOW) {
+        frame.csPin = lastLowPin;
+    }
     if (frame.csPin < 0) {
         for (int pin = 0; pin < FAKE_PIN_COUNT; pin++) {
             if (pinModes[pin] == OUTPUT && pinLevels[pin] == LOW) {

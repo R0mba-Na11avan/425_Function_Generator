@@ -12,7 +12,7 @@
            BOOT_HOLD_MS the saved Wi-Fi and the paired phones are forgotten
            and the board restarts into setup mode. let go early and it boots
            normally
-        3. generator + controller (output starts OFF, sine, 1 Hz, minimum amplitude)
+        3. generator + controller (output starts OFF, sine, 1 Hz, 1 Vpp, 0 V offset)
         4. MCP routes on the shared HTTP server (it starts once Wi-Fi is up)
         5. input + display. the network line and the BLE status/pairing popup
            read WifiManager and BleService through functions given to
@@ -24,8 +24,7 @@
     reach WifiManager and BleService through runDeviceAction.
 
     Objects are created here and not as globals: global constructors run
-    before the Arduino core is ready, and MCP4131's constructor already starts
-    the SPI bus.
+    before the Arduino core is ready.
 */
 
 #include "src/config.h"
@@ -95,7 +94,7 @@ void setup() {
         }
     }
 
-    FunctionGenerator* funcGen = new FunctionGenerator(PIN_AD9833_CS, PIN_MCP4131_CS);
+    FunctionGenerator* funcGen = new FunctionGenerator(PIN_AD9833_CS, PIN_AMP_DAC_CS, PIN_OFFSET_DAC_CS, PIN_WAVE_SWITCH);
     funcGen->begin();
     FuncGenController* controller = new FuncGenController(*funcGen);
 

@@ -1,7 +1,7 @@
 /**************************************************************************
 *   Author: Parikshith Venkataraghavan
 *   Purpose: host-test stand-in for the Arduino core. only what the vendored
-             AD9833/MCP4131 libs and src/core need. pin writes are recorded
+             AD9833/AD5452 libs and src/core need. pin writes are recorded
              so the fake SPI can tell which chip select is active
 **************************************************************************/
 

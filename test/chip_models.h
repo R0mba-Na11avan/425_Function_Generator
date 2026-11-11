@@ -1,7 +1,7 @@
 /**************************************************************************
 *   Author: Parikshith Venkataraghavan
 *   Purpose: replays the fake SPI log through simple models of the AD9833
-             and MCP4131 so tests can check what the chips would hold,
+             and AD5452 so tests can check what the chips would hold,
              instead of the exact order the libraries write things in
 **************************************************************************/
 
@@ -53,25 +53,31 @@ inline Ad9833Model replayAd9833(const SPIClass& spi, int csPin) {
     return m;
 }
 
-//MCP4131 wiper 0, from the write commands
-struct Mcp4131Model {
-    int wiper = -1; //-1 = never written
+//AD5452 DAC register, from the 16-bit words (C1 C0 D11..D0 X X, datasheet Table 10)
+struct Ad5452Model {
+    int code = 0;       //power-on state is zero scale
     int writes = 0;
-    int badMode = 0;
+    int badMode = 0;    //frames not sent in SPI mode 1 (falling-edge clocking, SCLK idle low)
+    int badControl = 0; //C1 C0 not 00 (11 would move clocking to the rising edge)
+    int badLength = 0;  //frames that weren't exactly one 16-bit word
 };
 
-inline Mcp4131Model replayMcp4131(const SPIClass& spi, int csPin) {
-    Mcp4131Model m;
+inline Ad5452Model replayAd5452(const SPIClass& spi, int csPin) {
+    Ad5452Model m;
     for (const SpiFrame& f : spi.frames) {
         if (f.csPin != csPin) continue;
-        if (f.dataMode != SPI_MODE0) m.badMode++;
-        if (f.bytes.size() < 2) continue;
-        uint8_t address = f.bytes[0] >> 4;
-        uint8_t command = (f.bytes[0] >> 2) & 0x3;
-        if (address == 0 && command == 0) {
-            m.wiper = f.bytes[1];
-            m.writes++;
+        if (f.dataMode != SPI_MODE1) m.badMode++;
+        if (f.bytes.size() != 2) {
+            m.badLength++;
+            continue;
         }
+        uint16_t word = (f.bytes[0] << 8) | f.bytes[1];
+        if (word >> 14) {
+            m.badControl++;
+            continue;
+        }
+        m.code = (word >> 2) & 0x0FFF;
+        m.writes++;
     }
     return m;
 }

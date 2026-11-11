@@ -1,8 +1,9 @@
 # Function Generator (ECE 425)
 
 Firmware for a function generator built around an ESP32-S3 (N16R8). An AD9833
-produces the waveform, an MCP4131 digital potentiometer sets the amplitude, and
-the ESP32 provides three ways to control it:
+produces the waveform, a TS5A3159A switch picks the sine/triangle or square
+path, and two AD5452 multiplying DACs set the amplitude and DC offset (see
+`docs/parts.md` for the output stage). The ESP32 provides three ways to control it:
 
 - **Local:** an ILI9341 LCD dashboard with a rotary encoder and touchscreen
 - **AI agents:** an MCP server over Wi-Fi (required for the project)
@@ -15,7 +16,7 @@ oui oui baugette
 
 ```
  LCD + encoder + touch ─┐
- MCP server (HTTP) ─────┼──► FuncGenController ──► FunctionGenerator ──► AD9833 + MCP4131
+ MCP server (HTTP) ─────┼──► FuncGenController ──► FunctionGenerator ──► AD9833 + 2x AD5452 + switch
  BLE (NimBLE) ──────────┘      (mutex, listeners)
 ```
 
@@ -30,8 +31,8 @@ outside `core/` touches `FunctionGenerator` directly.
 425_Function_Generator.ino   creates and wires everything in setup(), loop() deletes itself
 src/
   config.h   pins, limits, task settings, network constants
-  libs/      vendored third-party libs (AD9833, MCP4131, Adafruit GFX + ILI9341,
-             XPT2046_Touchscreen, ArduinoJson)
+  libs/      vendored third-party libs (AD9833, Adafruit GFX + ILI9341,
+             XPT2046_Touchscreen, ArduinoJson) + our own AD5452 driver
   core/      FunctionGenerator, FuncGenState, FuncGenController
   core/      ... + net_status.h / ble_status.h (Wi-Fi and BLE state shared by comms and ui)
   ui/        display_ui (UI task, canvases, listener), dashboard_view (drawing),
@@ -54,7 +55,7 @@ headers, so include across folders with relative paths (`"../core/..."`).
 
 | Part | State |
 |---|---|
-| `FunctionGenerator` (AD9833 + MCP4131) | done (incl. output enable and limit getters), amplitude mapping is a placeholder |
+| `FunctionGenerator` (AD9833 + 2x AD5452 + path switch) | done (incl. output enable, DC offset, peak limit and limit getters), host-tested, calibration values in `config.h` are placeholders until the output stage is measured |
 | `FuncGenController` / `FuncGenState` | done |
 | `ui/input` (encoder via PCNT, button, XPT2046 touch) | done, not tried on hardware yet, touch calibration is a placeholder |
 | `ui/display_ui` (dashboard, editing, info panel with Wi-Fi/phone buttons, remote-change flash, pairing popup) | done, not tried on hardware yet |
@@ -94,6 +95,13 @@ AP fallback + provisioning page) -> MCP server -> BLE.
   fixed-unit integers and out-of-range writes are rejected, like MCP.
 - **Limits live in one place** so the LCD, MCP schemas, `get_limits` and the BLE
   range checks can't disagree.
+- **Peak limit:** the output can't swing past `OUTPUT_PEAK_MAX_V`, so
+  amplitude / 2 + |offset| has to stay below it. The value being changed stops
+  at the edge (knob stops, MCP/BLE get an out-of-range error); the other one is
+  never moved. `FuncGenLimits::amplitudeFor` / `dcOffsetFor` give the range
+  allowed right now.
+- **Output off** puts the AD9833 to sleep and sets both DACs to 0 V output. The
+  amplitude and offset are kept and come back when the output is turned on.
 
 ## Build (Arduino IDE)
 
@@ -111,8 +119,13 @@ setup routes and the MCP server, include it as
 ## Using it
 
 - **Knob:** turn to pick a field, press to edit it (press on OUTPUT toggles the
-  output), turn to change the value, press again when done. Edit mode also ends
-  after 10 s without input. Long press on FREQUENCY changes the step.
+  output), turn to change the value. Long press when done (on amplitude, offset
+  and waveform a second press works too). Edit mode also ends after 10 s
+  without input.
+- **Frequency:** while editing, each press moves the underlined digit to the
+  next power of 10 (0.1 Hz, 1 Hz, 10 Hz ... 1 MHz, then back to 0.1 Hz); the
+  current step shows as "STEP" in the top right. Turning starts from the value
+  on screen. In MHz the 0.1 Hz digit isn't shown, so that step acts as 1 Hz.
 - **Touch:** tap a field to select it, tap it again to edit, tap a frequency
   digit to step that digit. Tap the status bar for the network info panel.
 - **Remote changes:** a field changed over MCP or BLE flashes magenta and an
@@ -121,7 +134,9 @@ setup routes and the MCP server, include it as
 - **Bluetooth:** a Bluetooth icon at the right of the status bar means a phone is
   connected. When a new phone pairs, a full-screen popup shows the code to type
   on the phone; press or tap to cancel (it cancels itself after 30 s).
-- **Power-on:** sine, 1 Hz, minimum amplitude, output OFF.
+- **Power-on:** sine, 1 Hz, 1 Vpp, 0 V offset, output OFF.
+- **Amplitude and offset** share one limit: the bigger the amplitude, the less
+  offset is allowed (and the other way round). The knob just stops at the edge.
 - **Info panel buttons:** turn the knob to highlight "Change Wi-Fi", "Forget
   phones" or "close" and press, or tap them.
   - *Change Wi-Fi* (asks first) opens setup mode; the info panel then shows the
@@ -165,9 +180,9 @@ Tools: `set_waveform`, `set_frequency`, `set_amplitude`, `set_phase`,
 |---|---|---|---|---|
 | `54750f01-…` | waveform | 1 (u8) | 0 sine, 1 square, 2 triangle | `02` |
 | `54750f02-…` | frequency | 4 (u32) | 0.01 Hz | 1 kHz = 100000 = `A0 86 01 00` |
-| `54750f03-…` | amplitude | 2 (u16) | mVpp (range depends on waveform) | 2.5 Vpp = 2500 = `C4 09` |
+| `54750f03-…` | amplitude | 2 (u16) | mVpp (range depends on waveform and offset) | 2.5 Vpp = 2500 = `C4 09` |
 | `54750f04-…` | phase | 2 (u16) | 0.01 degree, 0 to 35999 | 90° = 9000 = `28 23` |
-| `54750f05-…` | DC offset | 2 (s16) | mV | -0.25 V = -250 = `06 FF` |
+| `54750f05-…` | DC offset | 2 (s16) | mV (range depends on amplitude) | -0.25 V = -250 = `06 FF` |
 | `54750f06-…` | output | 1 (u8) | 0 off, 1 on | `01` |
 
 Full UUIDs: `54750fXX-f75a-46c0-b78a-746996b46f1a`. Numbers are little-endian
@@ -182,7 +197,7 @@ the board from the phone's Bluetooth settings and pair again.
 
 Host tests run the real core, UI logic and vendored libraries on a PC against
 fake Arduino/SPI/FreeRTOS headers (`test/fakes`). They check what would reach
-the AD9833 and MCP4131, and render the dashboard with the real Adafruit GFX code
+the AD9833, both AD5452s and the path switch, and render the dashboard with the real Adafruit GFX code
 to BMP screenshots in `test/build/screens`. The HTTP server, Wi-Fi state machine
 and setup routes run against a fake esp_http_server. The BLE value encoding and
 range checks run against the real controller; the NimBLE stack itself isn't

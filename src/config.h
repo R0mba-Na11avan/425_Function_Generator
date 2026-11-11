@@ -24,17 +24,23 @@
     REAL WIRING. Change them here only: every file includes this header, so the
     sketch and all modules pick the new pins up on the next build.
 
-    Bus plan: the generator chips use the default SPI object (FSPI) because
-    MCP4131 currently uses the global SPI. The display + touch share a second
-    bus (HSPI object), so a slow LCD redraw never delays a frequency change.
+    Bus plan: the generator chips (AD9833 + both AD5452s) share the default
+    SPI object (FSPI). The display + touch share a second bus (HSPI object),
+    so a slow LCD redraw never delays a frequency change.
 */
 
 //generator bus (default SPI / FSPI)
-#define PIN_GEN_SCK     12
-#define PIN_GEN_MISO    13
-#define PIN_GEN_MOSI    11
-#define PIN_AD9833_CS   10
-#define PIN_MCP4131_CS  9
+#define PIN_GEN_SCK         12
+#define PIN_GEN_MISO        13
+#define PIN_GEN_MOSI        11
+#define PIN_AD9833_CS       10
+#define PIN_AMP_DAC_CS      9       //AD5452 #1 SYNC: scales the amplified wave (amplitude)
+#define PIN_OFFSET_DAC_CS   14      //AD5452 #2 SYNC: sets the DC offset
+
+//TS5A3159A analog switch IN pin: LOW = NC = filtered sine/triangle path,
+//HIGH = NO = divided square path. put a pull-down on it so the sine path is
+//selected while the ESP32 boots
+#define PIN_WAVE_SWITCH     21
 
 //display + touch bus (HSPI). wire T_CLK/T_DIN/T_DO to the same SCK/MOSI/MISO.
 //MISO is only for the touch chip's T_DO: leave the LCD's own SDO(MISO) pin
@@ -70,24 +76,53 @@
 #define PHASE_MIN_DEG       0.0f
 #define PHASE_MAX_DEG       360.0f
 
-//amplitude (Vpp), per waveform.
-//PLACEHOLDERS until the output stage is built and measured on a scope.
-//the min is the AD9833's own sine output (650 mV - 38 mV, from the datasheet).
-//the square wave comes out at V_CC-0 instead, so it needs a voltage divider
-//(2N7000 switch) to keep the amplitude consistent with sine/triangle
-#define AMP_MIN_VPP_SINE        (0.650f - 0.038f)
-#define AMP_MAX_VPP_SINE        5.0f
-#define AMP_MIN_VPP_SQUARE      (0.650f - 0.038f)
-#define AMP_MAX_VPP_SQUARE      5.0f
-#define AMP_MIN_VPP_TRIANGLE    (0.650f - 0.038f)
-#define AMP_MAX_VPP_TRIANGLE    5.0f
+/*
+    Output stage (see docs/parts.md): AD9833 -> TS5A3159A (sine/triangle or
+    divided square) -> x20 gain -> AD5452 #1 (0..100 %) -> summer with
+    AD5452 #2 (DC offset) -> 50 ohm -> output.
 
-//DC offset (V). PLACEHOLDER, offset is stored but not applied to hardware yet
-#define DC_OFFSET_MIN_V     -2.5f
-#define DC_OFFSET_MAX_V     2.5f
+    ALL VALUES BELOW ARE PLACEHOLDERS until the stage is built and measured on
+    a scope. Calibrating = measuring the numbers marked "measure".
+*/
 
-//MCP4131 is a 7-bit pot: wiper positions 0..128
-#define MCP4131_WIPER_MAX   128
+//amplitude (Vpp into high-Z), per waveform (the square goes through its own
+//divider, so it can differ). min..max is the user-facing range
+#define AMP_MIN_VPP_SINE        0.0f
+#define AMP_MAX_VPP_SINE        12.0f
+#define AMP_MIN_VPP_SQUARE      0.0f
+#define AMP_MAX_VPP_SQUARE      12.0f
+#define AMP_MIN_VPP_TRIANGLE    0.0f
+#define AMP_MAX_VPP_TRIANGLE    12.0f
+
+//measure: output Vpp with the amplitude AD5452 at full code (4095), per
+//waveform. the AD5452 is linear, so every other code scales from this.
+//must be >= the matching AMP_MAX (checked in func_gen.cpp)
+#define AMP_FULL_CODE_VPP_SINE      12.0f
+#define AMP_FULL_CODE_VPP_SQUARE    12.0f
+#define AMP_FULL_CODE_VPP_TRIANGLE  12.0f
+
+//amplitude at power-on (clamped into the waveform's range)
+#define AMP_DEFAULT_VPP         1.0f
+
+//DC offset (V). this is the widest range, the real one also has to respect
+//OUTPUT_PEAK_MAX_V below
+#define DC_OFFSET_MIN_V     -10.0f
+#define DC_OFFSET_MAX_V     10.0f
+
+//measure: DC at the output with the offset AD5452 at code 0 and at full code
+//(4095), amplitude AD5452 at 0. if the wiring flips the sign, these just swap.
+//the AD5452 powers up at code 0, so the output sits at OFFSET_V_AT_CODE_0
+//until FunctionGenerator::begin() runs (keep begin() early in setup)
+#define OFFSET_V_AT_CODE_0      -10.0f
+#define OFFSET_V_AT_FULL_CODE   10.0f
+
+//the op-amps can't swing past this, so amplitude / 2 + |offset| must stay at
+//or below it. changing one setting never moves the other: the one being
+//changed stops at the edge instead
+#define OUTPUT_PEAK_MAX_V   10.0f
+
+//SPI clock for both AD5452s (the chip allows up to 50 MHz)
+#define MDAC_SPI_HZ         8000000
 
 
 /*
@@ -96,16 +131,16 @@
 
 #define LCD_WIDTH           320     //after rotation
 #define LCD_HEIGHT          240
-#define LCD_ROTATION        1       //landscape
+#define LCD_ROTATION        3       //landscape, flipped 180 to match the touch panel
 #define LCD_SPI_HZ          40000000
 
 //redraw rate cap for the UI task
 #define UI_FRAME_MS         40      //~25 Hz
 #define UI_NET_POLL_MS      500     //how often the network line is refreshed
 
-//editing steps on the dashboard. frequency steps are 1 Hz .. 1 MHz (x10 each),
-//cycled with a long press or by tapping a digit
-#define UI_FREQ_STEP_DEFAULT    3       //index into 1, 10, 100, 1k, ... -> 1 kHz
+//editing steps on the dashboard. frequency steps are 0.1 Hz .. 1 MHz (x10 each),
+//picked with a press while editing frequency or by tapping a digit
+#define UI_FREQ_STEP_DEFAULT    4       //index into 0.1, 1, 10, 100, 1k, ... -> 1 kHz
 #define UI_AMP_STEP_V           0.05f
 #define UI_OFFSET_STEP_V        0.05f
 

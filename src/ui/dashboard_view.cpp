@@ -205,13 +205,15 @@ static void renderFrequency(Adafruit_GFX& g, Rect r, const DashboardView& v, boo
     drawFrame(g, r, selected, editing, remote);
     drawLabel(g, r, "FREQUENCY", editing ? COLOR_EDITING : COLOR_LABEL);
 
-    //step, right aligned in the label row
+    //step, right aligned in the label row. the step the knob really uses at
+    //this frequency (0.1 Hz isn't on screen in MHz, so it acts as 1 Hz there)
+    uint8_t stepIndex = freqStepShown(v.state.frequency, v.freqStepIndex);
     char step[12];
     char stepLine[20];
-    formatFreqStep(v.freqStepIndex, step, sizeof(step));
+    formatFreqStep(stepIndex, step, sizeof(step));
     snprintf(stepLine, sizeof(stepLine), "STEP %s", step);
     g.setFont(nullptr);
-    g.setTextColor(COLOR_LABEL);
+    g.setTextColor(editing ? COLOR_EDITING : COLOR_LABEL);
     g.setCursor(r.x + r.w - 8 - (int16_t)strlen(stepLine) * 6, r.y + 6);
     g.print(stepLine);
 
@@ -226,7 +228,7 @@ static void renderFrequency(Adafruit_GFX& g, Rect r, const DashboardView& v, boo
     g.print(f.unit);
 
     //underline the digit the encoder changes, if it is on screen
-    int8_t digit = stepDigitIndex(f, freqStepHz(v.freqStepIndex));
+    int8_t digit = stepDigitIndex(f, freqStepHz(stepIndex));
     if (digit >= 0) {
         int16_t x = numCharX(f.text, startX, digit);
         g.fillRect(x, baseline + 12, numCharWidth(f.text[digit]), 3, editing ? COLOR_EDITING : COLOR_LABEL);
@@ -238,14 +240,16 @@ static void renderValue(Adafruit_GFX& g, Rect r, bool selected, bool editing, bo
     drawFrame(g, r, selected, editing, remote);
     drawLabel(g, r, label, editing ? COLOR_EDITING : COLOR_LABEL);
 
+    //unit right aligned in the label row, so the number gets the whole width
+    //(12.00 and -10.00 don't fit next to a unit)
+    g.setFont(nullptr);
+    g.setTextColor(COLOR_TEXT);
+    g.setCursor(r.x + r.w - 8 - (int16_t)strlen(unit) * 6, r.y + 6);
+    g.print(unit);
+
     int16_t x = r.x + 10;
     int16_t baseline = r.y + VALUE_BASELINE;
     drawNumber(g, x, baseline, value, editing ? COLOR_EDITING : COLOR_TEXT);
-
-    g.setFont(&FreeSansBold9pt7b);
-    g.setTextColor(COLOR_TEXT);
-    g.setCursor(x + numTextWidth(value) + 6, baseline);
-    g.print(unit);
 }
 
 //public

@@ -15,6 +15,7 @@ static FuncGenLimits limits() {
     l.phase = FunctionGenerator::phaseRange();
     for (uint8_t i = 0; i < WAVEFORM_COUNT; i++) l.amplitude[i] = FunctionGenerator::amplitudeRange((WAVEFORM)i);
     l.dcOffset = FunctionGenerator::dcOffsetRange();
+    l.outputPeak = FunctionGenerator::outputPeakMax();
     return l;
 }
 
@@ -57,10 +58,14 @@ TEST(frequency_units_and_decimals) {
     f = formatFrequency(999.9f);
     CHECK(strcmp(f.text, "999.9") == 0 && strcmp(f.unit, "Hz") == 0);
     f = formatFrequency(999.96f); //would round to "1000.0 Hz"
-    CHECK(strcmp(f.text, "1.000") == 0 && strcmp(f.unit, "kHz") == 0);
+    CHECK(strcmp(f.text, "1.0000") == 0 && strcmp(f.unit, "kHz") == 0);
     f = formatFrequency(1500.0f);
-    CHECK(strcmp(f.text, "1.500") == 0 && strcmp(f.unit, "kHz") == 0);
-    f = formatFrequency(999999.7f);
+    CHECK(strcmp(f.text, "1.5000") == 0 && strcmp(f.unit, "kHz") == 0);
+    f = formatFrequency(1000.1f); //the 0.1 Hz digit is shown in kHz too
+    CHECK(strcmp(f.text, "1.0001") == 0 && strcmp(f.unit, "kHz") == 0);
+    f = formatFrequency(999999.6f);
+    CHECK(strcmp(f.text, "999.9996") == 0 && strcmp(f.unit, "kHz") == 0);
+    f = formatFrequency(999999.97f); //would round to "1000.0000 kHz"
     CHECK(strcmp(f.text, "1.000000") == 0 && strcmp(f.unit, "MHz") == 0);
     f = formatFrequency(12500000.0f);
     CHECK(strcmp(f.text, "12.500000") == 0 && strcmp(f.unit, "MHz") == 0);
@@ -69,6 +74,8 @@ TEST(frequency_units_and_decimals) {
 
 TEST(longest_frequency_fits_its_field) {
     FrequencyText f = formatFrequency(FREQ_MAX_HZ);
+    CHECK(freqTextStartX(f.text) >= 6);
+    f = formatFrequency(999999.0f); //longest kHz text, "999.9990"
     CHECK(freqTextStartX(f.text) >= 6);
     CHECK(freqUnitX() + 52 <= fieldRect(UI_FIELD::FREQUENCY).w);
 }
@@ -96,25 +103,49 @@ TEST(digit_place_values) {
 }
 
 TEST(step_digit_index) {
-    FrequencyText f = formatFrequency(1500.0f); //"1.500" kHz
+    FrequencyText f = formatFrequency(1500.0f); //"1.5000" kHz
     CHECK_EQ(stepDigitIndex(f, 1000), 0);
     CHECK_EQ(stepDigitIndex(f, 100), 2);
     CHECK_EQ(stepDigitIndex(f, 1), 4);
+    CHECK_EQ(stepDigitIndex(f, 0.1f), 5);
     CHECK_EQ(stepDigitIndex(f, 10000), -1); //not on screen
 
     f = formatFrequency(5000000.0f); //"5.000000" MHz, every step down to 1 Hz is visible
-    for (uint8_t s = 0; s < FREQ_STEP_COUNT; s++) CHECK(stepDigitIndex(f, freqStepHz(s)) >= 0);
+    for (uint8_t s = 1; s < FREQ_STEP_COUNT; s++) CHECK(stepDigitIndex(f, freqStepHz(s)) >= 0);
+    CHECK_EQ(stepDigitIndex(f, freqStepHz(0)), -1); //0.1 Hz isn't
+
+    f = formatFrequency(0.5f); //"0.5" Hz
+    CHECK_EQ(stepDigitIndex(f, 0.1f), 2);
 }
 
 TEST(freq_steps) {
-    CHECK_NEAR(freqStepHz(0), 1, 0);
-    CHECK_NEAR(freqStepHz(3), 1000, 0);
-    CHECK_NEAR(freqStepHz(6), 1000000, 0);
+    CHECK_NEAR(freqStepHz(0), 0.1, 1e-7);
+    CHECK_NEAR(freqStepHz(1), 1, 0);
+    CHECK_NEAR(freqStepHz(4), 1000, 0);
+    CHECK_NEAR(freqStepHz(7), 1000000, 0);
+    CHECK_NEAR(freqStepHz(UI_FREQ_STEP_DEFAULT), 1000, 0);
     char buf[16];
     formatFreqStep(0, buf, sizeof(buf));
+    CHECK(strcmp(buf, "0.1 Hz") == 0);
+    formatFreqStep(1, buf, sizeof(buf));
     CHECK(strcmp(buf, "1 Hz") == 0);
-    formatFreqStep(5, buf, sizeof(buf));
+    formatFreqStep(6, buf, sizeof(buf));
     CHECK(strcmp(buf, "100 kHz") == 0);
+}
+
+TEST(freq_step_shown_follows_the_readout) {
+    CHECK_NEAR(freqResolutionHz(500.0f), 0.1, 1e-7);
+    CHECK_NEAR(freqResolutionHz(50000.0f), 0.1, 1e-7);
+    CHECK_NEAR(freqResolutionHz(5e6f), 1, 0);
+    CHECK_EQ(freqStepShown(500.0f, 0), 0);
+    CHECK_EQ(freqStepShown(5e6f, 0), 1);    //0.1 Hz acts as 1 Hz in MHz
+    CHECK_EQ(freqStepShown(5e6f, 3), 3);
+
+    //next power of 10 up, wrapping to the smallest shown step
+    CHECK_EQ(nextFreqStep(500.0f, 0), 1);
+    CHECK_EQ(nextFreqStep(500.0f, FREQ_STEP_COUNT - 1), 0);
+    CHECK_EQ(nextFreqStep(5e6f, FREQ_STEP_COUNT - 1), 1);
+    CHECK_EQ(nextFreqStep(5e6f, 0), 2);     //from the 1 Hz it was acting as
 }
 
 TEST(amplitude_and_offset_text) {
@@ -215,21 +246,74 @@ TEST(editor_frequency_steps_and_clamps) {
     c = ed.handle(encoder(1, 1), s, limits(), 0);
     CHECK(c.action == EDIT_ACTION::NONE); //already at the limit
 
-    ed.handle(button(INPUT_EVENT::BUTTON_SHORT), s, limits(), 0);
+    ed.handle(button(INPUT_EVENT::BUTTON_LONG), s, limits(), 0);
     CHECK(!ed.editing());
 }
 
-TEST(editor_long_press_cycles_frequency_step) {
+TEST(editor_press_moves_frequency_step_long_press_leaves) {
     DashboardEditor ed;
-    FuncGenState s = state();
-    for (uint8_t i = 1; i <= FREQ_STEP_COUNT; i++) {
-        ed.handle(button(INPUT_EVENT::BUTTON_LONG), s, limits(), 0);
-        CHECK_EQ(ed.freqStepIndex(), (UI_FREQ_STEP_DEFAULT + i) % FREQ_STEP_COUNT);
-    }
-    ed.handle(encoder(1, 1), s, limits(), 0); //amplitude
-    uint8_t before = ed.freqStepIndex();
+    FuncGenState s = state(500.0f);
     ed.handle(button(INPUT_EVENT::BUTTON_LONG), s, limits(), 0);
-    CHECK_EQ(ed.freqStepIndex(), before); //only on the frequency field
+    CHECK_EQ(ed.freqStepIndex(), UI_FREQ_STEP_DEFAULT); //not editing: nothing happens
+    CHECK(!ed.editing());
+
+    ed.handle(button(INPUT_EVENT::BUTTON_SHORT), s, limits(), 0); //enter
+    CHECK(ed.editing());
+    CHECK_EQ(ed.freqStepIndex(), UI_FREQ_STEP_DEFAULT);
+    for (uint8_t i = 1; i <= FREQ_STEP_COUNT; i++) {
+        ed.handle(button(INPUT_EVENT::BUTTON_SHORT), s, limits(), 0);
+        CHECK_EQ(ed.freqStepIndex(), (UI_FREQ_STEP_DEFAULT + i) % FREQ_STEP_COUNT);
+        CHECK(ed.editing()); //presses never leave
+    }
+
+    ed.handle(button(INPUT_EVENT::BUTTON_LONG), s, limits(), 0);
+    CHECK(!ed.editing());
+    uint8_t kept = ed.freqStepIndex();
+    ed.handle(button(INPUT_EVENT::BUTTON_SHORT), s, limits(), 0); //enter again
+    CHECK_EQ(ed.freqStepIndex(), kept); //the step is remembered
+
+    //on other fields a press still toggles, and a long press also leaves
+    DashboardEditor ed2;
+    ed2.handle(encoder(1, 1), s, limits(), 0); //amplitude
+    ed2.handle(button(INPUT_EVENT::BUTTON_SHORT), s, limits(), 0);
+    CHECK(ed2.editing());
+    ed2.handle(button(INPUT_EVENT::BUTTON_SHORT), s, limits(), 0);
+    CHECK(!ed2.editing());
+    ed2.handle(button(INPUT_EVENT::BUTTON_SHORT), s, limits(), 0);
+    ed2.handle(button(INPUT_EVENT::BUTTON_LONG), s, limits(), 0);
+    CHECK(!ed2.editing());
+    CHECK_EQ(ed2.freqStepIndex(), UI_FREQ_STEP_DEFAULT);
+}
+
+TEST(editor_frequency_tenths_can_be_removed) {
+    //the old trap: 0.1 Hz minimum, 1 Hz smallest step, so 1.1, 2.1, ... forever
+    DashboardEditor ed;
+    FuncGenState s = state(1.1f);
+    ed.handle(button(INPUT_EVENT::BUTTON_SHORT), s, limits(), 0);
+    while (ed.freqStepIndex() != 0) ed.handle(button(INPUT_EVENT::BUTTON_SHORT), s, limits(), 0);
+    EditCommand c = ed.handle(encoder(-1, -1), s, limits(), 0);
+    CHECK(c.action == EDIT_ACTION::SET_FREQUENCY);
+    CHECK_NEAR(c.value, 1.0, 1e-5);
+}
+
+TEST(editor_frequency_starts_from_the_value_on_screen) {
+    DashboardEditor ed;
+    ed.handle(button(INPUT_EVENT::BUTTON_SHORT), state(), limits(), 0);
+    while (ed.freqStepIndex() != 1) ed.handle(button(INPUT_EVENT::BUTTON_SHORT), state(), limits(), 0); //1 Hz
+
+    //"1.000000 MHz" on screen, the hidden 0.3 Hz is dropped
+    EditCommand c = ed.handle(encoder(1, 1), state(1000000.3f), limits(), 0);
+    CHECK_NEAR(c.value, 1000001.0, 0.07);   //float spacing near 1e6 is 0.0625
+
+    //the AD9833 applies about 1000.0629 for 1000.1: "1.0001 kHz" on screen,
+    //so -0.1 Hz steps from 1000.1, not from 1000.0629
+    while (ed.freqStepIndex() != 0) ed.handle(button(INPUT_EVENT::BUTTON_SHORT), state(), limits(), 0);
+    c = ed.handle(encoder(-1, -1), state(1000.0629f), limits(), 0);
+    CHECK_NEAR(c.value, 1000.0, 1e-3);
+
+    //0.1 Hz step in MHz acts as 1 Hz
+    c = ed.handle(encoder(1, 1), state(5000000.0f), limits(), 0);
+    CHECK_NEAR(c.value, 5000001.0, 0.5);
 }
 
 TEST(editor_amplitude_snaps_and_clamps) {
@@ -243,7 +327,7 @@ TEST(editor_amplitude_snaps_and_clamps) {
     CHECK(c.action == EDIT_ACTION::SET_AMPLITUDE);
     CHECK_NEAR(c.value, 1.10, 1e-4); //1.08 snapped to the 0.05 grid
 
-    ValueRange r = limits().amplitude[(uint8_t)WAVEFORM::SINE];
+    ValueRange r = limits().amplitudeFor(s);
     c = ed.handle(encoder(-1, -100), s, limits(), 0);
     CHECK_NEAR(c.value, r.min, 1e-6);
     c = ed.handle(encoder(1, 1000), s, limits(), 0);
@@ -260,7 +344,37 @@ TEST(editor_offset_steps) {
     CHECK(c.action == EDIT_ACTION::SET_DC_OFFSET);
     CHECK_NEAR(c.value, -2 * UI_OFFSET_STEP_V, 1e-5);
     c = ed.handle(encoder(-1, -1000), s, limits(), 0);
-    CHECK_NEAR(c.value, DC_OFFSET_MIN_V, 1e-6);
+    CHECK_NEAR(c.value, limits().dcOffsetFor(s).min, 1e-6);
+}
+
+TEST(editor_knob_stops_at_the_peak_limit) {
+    FuncGenLimits l = limits();
+    l.outputPeak = 5.0f;
+    l.amplitude[(uint8_t)WAVEFORM::SINE] = ValueRange{0.0f, 12.0f};
+    l.dcOffset = ValueRange{-10.0f, 10.0f};
+
+    //offset 2 V: amplitude stops at 6 Vpp
+    DashboardEditor ed;
+    FuncGenState s = state();
+    s.dcOffset = 2.0f;
+    ed.handle(encoder(1, 1), s, l, 0); //amplitude
+    CHECK(ed.selected() == UI_FIELD::AMPLITUDE);
+    ed.handle(button(INPUT_EVENT::BUTTON_SHORT), s, l, 0);
+    EditCommand c = ed.handle(encoder(1, 1000), s, l, 0);
+    CHECK(c.action == EDIT_ACTION::SET_AMPLITUDE);
+    CHECK_NEAR(c.value, 6.0, 1e-5);
+
+    //amplitude 4 Vpp: offset stops at +-3 V
+    DashboardEditor ed2;
+    s = state();
+    s.amplitude = 4.0f;
+    ed2.handle(encoder(2, 2), s, l, 0); //offset
+    CHECK(ed2.selected() == UI_FIELD::OFFSET);
+    ed2.handle(button(INPUT_EVENT::BUTTON_SHORT), s, l, 0);
+    c = ed2.handle(encoder(1, 1000), s, l, 0);
+    CHECK_NEAR(c.value, 3.0, 1e-5);
+    c = ed2.handle(encoder(-1, -1000), s, l, 0);
+    CHECK_NEAR(c.value, -3.0, 1e-5);
 }
 
 TEST(editor_waveform_cycles) {
@@ -318,20 +432,23 @@ TEST(editor_tap_output_toggles) {
 
 TEST(editor_tap_digit_sets_step) {
     DashboardEditor ed;
-    FuncGenState s = state(1500.0f); //"1.500" kHz
+    FuncGenState s = state(1500.0f); //"1.5000" kHz
     FrequencyText f = formatFrequency(s.frequency);
     Rect r = fieldRect(UI_FIELD::FREQUENCY);
     int16_t start = r.x + freqTextStartX(f.text);
     int16_t y = r.y + FREQ_BASELINE - 10;
 
     ed.handle(tap(numCharX(f.text, start, 2) + 3, y), s, limits(), 0); //the "5" = 100 Hz
-    CHECK_EQ(ed.freqStepIndex(), 2);
+    CHECK_EQ(ed.freqStepIndex(), 3);
     CHECK(ed.selected() == UI_FIELD::FREQUENCY);
     CHECK(ed.editing());
 
-    ed.handle(tap(numCharX(f.text, start, 4) + 3, y), s, limits(), 0); //last digit = 1 Hz
-    CHECK_EQ(ed.freqStepIndex(), 0);
+    ed.handle(tap(numCharX(f.text, start, 4) + 3, y), s, limits(), 0); //1 Hz digit
+    CHECK_EQ(ed.freqStepIndex(), 1);
     CHECK(ed.editing()); //stays in edit mode
+
+    ed.handle(tap(numCharX(f.text, start, 5) + 3, y), s, limits(), 0); //last digit = 0.1 Hz
+    CHECK_EQ(ed.freqStepIndex(), 0);
 
     ed.handle(tap(numCharX(f.text, start, 1) + 1, y), s, limits(), 0); //the dot: plain tap
     CHECK_EQ(ed.freqStepIndex(), 0);

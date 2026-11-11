@@ -32,7 +32,7 @@ static void noopListener(const FuncGenState&, CHANGE_SOURCE, void*) {}
 struct Rig {
     FunctionGenerator gen;
     FuncGenController ctl;
-    Rig() : gen(PIN_AD9833_CS, PIN_MCP4131_CS), ctl(gen) { gen.begin(); }
+    Rig() : gen(PIN_AD9833_CS, PIN_AMP_DAC_CS, PIN_OFFSET_DAC_CS, PIN_WAVE_SWITCH), ctl(gen) { gen.begin(); }
 };
 
 TEST(listener_gets_applied_state) {
@@ -111,6 +111,7 @@ TEST(limits_match_function_generator) {
     CHECK_NEAR(l.phase.max, FunctionGenerator::phaseRange().max, 0);
     CHECK_NEAR(l.dcOffset.min, FunctionGenerator::dcOffsetRange().min, 0);
     CHECK_NEAR(l.dcOffset.max, FunctionGenerator::dcOffsetRange().max, 0);
+    CHECK_NEAR(l.outputPeak, FunctionGenerator::outputPeakMax(), 0);
     for (uint8_t i = 0; i < WAVEFORM_COUNT; i++) {
         ValueRange r = FunctionGenerator::amplitudeRange((WAVEFORM)i);
         CHECK_NEAR(l.amplitude[i].min, r.min, 0);

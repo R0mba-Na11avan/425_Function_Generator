@@ -1,6 +1,7 @@
 # Function Generator (ECE 425)
 
-ESP32-S3 (N16R8) firmware: AD9833 waveform generator + MCP4131 amplitude pot,
+ESP32-S3 (N16R8) firmware: AD9833 waveform generator + two AD5452 MDACs
+(amplitude, DC offset) + a TS5A3159A path switch (parts: `docs/parts.md`),
 controlled by an ILI9341 LCD (encoder + touch), an MCP server over Wi-Fi, and
 BLE (last). Read `README.md` for the architecture and status. Each stub header in
 `src/` contains the spec for that module, so read it before implementing a file.
@@ -38,7 +39,9 @@ BLE (last). Read `README.md` for the architecture and status. Each stub header i
   The pins there are temporary placeholders until the wiring is confirmed. Never
   hardcode a pin elsewhere.
 - Valid ranges are defined in one place so the LCD, MCP schemas and `get_limits`
-  can't disagree.
+  can't disagree. Amplitude and offset also share `OUTPUT_PEAK_MAX_V`: check new
+  values with `FuncGenLimits::amplitudeFor` / `dcOffsetFor`, never only the
+  widest range. A setter clamps its own value and never moves the other one.
 - No LVGL. The UI is drawn directly with Adafruit GFX + ILI9341.
 - BLE uses NimBLE's C API (not the Arduino BLE wrapper, which can't reject
   writes). All NimBLE calls happen on the NimBLE host task. The GATT layout and
@@ -51,7 +54,8 @@ BLE (last). Read `README.md` for the architecture and status. Each stub header i
   enum/consts), `//comment` style, 4-space indent, header banner with Author and
   Purpose.
 - Third-party libs are vendored under `src/libs/<Name>/`. Don't modify them
-  unless asked.
+  unless asked. `src/libs/AD5452/` is ours (no library existed), so it can be
+  edited like any other project file.
 
 ## Arduino IDE constraints
 
@@ -81,7 +85,6 @@ versus what has only been reasoned about.
 
 ## Known gaps
 
-- `FunctionGenerator::ampToWipe()` is a linear placeholder, and the amplitude and
-  DC offset limits in `config.h` are placeholders until the output stage is
-  measured.
-- DC offset is stored but not applied to hardware.
+- The output stage isn't built yet: the amplitude/offset limits, the peak limit
+  and the AD5452 calibration values (`AMP_FULL_CODE_VPP_*`, `OFFSET_V_AT_*`) in
+  `config.h` are placeholders until it is measured.

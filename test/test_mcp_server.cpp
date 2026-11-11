@@ -17,7 +17,7 @@ struct McpRig {
     FuncGenController ctl;
     HttpServer http;
     McpServer mcp;
-    McpRig() : gen(PIN_AD9833_CS, PIN_MCP4131_CS), ctl(gen), mcp(ctl, http) {
+    McpRig() : gen(PIN_AD9833_CS, PIN_AMP_DAC_CS, PIN_OFFSET_DAC_CS, PIN_WAVE_SWITCH), ctl(gen), mcp(ctl, http) {
         fakeHttpdReset();
         gen.begin();
         mcp.begin();
@@ -280,9 +280,9 @@ TEST(mcp_out_of_range_is_rejected_not_clamped) {
     CHECK(!isToolError(r = call("set_frequency", "{\"hz\":12500000}")));
     CHECK(isToolError(r = call("set_frequency", "{\"hz\":1e999}")));
 
-    r = call("set_amplitude", "{\"vpp\":9}");
+    r = call("set_amplitude", "{\"vpp\":100}");
     CHECK(isToolError(r));
-    CHECK(contains(toolText(r), "for the sine waveform"));
+    CHECK(contains(toolText(r), "for the sine waveform at 0 V offset"));
 
     CHECK(isToolError(r = call("set_phase", "{\"degrees\":360}"))); //exclusive
     CHECK(contains(toolText(r), "less than 360"));
@@ -290,7 +290,8 @@ TEST(mcp_out_of_range_is_rejected_not_clamped) {
     CHECK(!isToolError(call("set_phase", "{\"degrees\":0}")));
     CHECK(!isToolError(call("set_phase", "{\"degrees\":359.9}")));
 
-    CHECK(isToolError(call("set_dc_offset", "{\"volts\":3}")));
+    CHECK(isToolError(call("set_dc_offset", "{\"volts\":100}")));
+    CHECK(isToolError(call("set_dc_offset", "{\"volts\":-100}")));
 }
 
 TEST(mcp_bad_arguments_are_tool_errors) {
@@ -332,9 +333,39 @@ TEST(mcp_get_limits_matches_controller) {
         CHECK_NEAR(s["amplitude_vpp"][names[i]]["max"].as<double>(), l.amplitude[i].max, 1e-6);
     }
     CHECK_NEAR(s["dc_offset_v"]["min"].as<double>(), l.dcOffset.min, 1e-6);
-    //floats are printed short, not as 0.6119999886
-    CHECK(contains(toolText(r), "0.612"));
-    CHECK(!contains(toolText(r), "0.61199"));
+    CHECK_NEAR(s["output_peak_v"].as<double>(), l.outputPeak, 1e-6);
+    //floats are printed short, not as 0.1000000015
+    CHECK(contains(toolText(r), "0.1"));
+    CHECK(!contains(toolText(r), "0.1000000"));
+}
+
+TEST(mcp_amplitude_and_offset_share_the_peak_limit) {
+    McpRig rig;
+    float peak = rig.ctl.limits().outputPeak;
+    CHECK(!isToolError(call("set_amplitude", "{\"vpp\":12}")));
+    CHECK_NEAR(rig.ctl.state().amplitude, 12.0, 1e-6);
+
+    //12 Vpp leaves peak - 6 V of offset; asking for more is an error, nothing changes
+    char args[48];
+    snprintf(args, sizeof(args), "{\"volts\":%.3f}", peak - 6.0f + 0.5f);
+    Rpc r = call("set_dc_offset", args);
+    CHECK(isToolError(r));
+    CHECK(contains(toolText(r), "at 12 Vpp amplitude"));
+    CHECK_NEAR(rig.ctl.state().dcOffset, 0.0, 1e-6);
+    CHECK_NEAR(rig.ctl.state().amplitude, 12.0, 1e-6);
+
+    snprintf(args, sizeof(args), "{\"volts\":%.3f}", peak - 6.0f);
+    CHECK(!isToolError(call("set_dc_offset", args)));
+    CHECK_NEAR(rig.ctl.state().dcOffset, peak - 6.0f, 1e-5);
+
+    //and back: with a big offset the amplitude can't grow, even below its own max
+    CHECK(!isToolError(call("set_amplitude", "{\"vpp\":1}")));
+    snprintf(args, sizeof(args), "{\"volts\":%.3f}", peak - 2.0f);
+    CHECK(!isToolError(call("set_dc_offset", args)));
+    CHECK(isToolError(r = call("set_amplitude", "{\"vpp\":5}"))); //only 4 Vpp left
+    CHECK(contains(toolText(r), "V offset"));
+    CHECK_NEAR(rig.ctl.state().amplitude, 1.0, 1e-6);
+    CHECK(!isToolError(call("set_amplitude", "{\"vpp\":4}")));
 }
 
 //HTTP-level checks

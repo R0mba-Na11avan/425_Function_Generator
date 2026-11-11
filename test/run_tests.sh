@@ -23,7 +23,7 @@ SOURCES=(
     "$ROOT/src/comms/mcp_server.cpp"
     "$ROOT/src/comms/ble_logic.cpp"
     "$ROOT/src/libs/AD9833/AD9833.cpp"
-    "$ROOT/src/libs/MCP4131/MCP4131.cpp"
+    "$ROOT/src/libs/AD5452/AD5452.cpp"
     "$ROOT/src/libs/Adafruit_GFX/Adafruit_GFX.cpp"
 )
 

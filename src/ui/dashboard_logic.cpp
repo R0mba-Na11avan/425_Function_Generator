@@ -114,8 +114,9 @@ FrequencyText formatFrequency(float hz) {
         snprintf(f.text, sizeof(f.text), "%.1f", hz);
         f.unit = "Hz";
         f.unitScale = 1.0f;
-    } else if (hz < 999999.5f) {
-        snprintf(f.text, sizeof(f.text), "%.3f", hz / 1e3f);
+    } else if (hz < 999999.95f) {
+        //4 decimals, so the 0.1 Hz digit is on screen too
+        snprintf(f.text, sizeof(f.text), "%.4f", hz / 1e3);
         f.unit = "kHz";
         f.unitScale = 1e3f;
     } else {
@@ -154,13 +155,32 @@ int8_t stepDigitIndex(const FrequencyText& f, float stepHz) {
 }
 
 float freqStepHz(uint8_t index) {
+    static const float STEPS[FREQ_STEP_COUNT] = {0.1f, 1.0f, 10.0f, 100.0f, 1e3f, 1e4f, 1e5f, 1e6f};
     if (index >= FREQ_STEP_COUNT) index = FREQ_STEP_COUNT - 1;
-    return powf(10.0f, (float)index);
+    return STEPS[index];
+}
+
+float freqResolutionHz(float hz) {
+    //same unit choice as formatFrequency: MHz shows 6 decimals (1 Hz), the rest 0.1 Hz
+    return formatFrequency(hz).unitScale >= 1e6f ? 1.0f : 0.1f;
+}
+
+uint8_t freqStepShown(float hz, uint8_t index) {
+    if (index >= FREQ_STEP_COUNT) index = FREQ_STEP_COUNT - 1;
+    float res = freqResolutionHz(hz);
+    while (index < FREQ_STEP_COUNT - 1 && freqStepHz(index) < res * 0.5f) index++;
+    return index;
+}
+
+uint8_t nextFreqStep(float hz, uint8_t index) {
+    uint8_t next = freqStepShown(hz, index) + 1;
+    if (next >= FREQ_STEP_COUNT) next = 0;
+    return freqStepShown(hz, next);
 }
 
 void formatFreqStep(uint8_t index, char* out, size_t len) {
     static const char* const LABELS[FREQ_STEP_COUNT] = {
-        "1 Hz", "10 Hz", "100 Hz", "1 kHz", "10 kHz", "100 kHz", "1 MHz"
+        "0.1 Hz", "1 Hz", "10 Hz", "100 Hz", "1 kHz", "10 kHz", "100 kHz", "1 MHz"
     };
     if (index >= FREQ_STEP_COUNT) index = FREQ_STEP_COUNT - 1;
     snprintf(out, len, "%s", LABELS[index]);
@@ -537,18 +557,23 @@ EditCommand DashboardEditor::onEncoder(const InputEvent& event, const FuncGenSta
             return c;
         }
         case UI_FIELD::FREQUENCY: {
-            //no snapping, so the other digits stay as they are
-            double hz = (double)state.frequency + (double)event.delta * freqStepHz(_stepIndex);
+            //start from the value on screen (digits it hides are dropped, so
+            //nothing invisible sticks around), then move by the step. the
+            //other shown digits stay as they are, no snapping to the step
+            double res = freqResolutionHz(state.frequency);
+            double shown = round((double)state.frequency / res) * res;
+            double hz = shown + (double)event.delta * freqStepHz(freqStepShown(state.frequency, _stepIndex));
             return valueCommand(EDIT_ACTION::SET_FREQUENCY, clampRange((float)hz, limits.frequency), state.frequency);
         }
         case UI_FIELD::AMPLITUDE: {
-            ValueRange r = limits.amplitude[(uint8_t)state.waveform];
+            //the offset stays put, so the knob stops at the peak limit
+            ValueRange r = limits.amplitudeFor(state);
             return valueCommand(EDIT_ACTION::SET_AMPLITUDE,
                                 stepSnapped(state.amplitude, event.delta, UI_AMP_STEP_V, r), state.amplitude);
         }
         case UI_FIELD::OFFSET:
             return valueCommand(EDIT_ACTION::SET_DC_OFFSET,
-                                stepSnapped(state.dcOffset, event.delta, UI_OFFSET_STEP_V, limits.dcOffset),
+                                stepSnapped(state.dcOffset, event.delta, UI_OFFSET_STEP_V, limits.dcOffsetFor(state)),
                                 state.dcOffset);
         case UI_FIELD::OUTPUT_ENABLE:
         default:
@@ -561,14 +586,17 @@ EditCommand DashboardEditor::onShortPress(const FuncGenState& state) {
         _editing = false;
         return outputCommand(!state.outputEnabled);
     }
+    if (_selected == UI_FIELD::FREQUENCY && _editing) {
+        //while editing frequency a press picks the digit, a long press leaves
+        _stepIndex = nextFreqStep(state.frequency, _stepIndex);
+        return noCommand();
+    }
     _editing = !_editing;
     return noCommand();
 }
 
 void DashboardEditor::onLongPress() {
-    if (_selected == UI_FIELD::FREQUENCY) {
-        _stepIndex = (_stepIndex + 1) % FREQ_STEP_COUNT;
-    }
+    _editing = false;
 }
 
 EditCommand DashboardEditor::onTap(const InputEvent& event, const FuncGenState& state) {
