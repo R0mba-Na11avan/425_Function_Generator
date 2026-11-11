@@ -285,12 +285,20 @@ TEST(editor_press_moves_frequency_step_long_press_leaves) {
     CHECK_EQ(ed2.freqStepIndex(), UI_FREQ_STEP_DEFAULT);
 }
 
+//presses until the frequency step is target, false if it never gets there
+static bool pressToStep(DashboardEditor& ed, const FuncGenState& s, uint8_t target) {
+    for (uint8_t i = 0; i <= FREQ_STEP_COUNT && ed.freqStepIndex() != target; i++) {
+        ed.handle(button(INPUT_EVENT::BUTTON_SHORT), s, limits(), 0);
+    }
+    return ed.freqStepIndex() == target;
+}
+
 TEST(editor_frequency_tenths_can_be_removed) {
     //the old trap: 0.1 Hz minimum, 1 Hz smallest step, so 1.1, 2.1, ... forever
     DashboardEditor ed;
     FuncGenState s = state(1.1f);
     ed.handle(button(INPUT_EVENT::BUTTON_SHORT), s, limits(), 0);
-    while (ed.freqStepIndex() != 0) ed.handle(button(INPUT_EVENT::BUTTON_SHORT), s, limits(), 0);
+    CHECK(pressToStep(ed, s, 0));
     EditCommand c = ed.handle(encoder(-1, -1), s, limits(), 0);
     CHECK(c.action == EDIT_ACTION::SET_FREQUENCY);
     CHECK_NEAR(c.value, 1.0, 1e-5);
@@ -299,7 +307,7 @@ TEST(editor_frequency_tenths_can_be_removed) {
 TEST(editor_frequency_starts_from_the_value_on_screen) {
     DashboardEditor ed;
     ed.handle(button(INPUT_EVENT::BUTTON_SHORT), state(), limits(), 0);
-    while (ed.freqStepIndex() != 1) ed.handle(button(INPUT_EVENT::BUTTON_SHORT), state(), limits(), 0); //1 Hz
+    CHECK(pressToStep(ed, state(), 1)); //1 Hz
 
     //"1.000000 MHz" on screen, the hidden 0.3 Hz is dropped
     EditCommand c = ed.handle(encoder(1, 1), state(1000000.3f), limits(), 0);
@@ -307,7 +315,7 @@ TEST(editor_frequency_starts_from_the_value_on_screen) {
 
     //the AD9833 applies about 1000.0629 for 1000.1: "1.0001 kHz" on screen,
     //so -0.1 Hz steps from 1000.1, not from 1000.0629
-    while (ed.freqStepIndex() != 0) ed.handle(button(INPUT_EVENT::BUTTON_SHORT), state(), limits(), 0);
+    CHECK(pressToStep(ed, state(), 0));
     c = ed.handle(encoder(-1, -1), state(1000.0629f), limits(), 0);
     CHECK_NEAR(c.value, 1000.0, 1e-3);
 

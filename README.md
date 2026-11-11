@@ -14,10 +14,19 @@ oui oui baugette
 
 ## Architecture
 
-```
- LCD + encoder + touch ─┐
- MCP server (HTTP) ─────┼──► FuncGenController ──► FunctionGenerator ──► AD9833 + 2x AD5452 + switch
- BLE (NimBLE) ──────────┘      (mutex, listeners)
+```mermaid
+flowchart LR
+    LCD["LCD + encoder + touch"]
+    MCP["MCP server (HTTP)"]
+    BLE["BLE (NimBLE)"]
+    CTRL["FuncGenController<br/>(mutex, listeners)"]
+    FG["FunctionGenerator"]
+    HW["AD9833 + 2x AD5452<br/>+ path switch"]
+
+    LCD --> CTRL
+    MCP --> CTRL
+    BLE --> CTRL
+    CTRL --> FG --> HW
 ```
 
 Every interface is a client of `FuncGenController`. It serializes access to the

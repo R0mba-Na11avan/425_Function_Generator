@@ -18,20 +18,30 @@ purpose. See [Open items](#open-items).
 
 ## Signal chain
 
-```
-AD9833 VOUT ──┬── RC low-pass ──────────── NC ┐
-              │                               ├─ TS5A3159A COM ──► gain 1 (OPA2810 A, x5, subtracts ~0.3 V)
-              └── divider 3.3 V -> 0.6 V ─── NO ┘        ▲                         │
-                                                  ESP32 GPIO (IN)                    ▼
-                                                                          gain 2 (OPA2810 B, x4)
-                                                                                     │ VREF (±6 V max)
-                                                                                     ▼
-                                                                     AD5452 #1 (amplitude) ─► OPA2810 I/V
-                                                                                                │
-                                         offset reference ─► AD5452 #2 (DC offset) ─► TL071 I/V │
-                                                                                     │          │
-                                                                                     ▼          ▼
-                                                                                OPA2810 inverting summer ─► 50 Ω ─► output
+```mermaid
+flowchart TD
+    DDS["AD9833 VOUT"]
+    LPF["RC low-pass"]
+    DIV["Divider<br/>3.3 V to 0.6 V"]
+    SW["TS5A3159A<br/>COM"]
+    GPIO["ESP32 GPIO"]
+    G1["Gain 1<br/>OPA2810 A, x5<br/>subtracts ~0.3 V"]
+    G2["Gain 2<br/>OPA2810 B, x4"]
+    AMP["AD5452 #1<br/>amplitude"]
+    AIV["OPA2810 I/V"]
+    OREF["Offset reference"]
+    OFS["AD5452 #2<br/>DC offset"]
+    OIV["TL071 I/V"]
+    SUM["OPA2810<br/>inverting summer"]
+    R50["50 Ω"]
+    OUT(["Output"])
+
+    DDS -->|sine / triangle| LPF -->|NC| SW
+    DDS -->|square| DIV -->|NO| SW
+    GPIO -.->|IN| SW
+    SW --> G1 --> G2 -->|"VREF (±6 V max)"| AMP --> AIV --> SUM
+    OREF --> OFS --> OIV --> SUM
+    SUM --> R50 --> OUT
 ```
 
 The x20 gain is split over two op-amps (x5 then x4) so each stage keeps a
