@@ -6,3 +6,14 @@ test/build/
 
 #compile-time secrets, if ever added (see src/config.h)
 src/secrets.h
+
+#KiCad local autosave history (contains its own .git) and backups
+Function_Generator_PCB/.history/
+Function_Generator_PCB/*-backups/
+Function_Generator_PCB/fp-info-cache
+Function_Generator_PCB/symbols/*.bak
+Function_Generator_PCB/*.kicad_prl
+
+#PCB assistant chat history (other assistant files are shared)
+Function_Generator_PCB/.pcb_assistant/chats.json
+Function_Generator_PCB/.pcb_assistant/usage.jsonl
