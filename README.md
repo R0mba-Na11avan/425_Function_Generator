@@ -3,7 +3,8 @@
 Firmware for a function generator built around an ESP32-S3 (N16R8). An AD9833
 produces the waveform, a TS5A3159A switch picks the sine/triangle or square
 path, and two AD5452 multiplying DACs set the amplitude and DC offset (see
-`docs/parts.md` for the output stage). The ESP32 provides three ways to control it:
+`docs/parts.md` for the output stage, `docs/pinout_table.md` for the wiring).
+The ESP32 provides three ways to control it:
 
 - **Local:** an ILI9341 LCD dashboard with a rotary encoder and touchscreen
 - **AI agents:** an MCP server over Wi-Fi (required for the project)
