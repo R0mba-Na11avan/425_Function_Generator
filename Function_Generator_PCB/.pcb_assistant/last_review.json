@@ -306,8 +306,8 @@
     },
     {
       "severity": "verify",
-      "title": "Both 10V_ref and scaled_func are attached to the same items; 10V_ref will be used in the netlist (\u00d72)",
-      "detail": "Label '10V_ref'\nLabel 'scaled_func'\nLabel 'dc_offset'",
+      "title": "Both 10V_ref and dc_offset are attached to the same items; 10V_ref will be used in the netlist (\u00d72)",
+      "detail": "Label '10V_ref'\nLabel 'dc_offset'\nLabel 'scaled_func'",
       "failure_mode": "",
       "citation": "KiCad ERC rule multiple_net_names",
       "source": "erc",
@@ -345,20 +345,20 @@
   ],
   "runs": {
     "erc": {
-      "ts": 1794601705.182703,
-      "hash": "57d7dd675cd6a927"
+      "ts": 1794603541.1345897,
+      "hash": "728adcd19c834d41"
     },
     "pattern": {
-      "ts": 1794601705.182703,
-      "hash": "57d7dd675cd6a927"
+      "ts": 1794603541.1345897,
+      "hash": "728adcd19c834d41"
     },
     "drc": {
-      "ts": 1794601705.182703,
-      "hash": "57d7dd675cd6a927"
+      "ts": 1794603541.1345897,
+      "hash": "728adcd19c834d41"
     },
     "distributor": {
-      "ts": 1794601705.182703,
-      "hash": "57d7dd675cd6a927"
+      "ts": 1794603541.1345897,
+      "hash": "728adcd19c834d41"
     }
   },
   "coverage": [

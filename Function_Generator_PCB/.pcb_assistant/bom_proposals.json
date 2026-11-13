@@ -1,153 +1,6 @@
 {
   "proposals": [
     {
-      "id": "sch:e741d79c8d87",
-      "refdes": [
-        "R1",
-        "R2"
-      ],
-      "qty": 2,
-      "value": "50",
-      "footprint": null,
-      "current_mpn": null,
-      "current_price": null,
-      "offer": {
-        "mpn": "CRCW060350R0FKEA",
-        "manufacturer": "Vishay Dale",
-        "description": "RES SMD 50 OHM 1% 1/10W 0603",
-        "digikey_pn": "541-3318-1-ND",
-        "packaging": "Cut Tape (CT)",
-        "unit_price": 0.1,
-        "stock": 318807,
-        "lifecycle": "Active",
-        "product_url": "https://www.digikey.com/en/products/detail/vishay-dale/CRCW060350R0FKEA/5072766",
-        "datasheet_url": "https://www.vishay.com/docs/20035/dcrcwe3.pdf",
-        "min_order": 1,
-        "min_order_cost": null,
-        "bulk_only": false,
-        "photo_url": "https://mm.digikey.com/Volume0/opasdata/d220001/medias/images/2491/CRCW%200603%20%281608metric%29.jpg",
-        "category": "Resistors",
-        "parameters": {
-          "Resistance": "50 Ohms",
-          "Tolerance": "\u00b11%",
-          "Power (Watts)": "0.1W, 1/10W",
-          "Composition": "Thick Film",
-          "Features": "Automotive AEC-Q200",
-          "Temperature Coefficient": "\u00b1100ppm/\u00b0C",
-          "Operating Temperature": "-55\u00b0C ~ 155\u00b0C",
-          "Package / Case": "0603 (1608 Metric)",
-          "Supplier Device Package": "0603",
-          "Ratings": "-",
-          "Size / Dimension": "0.061\" L x 0.033\" W (1.55mm x 0.85mm)",
-          "Height - Seated (Max)": "0.020\" (0.50mm)",
-          "Number of Terminations": "2",
-          "Failure Rate": "-"
-        }
-      },
-      "alternatives": [
-        {
-          "mpn": "RN73R1ETTP50R0F50",
-          "manufacturer": "KOA Speer Electronics, Inc.",
-          "description": "RESISTOR",
-          "digikey_pn": "2019-RN73R1ETTP50R0F50CT-ND",
-          "packaging": "Cut Tape (CT)",
-          "unit_price": 0.12,
-          "stock": 112299,
-          "lifecycle": "Active",
-          "product_url": "https://www.digikey.com/en/products/detail/koa-speer-electronics-inc/RN73R1ETTP50R0F50/11476551",
-          "datasheet_url": "https://www.koaspeer.com/pdfs/RN73R.pdf",
-          "min_order": 1,
-          "min_order_cost": null,
-          "bulk_only": false,
-          "photo_url": "https://mm.digikey.com/Volume0/opasdata/d220001/medias/images/696/KOA-Speer-RK73Z-0402-%281005-Metric%29.jpg",
-          "category": "Resistors",
-          "parameters": {
-            "Resistance": "50 Ohms",
-            "Tolerance": "\u00b11%",
-            "Power (Watts)": "0.063W, 1/16W",
-            "Composition": "Thin Film",
-            "Features": "Automotive AEC-Q200, Moisture Resistant",
-            "Temperature Coefficient": "\u00b150ppm/\u00b0C",
-            "Operating Temperature": "-55\u00b0C ~ 155\u00b0C",
-            "Package / Case": "0402 (1005 Metric)",
-            "Supplier Device Package": "0402",
-            "Ratings": "-",
-            "Size / Dimension": "0.039\" L x 0.020\" W (1.00mm x 0.50mm)",
-            "Height - Seated (Max)": "0.016\" (0.40mm)",
-            "Number of Terminations": "2"
-          }
-        },
-        {
-          "mpn": "CRCW080550R0FKTA",
-          "manufacturer": "Vishay Dale",
-          "description": "CRCW0805 50 1% 100 RT1",
-          "digikey_pn": "541-CRCW080550R0FKTACT-ND",
-          "packaging": "Cut Tape (CT)",
-          "unit_price": 0.23,
-          "stock": 18305,
-          "lifecycle": "Active",
-          "product_url": "https://www.digikey.com/en/products/detail/vishay-dale/CRCW080550R0FKTA/21556509",
-          "datasheet_url": "https://www.vishay.com/docs/20008/dcrcw.pdf",
-          "min_order": 1,
-          "min_order_cost": null,
-          "bulk_only": false,
-          "photo_url": "https://mm.digikey.com/Volume0/opasdata/d220001/medias/images/4849/541_CRCW-0805-%282125metric%29.jpg",
-          "category": "Resistors",
-          "parameters": {
-            "Resistance": "50 Ohms",
-            "Tolerance": "\u00b11%",
-            "Power (Watts)": "0.125W, 1/8W",
-            "Composition": "Thick Film",
-            "Features": "Automotive AEC-Q200",
-            "Temperature Coefficient": "\u00b1100ppm/\u00b0C",
-            "Operating Temperature": "-55\u00b0C ~ 155\u00b0C",
-            "Package / Case": "0805 (2012 Metric)",
-            "Supplier Device Package": "0805",
-            "Ratings": "-",
-            "Size / Dimension": "0.079\" L x 0.049\" W (2.00mm x 1.25mm)",
-            "Height - Seated (Max)": "0.020\" (0.50mm)",
-            "Number of Terminations": "2",
-            "Failure Rate": "-"
-          }
-        },
-        {
-          "mpn": "TNPR020150R0FEED",
-          "manufacturer": "Vishay",
-          "description": "TNPR0201 50R0 1% T-9 ET7 E3",
-          "digikey_pn": "749-TNPR020150R0FEEDCT-ND",
-          "packaging": "Cut Tape (CT)",
-          "unit_price": 0.37,
-          "stock": 4243,
-          "lifecycle": "Active",
-          "product_url": "https://www.digikey.com/en/products/detail/vishay/TNPR020150R0FEED/22111418",
-          "datasheet_url": "https://www.vishay.com/docs/28949/tnpr_e3.pdf",
-          "min_order": 1,
-          "min_order_cost": null,
-          "bulk_only": false,
-          "photo_url": "https://mm.digikey.com/Volume0/opasdata/d220001/medias/images/5765/MFG_TNPR0201.jpg",
-          "category": "Resistors",
-          "parameters": {
-            "Resistance": "50 Ohms",
-            "Tolerance": "\u00b11%",
-            "Power (Watts)": "0.05W, 1/20W",
-            "Composition": "Thin Film",
-            "Features": "Anti-Sulfur, Moisture Resistant, RF, High Frequency",
-            "Temperature Coefficient": "\u00b125ppm/\u00b0C",
-            "Operating Temperature": "-55\u00b0C ~ 155\u00b0C",
-            "Package / Case": "0201 (0603 Metric)",
-            "Supplier Device Package": "0201",
-            "Size / Dimension": "0.024\" L x 0.012\" W (0.60mm x 0.30mm)",
-            "Height - Seated (Max)": "0.010\" (0.26mm)",
-            "Number of Terminations": "2",
-            "Failure Rate": "-"
-          }
-        }
-      ],
-      "rationale": "50\u03a9, \u22645%",
-      "status": "approved",
-      "created_at": "2026-11-12T22:39:00+00:00"
-    },
-    {
       "id": "sch:e9fc555a7773",
       "refdes": [
         "U2"
@@ -199,156 +52,6 @@
       "rationale": "exact part number TEC 2-1222WI \u2014 but only 0 in stock; alternatives are versions of TEC 2-1222WI you can buy 1 of",
       "status": "approved",
       "created_at": "2026-11-12T22:39:00+00:00"
-    },
-    {
-      "id": "sch:e2baff468f93",
-      "refdes": [
-        "R7",
-        "R8",
-        "R23",
-        "R24"
-      ],
-      "qty": 4,
-      "value": "10k",
-      "footprint": null,
-      "current_mpn": null,
-      "current_price": null,
-      "offer": {
-        "mpn": "CRCW040210K0FKED",
-        "manufacturer": "Vishay Dale",
-        "description": "RES 10K OHM 1% 1/16W 0402",
-        "digikey_pn": "541-10.0KLCT-ND",
-        "packaging": "Cut Tape (CT)",
-        "unit_price": 0.1,
-        "stock": 13221275,
-        "lifecycle": "Active",
-        "product_url": "https://www.digikey.com/en/products/detail/vishay-dale/CRCW040210K0FKED/1178121",
-        "datasheet_url": "https://www.vishay.com/docs/20035/dcrcwe3.pdf",
-        "min_order": 1,
-        "min_order_cost": null,
-        "bulk_only": false,
-        "photo_url": "https://mm.digikey.com/Volume0/opasdata/d220001/medias/images/596/Vishay-CRCW-0402.jpg",
-        "category": "Resistors",
-        "parameters": {
-          "Resistance": "10 kOhms",
-          "Tolerance": "\u00b11%",
-          "Power (Watts)": "0.063W, 1/16W",
-          "Composition": "Thick Film",
-          "Features": "Automotive AEC-Q200",
-          "Temperature Coefficient": "\u00b1100ppm/\u00b0C",
-          "Operating Temperature": "-55\u00b0C ~ 155\u00b0C",
-          "Package / Case": "0402 (1005 Metric)",
-          "Supplier Device Package": "0402",
-          "Ratings": "-",
-          "Size / Dimension": "0.039\" L x 0.020\" W (1.00mm x 0.50mm)",
-          "Height - Seated (Max)": "0.016\" (0.40mm)",
-          "Number of Terminations": "2",
-          "Failure Rate": "-"
-        }
-      },
-      "alternatives": [
-        {
-          "mpn": "RK73H1ETTP1002F",
-          "manufacturer": "KOA Speer Electronics, Inc.",
-          "description": "RES 10K OHM 1% 1/10W 0402",
-          "digikey_pn": "2019-RK73H1ETTP1002FCT-ND",
-          "packaging": "Cut Tape (CT)",
-          "unit_price": 0.1,
-          "stock": 11629670,
-          "lifecycle": "Active",
-          "product_url": "https://www.digikey.com/en/products/detail/koa-speer-electronics-inc/RK73H1ETTP1002F/9844154",
-          "datasheet_url": "https://www.koaspeer.com/pdfs/RK73H.pdf",
-          "min_order": 1,
-          "min_order_cost": null,
-          "bulk_only": false,
-          "photo_url": "https://mm.digikey.com/Volume0/opasdata/d220001/medias/images/5572/MFG_RK73H1HTTCM12R7D.jpg",
-          "category": "Resistors",
-          "parameters": {
-            "Resistance": "10 kOhms",
-            "Tolerance": "\u00b11%",
-            "Power (Watts)": "0.1W, 1/10W",
-            "Composition": "Thick Film",
-            "Features": "Automotive AEC-Q200",
-            "Temperature Coefficient": "\u00b1100ppm/\u00b0C",
-            "Operating Temperature": "-55\u00b0C ~ 155\u00b0C",
-            "Package / Case": "0402 (1005 Metric)",
-            "Supplier Device Package": "0402",
-            "Ratings": "-",
-            "Size / Dimension": "0.039\" L x 0.020\" W (1.00mm x 0.50mm)",
-            "Height - Seated (Max)": "0.016\" (0.40mm)",
-            "Number of Terminations": "2",
-            "Failure Rate": "-"
-          }
-        },
-        {
-          "mpn": "RMCF0402FT10K0",
-          "manufacturer": "Stackpole Electronics Inc",
-          "description": "RES 10K OHM 1% 1/16W 0402",
-          "digikey_pn": "RMCF0402FT10K0CT-ND",
-          "packaging": "Cut Tape (CT)",
-          "unit_price": 0.1,
-          "stock": 10495788,
-          "lifecycle": "Active",
-          "product_url": "https://www.digikey.com/en/products/detail/stackpole-electronics-inc/RMCF0402FT10K0/1761433",
-          "datasheet_url": "https://www.seielect.com/catalog/SEI-RMCF_RMCP.pdf",
-          "min_order": 1,
-          "min_order_cost": null,
-          "bulk_only": false,
-          "photo_url": "https://mm.digikey.com/Volume0/opasdata/d220001/medias/images/7182/MFG_RMCF_series.jpg",
-          "category": "Resistors",
-          "parameters": {
-            "Resistance": "10 kOhms",
-            "Tolerance": "\u00b11%",
-            "Power (Watts)": "0.063W, 1/16W",
-            "Composition": "Thick Film",
-            "Features": "Automotive AEC-Q200",
-            "Temperature Coefficient": "\u00b1100ppm/\u00b0C",
-            "Operating Temperature": "-55\u00b0C ~ 155\u00b0C",
-            "Package / Case": "0402 (1005 Metric)",
-            "Supplier Device Package": "0402",
-            "Ratings": "-",
-            "Size / Dimension": "0.039\" L x 0.020\" W (1.00mm x 0.50mm)",
-            "Height - Seated (Max)": "0.016\" (0.40mm)",
-            "Number of Terminations": "2",
-            "Failure Rate": "-"
-          }
-        },
-        {
-          "mpn": "RC1005F103CS",
-          "manufacturer": "Samsung Electro-Mechanics",
-          "description": "RES SMD 10K OHM 1% 1/16W 0402",
-          "digikey_pn": "1276-3431-1-ND",
-          "packaging": "Cut Tape (CT)",
-          "unit_price": 0.1,
-          "stock": 5929770,
-          "lifecycle": "Active",
-          "product_url": "https://www.digikey.com/en/products/detail/samsung-electro-mechanics/RC1005F103CS/3903439",
-          "datasheet_url": "https://mm.digikey.com/Volume0/opasdata/d220001/medias/docus/39/RC_Series_ds.pdf",
-          "min_order": 1,
-          "min_order_cost": null,
-          "bulk_only": false,
-          "photo_url": "https://mm.digikey.com/Volume0/opasdata/d220001/medias/images/2575/RC%20Series%200402%281005%20Metric%29.jpg",
-          "category": "Resistors",
-          "parameters": {
-            "Resistance": "10 kOhms",
-            "Tolerance": "\u00b11%",
-            "Power (Watts)": "0.063W, 1/16W",
-            "Composition": "Thick Film",
-            "Features": "Moisture Resistant",
-            "Temperature Coefficient": "\u00b1100ppm/\u00b0C",
-            "Operating Temperature": "-55\u00b0C ~ 155\u00b0C",
-            "Package / Case": "0402 (1005 Metric)",
-            "Supplier Device Package": "0402",
-            "Size / Dimension": "0.039\" L x 0.020\" W (1.00mm x 0.50mm)",
-            "Height - Seated (Max)": "0.016\" (0.40mm)",
-            "Number of Terminations": "2",
-            "Failure Rate": "-"
-          }
-        }
-      ],
-      "rationale": "10k\u03a9, \u22645%",
-      "status": "approved",
-      "created_at": "2026-11-13T20:02:54+00:00"
     },
     {
       "id": "sch:6531904fbeee",
@@ -497,14 +200,365 @@
       "created_at": "2026-11-13T20:02:54+00:00"
     },
     {
-      "id": "sch:f837a5debdb7",
+      "id": "sch:fcb2494ecc88",
+      "refdes": [
+        "U8",
+        "U9",
+        "U13",
+        "U14"
+      ],
+      "qty": 4,
+      "value": "AD5452",
+      "footprint": "AD5452YRMZ:RM_8_ADI-M",
+      "current_mpn": null,
+      "current_price": null,
+      "offer": {
+        "mpn": "AD5452YRMZ",
+        "manufacturer": "Analog Devices Inc.",
+        "description": "IC DAC 12BIT 8-MSOP",
+        "digikey_pn": "505-AD5452YRMZ-ND",
+        "packaging": "Tube",
+        "unit_price": 9.19,
+        "stock": 1239,
+        "lifecycle": "Active",
+        "product_url": "https://www.digikey.com/en/products/detail/analog-devices-inc/AD5452YRMZ/997189",
+        "datasheet_url": "https://www.analog.com/media/en/technical-documentation/data-sheets/ad5450_5451_5452_5453.pdf",
+        "min_order": 1,
+        "min_order_cost": null,
+        "bulk_only": false,
+        "photo_url": "https://mm.digikey.com/Volume0/opasdata/d220001/medias/images/7265/MFG_505%7ERM-8%7ERM%7E8.jpg",
+        "category": "Integrated Circuits (ICs)",
+        "parameters": {
+          "Number of Bits": "12",
+          "Number of D/A Converters": "1",
+          "Settling Time": "110ns",
+          "Output Type": "Current - Unbuffered",
+          "Differential Output": "No",
+          "Data Interface": "SPI, DSP",
+          "Reference Type": "External",
+          "Voltage - Supply, Analog": "2.5V ~ 5.5V",
+          "Voltage - Supply, Digital": "2.5V ~ 5.5V",
+          "INL/DNL (LSB)": "\u00b10.5 (Max), \u00b11 (Max)",
+          "Architecture": "R-2R",
+          "Operating Temperature": "-40\u00b0C ~ 125\u00b0C",
+          "Package / Case": "8-TSSOP, 8-MSOP (0.118\", 3.00mm Width)",
+          "Supplier Device Package": "8-MSOP",
+          "Mounting Type": "Surface Mount"
+        }
+      },
+      "alternatives": [
+        {
+          "mpn": "AD5452YUJZ-REEL7",
+          "manufacturer": "Analog Devices Inc.",
+          "description": "IC DAC 12BIT TSOT-23-8",
+          "digikey_pn": "505-AD5452YUJZ-REEL7CT-ND",
+          "packaging": "Cut Tape (CT)",
+          "unit_price": 9.19,
+          "stock": 130,
+          "lifecycle": "Active",
+          "product_url": "https://www.digikey.com/en/products/detail/analog-devices-inc/AD5452YUJZ-REEL7/995896",
+          "datasheet_url": "https://www.analog.com/media/en/technical-documentation/data-sheets/ad5450_5451_5452_5453.pdf",
+          "min_order": 1,
+          "min_order_cost": null,
+          "bulk_only": false,
+          "photo_url": "https://mm.digikey.com/Volume0/opasdata/d220001/medias/images/4995/505%7EUJ-8%7EUJ%7E8.JPG",
+          "category": "Integrated Circuits (ICs)",
+          "parameters": {
+            "Number of Bits": "12",
+            "Number of D/A Converters": "1",
+            "Settling Time": "110ns",
+            "Output Type": "Current - Unbuffered",
+            "Differential Output": "No",
+            "Data Interface": "SPI, DSP",
+            "Reference Type": "External",
+            "Voltage - Supply, Analog": "2.5V ~ 5.5V",
+            "Voltage - Supply, Digital": "2.5V ~ 5.5V",
+            "INL/DNL (LSB)": "\u00b10.5 (Max), \u00b11 (Max)",
+            "Architecture": "R-2R",
+            "Operating Temperature": "-40\u00b0C ~ 125\u00b0C",
+            "Package / Case": "SOT-23-8 Thin, TSOT-23-8",
+            "Supplier Device Package": "TSOT-23-8",
+            "Mounting Type": "Surface Mount"
+          }
+        }
+      ],
+      "rationale": "no exact match for AD5452; cheapest orderable version",
+      "status": "approved",
+      "created_at": "2026-11-13T20:02:56+00:00"
+    },
+    {
+      "id": "sch:cde7a5e40626",
+      "refdes": [
+        "R1",
+        "R2"
+      ],
+      "qty": 2,
+      "value": "50",
+      "footprint": "Resistor_SMD:R_0603_1608Metric",
+      "current_mpn": null,
+      "current_price": null,
+      "offer": {
+        "mpn": "CRCW060350R0FKEA",
+        "manufacturer": "Vishay Dale",
+        "description": "RES SMD 50 OHM 1% 1/10W 0603",
+        "digikey_pn": "541-3318-1-ND",
+        "packaging": "Cut Tape (CT)",
+        "unit_price": 0.1,
+        "stock": 317407,
+        "lifecycle": "Active",
+        "product_url": "https://www.digikey.com/en/products/detail/vishay-dale/CRCW060350R0FKEA/5072766",
+        "datasheet_url": "https://www.vishay.com/docs/20035/dcrcwe3.pdf",
+        "min_order": 1,
+        "min_order_cost": null,
+        "bulk_only": false,
+        "photo_url": "https://mm.digikey.com/Volume0/opasdata/d220001/medias/images/2491/CRCW%200603%20%281608metric%29.jpg",
+        "category": "Resistors",
+        "parameters": {
+          "Resistance": "50 Ohms",
+          "Tolerance": "\u00b11%",
+          "Power (Watts)": "0.1W, 1/10W",
+          "Composition": "Thick Film",
+          "Features": "Automotive AEC-Q200",
+          "Temperature Coefficient": "\u00b1100ppm/\u00b0C",
+          "Operating Temperature": "-55\u00b0C ~ 155\u00b0C",
+          "Package / Case": "0603 (1608 Metric)",
+          "Supplier Device Package": "0603",
+          "Ratings": "-",
+          "Size / Dimension": "0.061\" L x 0.033\" W (1.55mm x 0.85mm)",
+          "Height - Seated (Max)": "0.020\" (0.50mm)",
+          "Number of Terminations": "2",
+          "Failure Rate": "-"
+        }
+      },
+      "alternatives": [
+        {
+          "mpn": "RT0603FRE0749R9L",
+          "manufacturer": "YAGEO",
+          "description": "RES SMD 49.9 OHM 1% 1/10W 0603",
+          "digikey_pn": "YAG5744CT-ND",
+          "packaging": "Cut Tape (CT)",
+          "unit_price": 0.1,
+          "stock": 40121,
+          "lifecycle": "Active",
+          "product_url": "https://www.digikey.com/en/products/detail/yageo/RT0603FRE0749R9L/1075394",
+          "datasheet_url": "https://yageogroup.com/content/datasheet/asset/file/PYU-RT_1-TO-0-01_ROHS_L",
+          "min_order": 1,
+          "min_order_cost": null,
+          "bulk_only": false,
+          "photo_url": "https://mm.digikey.com/Volume0/opasdata/d220001/medias/images/4839/RT-Series-Chip-Resistor.jpg",
+          "category": "Resistors",
+          "parameters": {
+            "Resistance": "49.9 Ohms",
+            "Tolerance": "\u00b11%",
+            "Power (Watts)": "0.1W, 1/10W",
+            "Composition": "Thin Film",
+            "Features": "-",
+            "Temperature Coefficient": "\u00b150ppm/\u00b0C",
+            "Operating Temperature": "-55\u00b0C ~ 155\u00b0C",
+            "Package / Case": "0603 (1608 Metric)",
+            "Supplier Device Package": "0603",
+            "Size / Dimension": "0.063\" L x 0.031\" W (1.60mm x 0.80mm)",
+            "Height - Seated (Max)": "0.022\" (0.55mm)",
+            "Number of Terminations": "2",
+            "Failure Rate": "-"
+          }
+        },
+        {
+          "mpn": "TNPR020150R0FEED",
+          "manufacturer": "Vishay",
+          "description": "TNPR0201 50R0 1% T-9 ET7 E3",
+          "digikey_pn": "749-TNPR020150R0FEEDCT-ND",
+          "packaging": "Cut Tape (CT)",
+          "unit_price": 0.37,
+          "stock": 3573,
+          "lifecycle": "Active",
+          "product_url": "https://www.digikey.com/en/products/detail/vishay/TNPR020150R0FEED/22111418",
+          "datasheet_url": "https://www.vishay.com/docs/28949/tnpr_e3.pdf",
+          "min_order": 1,
+          "min_order_cost": null,
+          "bulk_only": false,
+          "photo_url": "https://mm.digikey.com/Volume0/opasdata/d220001/medias/images/5765/MFG_TNPR0201.jpg",
+          "category": "Resistors",
+          "parameters": {
+            "Resistance": "50 Ohms",
+            "Tolerance": "\u00b11%",
+            "Power (Watts)": "0.05W, 1/20W",
+            "Composition": "Thin Film",
+            "Features": "Anti-Sulfur, Moisture Resistant, RF, High Frequency",
+            "Temperature Coefficient": "\u00b125ppm/\u00b0C",
+            "Operating Temperature": "-55\u00b0C ~ 155\u00b0C",
+            "Package / Case": "0201 (0603 Metric)",
+            "Supplier Device Package": "0201",
+            "Size / Dimension": "0.024\" L x 0.012\" W (0.60mm x 0.30mm)",
+            "Height - Seated (Max)": "0.010\" (0.26mm)",
+            "Number of Terminations": "2",
+            "Failure Rate": "-"
+          }
+        }
+      ],
+      "rationale": "50\u03a9, \u22645%, 0603",
+      "status": "approved",
+      "created_at": "2026-11-13T20:58:28+00:00"
+    },
+    {
+      "id": "sch:2e87b7fef998",
+      "refdes": [
+        "R7",
+        "R8",
+        "R23",
+        "R24"
+      ],
+      "qty": 4,
+      "value": "10k",
+      "footprint": "Resistor_SMD:R_0402_1005Metric",
+      "current_mpn": null,
+      "current_price": null,
+      "offer": {
+        "mpn": "CRCW040210K0FKED",
+        "manufacturer": "Vishay Dale",
+        "description": "RES 10K OHM 1% 1/16W 0402",
+        "digikey_pn": "541-10.0KLCT-ND",
+        "packaging": "Cut Tape (CT)",
+        "unit_price": 0.1,
+        "stock": 13207875,
+        "lifecycle": "Active",
+        "product_url": "https://www.digikey.com/en/products/detail/vishay-dale/CRCW040210K0FKED/1178121",
+        "datasheet_url": "https://www.vishay.com/docs/20035/dcrcwe3.pdf",
+        "min_order": 1,
+        "min_order_cost": null,
+        "bulk_only": false,
+        "photo_url": "https://mm.digikey.com/Volume0/opasdata/d220001/medias/images/596/Vishay-CRCW-0402.jpg",
+        "category": "Resistors",
+        "parameters": {
+          "Resistance": "10 kOhms",
+          "Tolerance": "\u00b11%",
+          "Power (Watts)": "0.063W, 1/16W",
+          "Composition": "Thick Film",
+          "Features": "Automotive AEC-Q200",
+          "Temperature Coefficient": "\u00b1100ppm/\u00b0C",
+          "Operating Temperature": "-55\u00b0C ~ 155\u00b0C",
+          "Package / Case": "0402 (1005 Metric)",
+          "Supplier Device Package": "0402",
+          "Ratings": "-",
+          "Size / Dimension": "0.039\" L x 0.020\" W (1.00mm x 0.50mm)",
+          "Height - Seated (Max)": "0.016\" (0.40mm)",
+          "Number of Terminations": "2",
+          "Failure Rate": "-"
+        }
+      },
+      "alternatives": [
+        {
+          "mpn": "RK73H1ETTP1002F",
+          "manufacturer": "KOA Speer Electronics, Inc.",
+          "description": "RES 10K OHM 1% 1/10W 0402",
+          "digikey_pn": "2019-RK73H1ETTP1002FCT-ND",
+          "packaging": "Cut Tape (CT)",
+          "unit_price": 0.1,
+          "stock": 11629670,
+          "lifecycle": "Active",
+          "product_url": "https://www.digikey.com/en/products/detail/koa-speer-electronics-inc/RK73H1ETTP1002F/9844154",
+          "datasheet_url": "https://www.koaspeer.com/pdfs/RK73H.pdf",
+          "min_order": 1,
+          "min_order_cost": null,
+          "bulk_only": false,
+          "photo_url": "https://mm.digikey.com/Volume0/opasdata/d220001/medias/images/5572/MFG_RK73H1HTTCM12R7D.jpg",
+          "category": "Resistors",
+          "parameters": {
+            "Resistance": "10 kOhms",
+            "Tolerance": "\u00b11%",
+            "Power (Watts)": "0.1W, 1/10W",
+            "Composition": "Thick Film",
+            "Features": "Automotive AEC-Q200",
+            "Temperature Coefficient": "\u00b1100ppm/\u00b0C",
+            "Operating Temperature": "-55\u00b0C ~ 155\u00b0C",
+            "Package / Case": "0402 (1005 Metric)",
+            "Supplier Device Package": "0402",
+            "Ratings": "-",
+            "Size / Dimension": "0.039\" L x 0.020\" W (1.00mm x 0.50mm)",
+            "Height - Seated (Max)": "0.016\" (0.40mm)",
+            "Number of Terminations": "2",
+            "Failure Rate": "-"
+          }
+        },
+        {
+          "mpn": "RMCF0402FT10K0",
+          "manufacturer": "Stackpole Electronics Inc",
+          "description": "RES 10K OHM 1% 1/16W 0402",
+          "digikey_pn": "RMCF0402FT10K0CT-ND",
+          "packaging": "Cut Tape (CT)",
+          "unit_price": 0.1,
+          "stock": 10493738,
+          "lifecycle": "Active",
+          "product_url": "https://www.digikey.com/en/products/detail/stackpole-electronics-inc/RMCF0402FT10K0/1761433",
+          "datasheet_url": "https://www.seielect.com/catalog/SEI-RMCF_RMCP.pdf",
+          "min_order": 1,
+          "min_order_cost": null,
+          "bulk_only": false,
+          "photo_url": "https://mm.digikey.com/Volume0/opasdata/d220001/medias/images/7182/MFG_RMCF_series.jpg",
+          "category": "Resistors",
+          "parameters": {
+            "Resistance": "10 kOhms",
+            "Tolerance": "\u00b11%",
+            "Power (Watts)": "0.063W, 1/16W",
+            "Composition": "Thick Film",
+            "Features": "Automotive AEC-Q200",
+            "Temperature Coefficient": "\u00b1100ppm/\u00b0C",
+            "Operating Temperature": "-55\u00b0C ~ 155\u00b0C",
+            "Package / Case": "0402 (1005 Metric)",
+            "Supplier Device Package": "0402",
+            "Ratings": "-",
+            "Size / Dimension": "0.039\" L x 0.020\" W (1.00mm x 0.50mm)",
+            "Height - Seated (Max)": "0.016\" (0.40mm)",
+            "Number of Terminations": "2",
+            "Failure Rate": "-"
+          }
+        },
+        {
+          "mpn": "RC1005F103CS",
+          "manufacturer": "Samsung Electro-Mechanics",
+          "description": "RES SMD 10K OHM 1% 1/16W 0402",
+          "digikey_pn": "1276-3431-1-ND",
+          "packaging": "Cut Tape (CT)",
+          "unit_price": 0.1,
+          "stock": 5929770,
+          "lifecycle": "Active",
+          "product_url": "https://www.digikey.com/en/products/detail/samsung-electro-mechanics/RC1005F103CS/3903439",
+          "datasheet_url": "https://mm.digikey.com/Volume0/opasdata/d220001/medias/docus/39/RC_Series_ds.pdf",
+          "min_order": 1,
+          "min_order_cost": null,
+          "bulk_only": false,
+          "photo_url": "https://mm.digikey.com/Volume0/opasdata/d220001/medias/images/2575/RC%20Series%200402%281005%20Metric%29.jpg",
+          "category": "Resistors",
+          "parameters": {
+            "Resistance": "10 kOhms",
+            "Tolerance": "\u00b11%",
+            "Power (Watts)": "0.063W, 1/16W",
+            "Composition": "Thick Film",
+            "Features": "Moisture Resistant",
+            "Temperature Coefficient": "\u00b1100ppm/\u00b0C",
+            "Operating Temperature": "-55\u00b0C ~ 155\u00b0C",
+            "Package / Case": "0402 (1005 Metric)",
+            "Supplier Device Package": "0402",
+            "Size / Dimension": "0.039\" L x 0.020\" W (1.00mm x 0.50mm)",
+            "Height - Seated (Max)": "0.016\" (0.40mm)",
+            "Number of Terminations": "2",
+            "Failure Rate": "-"
+          }
+        }
+      ],
+      "rationale": "10k\u03a9, \u22645%, 0402",
+      "status": "approved",
+      "created_at": "2026-11-13T20:58:28+00:00"
+    },
+    {
+      "id": "sch:8bb727f8aca6",
       "refdes": [
         "U6",
         "U7"
       ],
       "qty": 2,
       "value": "AD9833",
-      "footprint": null,
+      "footprint": "Package_SO:MSOP-10_3x3mm_P0.5mm",
       "current_mpn": null,
       "current_price": null,
       "offer": {
@@ -624,96 +678,9 @@
           }
         }
       ],
-      "rationale": "no exact match for AD9833; cheapest orderable version",
+      "rationale": "no exact match for AD9833; cheapest orderable version \u2014 none listed as MSOP-10; check the package matches the footprint",
       "status": "approved",
-      "created_at": "2026-11-13T20:02:55+00:00"
-    },
-    {
-      "id": "sch:fcb2494ecc88",
-      "refdes": [
-        "U8",
-        "U9",
-        "U13",
-        "U14"
-      ],
-      "qty": 4,
-      "value": "AD5452",
-      "footprint": "AD5452YRMZ:RM_8_ADI-M",
-      "current_mpn": null,
-      "current_price": null,
-      "offer": {
-        "mpn": "AD5452YRMZ",
-        "manufacturer": "Analog Devices Inc.",
-        "description": "IC DAC 12BIT 8-MSOP",
-        "digikey_pn": "505-AD5452YRMZ-ND",
-        "packaging": "Tube",
-        "unit_price": 9.19,
-        "stock": 1239,
-        "lifecycle": "Active",
-        "product_url": "https://www.digikey.com/en/products/detail/analog-devices-inc/AD5452YRMZ/997189",
-        "datasheet_url": "https://www.analog.com/media/en/technical-documentation/data-sheets/ad5450_5451_5452_5453.pdf",
-        "min_order": 1,
-        "min_order_cost": null,
-        "bulk_only": false,
-        "photo_url": "https://mm.digikey.com/Volume0/opasdata/d220001/medias/images/7265/MFG_505%7ERM-8%7ERM%7E8.jpg",
-        "category": "Integrated Circuits (ICs)",
-        "parameters": {
-          "Number of Bits": "12",
-          "Number of D/A Converters": "1",
-          "Settling Time": "110ns",
-          "Output Type": "Current - Unbuffered",
-          "Differential Output": "No",
-          "Data Interface": "SPI, DSP",
-          "Reference Type": "External",
-          "Voltage - Supply, Analog": "2.5V ~ 5.5V",
-          "Voltage - Supply, Digital": "2.5V ~ 5.5V",
-          "INL/DNL (LSB)": "\u00b10.5 (Max), \u00b11 (Max)",
-          "Architecture": "R-2R",
-          "Operating Temperature": "-40\u00b0C ~ 125\u00b0C",
-          "Package / Case": "8-TSSOP, 8-MSOP (0.118\", 3.00mm Width)",
-          "Supplier Device Package": "8-MSOP",
-          "Mounting Type": "Surface Mount"
-        }
-      },
-      "alternatives": [
-        {
-          "mpn": "AD5452YUJZ-REEL7",
-          "manufacturer": "Analog Devices Inc.",
-          "description": "IC DAC 12BIT TSOT-23-8",
-          "digikey_pn": "505-AD5452YUJZ-REEL7CT-ND",
-          "packaging": "Cut Tape (CT)",
-          "unit_price": 9.19,
-          "stock": 130,
-          "lifecycle": "Active",
-          "product_url": "https://www.digikey.com/en/products/detail/analog-devices-inc/AD5452YUJZ-REEL7/995896",
-          "datasheet_url": "https://www.analog.com/media/en/technical-documentation/data-sheets/ad5450_5451_5452_5453.pdf",
-          "min_order": 1,
-          "min_order_cost": null,
-          "bulk_only": false,
-          "photo_url": "https://mm.digikey.com/Volume0/opasdata/d220001/medias/images/4995/505%7EUJ-8%7EUJ%7E8.JPG",
-          "category": "Integrated Circuits (ICs)",
-          "parameters": {
-            "Number of Bits": "12",
-            "Number of D/A Converters": "1",
-            "Settling Time": "110ns",
-            "Output Type": "Current - Unbuffered",
-            "Differential Output": "No",
-            "Data Interface": "SPI, DSP",
-            "Reference Type": "External",
-            "Voltage - Supply, Analog": "2.5V ~ 5.5V",
-            "Voltage - Supply, Digital": "2.5V ~ 5.5V",
-            "INL/DNL (LSB)": "\u00b10.5 (Max), \u00b11 (Max)",
-            "Architecture": "R-2R",
-            "Operating Temperature": "-40\u00b0C ~ 125\u00b0C",
-            "Package / Case": "SOT-23-8 Thin, TSOT-23-8",
-            "Supplier Device Package": "TSOT-23-8",
-            "Mounting Type": "Surface Mount"
-          }
-        }
-      ],
-      "rationale": "no exact match for AD5452; cheapest orderable version",
-      "status": "approved",
-      "created_at": "2026-11-13T20:02:56+00:00"
+      "created_at": "2026-11-13T20:58:28+00:00"
     },
     {
       "id": "sch:b958fb089b52",
@@ -729,7 +696,7 @@
       "alternatives": [],
       "rationale": "generic symbol \u2014 set an MPN on the part (or ask the copilot to pick one)",
       "status": "skipped",
-      "created_at": "2026-11-13T20:08:11+00:00"
+      "created_at": "2026-11-13T20:59:50+00:00"
     },
     {
       "id": "sch:c2d74ca10a02",
@@ -745,7 +712,7 @@
       "alternatives": [],
       "rationale": "generic symbol \u2014 set an MPN on the part (or ask the copilot to pick one)",
       "status": "skipped",
-      "created_at": "2026-11-13T20:08:11+00:00"
+      "created_at": "2026-11-13T20:59:50+00:00"
     },
     {
       "id": "sch:89e9bc41c75c",
@@ -761,7 +728,7 @@
       "alternatives": [],
       "rationale": "no exact match for ILI9341; cheapest orderable version \u2014 nothing active and in stock matched.",
       "status": "skipped",
-      "created_at": "2026-11-13T20:08:11+00:00"
+      "created_at": "2026-11-13T20:59:50+00:00"
     },
     {
       "id": "sch:479812578b86",
@@ -777,7 +744,7 @@
       "alternatives": [],
       "rationale": "generic symbol \u2014 set an MPN on the part (or ask the copilot to pick one)",
       "status": "skipped",
-      "created_at": "2026-11-13T20:08:11+00:00"
+      "created_at": "2026-11-13T20:59:50+00:00"
     },
     {
       "id": "sch:afe2ce9a8248",
@@ -793,7 +760,7 @@
       "alternatives": [],
       "rationale": "generic symbol \u2014 set an MPN on the part (or ask the copilot to pick one)",
       "status": "skipped",
-      "created_at": "2026-11-13T20:08:11+00:00"
+      "created_at": "2026-11-13T20:59:50+00:00"
     },
     {
       "id": "sch:cdeee9933325",
@@ -809,7 +776,7 @@
       "alternatives": [],
       "rationale": "generic symbol \u2014 set an MPN on the part (or ask the copilot to pick one)",
       "status": "skipped",
-      "created_at": "2026-11-13T20:08:11+00:00"
+      "created_at": "2026-11-13T20:59:50+00:00"
     },
     {
       "id": "sch:de5cb7b0a3a8",
@@ -826,7 +793,7 @@
       "alternatives": [],
       "rationale": "generic symbol \u2014 set an MPN on the part (or ask the copilot to pick one)",
       "status": "skipped",
-      "created_at": "2026-11-13T20:08:11+00:00"
+      "created_at": "2026-11-13T20:59:50+00:00"
     },
     {
       "id": "sch:2abca78107de",
@@ -859,7 +826,7 @@
       "alternatives": [],
       "rationale": "generic symbol \u2014 set an MPN on the part (or ask the copilot to pick one)",
       "status": "skipped",
-      "created_at": "2026-11-13T20:08:11+00:00"
+      "created_at": "2026-11-13T20:59:50+00:00"
     },
     {
       "id": "sch:446b4cf6fcdb",
@@ -875,7 +842,7 @@
       "alternatives": [],
       "rationale": "generic symbol \u2014 set an MPN on the part (or ask the copilot to pick one)",
       "status": "skipped",
-      "created_at": "2026-11-13T20:08:11+00:00"
+      "created_at": "2026-11-13T20:59:50+00:00"
     },
     {
       "id": "sch:f54d8b90e995",
@@ -891,7 +858,7 @@
       "alternatives": [],
       "rationale": "generic symbol \u2014 set an MPN on the part (or ask the copilot to pick one)",
       "status": "skipped",
-      "created_at": "2026-11-13T20:08:11+00:00"
+      "created_at": "2026-11-13T20:59:50+00:00"
     },
     {
       "id": "sch:efc27355d572",
@@ -907,7 +874,7 @@
       "alternatives": [],
       "rationale": "no exact match for ESP32-S3-DevKitC-N16R8; cheapest orderable version \u2014 nothing active and in stock matched.",
       "status": "skipped",
-      "created_at": "2026-11-13T20:08:11+00:00"
+      "created_at": "2026-11-13T20:59:50+00:00"
     },
     {
       "id": "sch:904de2c71506",
@@ -923,7 +890,7 @@
       "alternatives": [],
       "rationale": "generic symbol \u2014 set an MPN on the part (or ask the copilot to pick one)",
       "status": "skipped",
-      "created_at": "2026-11-13T20:08:11+00:00"
+      "created_at": "2026-11-13T20:59:50+00:00"
     }
   ]
 }

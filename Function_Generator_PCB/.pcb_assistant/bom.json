@@ -76,32 +76,6 @@
       "line_total": null
     },
     {
-      "id": "sch:e741d79c8d87",
-      "refdes": [
-        "R1",
-        "R2"
-      ],
-      "qty": 2,
-      "value": "50",
-      "footprint": null,
-      "mpn": "CRCW060350R0FKEA",
-      "datasheet_url": "https://www.vishay.com/docs/20035/dcrcwe3.pdf",
-      "product_url": "https://www.digikey.com/en/products/detail/vishay-dale/CRCW060350R0FKEA/5072766",
-      "why": "from schematic",
-      "unit_price": 0.1,
-      "manufacturer": "Vishay Dale",
-      "distributor_pn": "541-3318-1-ND",
-      "stock": 318807,
-      "lifecycle": "Active",
-      "fetched_at": "2026-11-12T22:39:00+00:00",
-      "min_order": null,
-      "source": "schematic",
-      "status": "active",
-      "duplicate_of": [],
-      "separate_from": [],
-      "line_total": 0.2
-    },
-    {
       "id": "sch:446b4cf6fcdb",
       "refdes": [
         "SW1"
@@ -328,34 +302,6 @@
       "line_total": null
     },
     {
-      "id": "sch:e2baff468f93",
-      "refdes": [
-        "R7",
-        "R8",
-        "R23",
-        "R24"
-      ],
-      "qty": 4,
-      "value": "10k",
-      "footprint": null,
-      "mpn": "CRCW040210K0FKED",
-      "datasheet_url": "https://www.vishay.com/docs/20035/dcrcwe3.pdf",
-      "product_url": "https://www.digikey.com/en/products/detail/vishay-dale/CRCW040210K0FKED/1178121",
-      "why": "from schematic",
-      "unit_price": 0.1,
-      "manufacturer": "Vishay Dale",
-      "distributor_pn": "541-10.0KLCT-ND",
-      "stock": 13221275,
-      "lifecycle": "Active",
-      "fetched_at": "2026-11-13T20:02:54+00:00",
-      "min_order": null,
-      "source": "schematic",
-      "status": "active",
-      "duplicate_of": [],
-      "separate_from": [],
-      "line_total": 0.4
-    },
-    {
       "id": "sch:6531904fbeee",
       "refdes": [
         "SW3"
@@ -480,14 +426,68 @@
       "line_total": null
     },
     {
-      "id": "sch:f837a5debdb7",
+      "id": "sch:cde7a5e40626",
+      "refdes": [
+        "R1",
+        "R2"
+      ],
+      "qty": 2,
+      "value": "50",
+      "footprint": "Resistor_SMD:R_0603_1608Metric",
+      "mpn": "CRCW060350R0FKEA",
+      "datasheet_url": "https://www.vishay.com/docs/20035/dcrcwe3.pdf",
+      "product_url": "https://www.digikey.com/en/products/detail/vishay-dale/CRCW060350R0FKEA/5072766",
+      "why": "from schematic",
+      "unit_price": 0.1,
+      "manufacturer": "Vishay Dale",
+      "distributor_pn": "541-3318-1-ND",
+      "stock": 317407,
+      "lifecycle": "Active",
+      "fetched_at": "2026-11-13T20:58:28+00:00",
+      "min_order": null,
+      "source": "schematic",
+      "status": "active",
+      "duplicate_of": [],
+      "separate_from": [],
+      "line_total": 0.2
+    },
+    {
+      "id": "sch:2e87b7fef998",
+      "refdes": [
+        "R7",
+        "R8",
+        "R23",
+        "R24"
+      ],
+      "qty": 4,
+      "value": "10k",
+      "footprint": "Resistor_SMD:R_0402_1005Metric",
+      "mpn": "CRCW040210K0FKED",
+      "datasheet_url": "https://www.vishay.com/docs/20035/dcrcwe3.pdf",
+      "product_url": "https://www.digikey.com/en/products/detail/vishay-dale/CRCW040210K0FKED/1178121",
+      "why": "from schematic",
+      "unit_price": 0.1,
+      "manufacturer": "Vishay Dale",
+      "distributor_pn": "541-10.0KLCT-ND",
+      "stock": 13207875,
+      "lifecycle": "Active",
+      "fetched_at": "2026-11-13T20:58:28+00:00",
+      "min_order": null,
+      "source": "schematic",
+      "status": "active",
+      "duplicate_of": [],
+      "separate_from": [],
+      "line_total": 0.4
+    },
+    {
+      "id": "sch:8bb727f8aca6",
       "refdes": [
         "U6",
         "U7"
       ],
       "qty": 2,
       "value": "AD9833",
-      "footprint": null,
+      "footprint": "Package_SO:MSOP-10_3x3mm_P0.5mm",
       "mpn": "AD9833BRMZ-REEL7",
       "datasheet_url": "https://www.analog.com/media/en/technical-documentation/data-sheets/AD9833.pdf",
       "product_url": "https://www.digikey.com/en/products/detail/analog-devices-inc/AD9833BRMZ-REEL7/994990",
@@ -497,7 +497,7 @@
       "distributor_pn": "505-AD9833BRMZ-REEL7CT-ND",
       "stock": 4536,
       "lifecycle": "Active",
-      "fetched_at": "2026-11-13T20:02:55+00:00",
+      "fetched_at": "2026-11-13T20:58:28+00:00",
       "min_order": null,
       "source": "schematic",
       "status": "active",
