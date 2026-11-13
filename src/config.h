@@ -243,6 +243,10 @@
 #define HTTP_MAX_PATH_LEN       32
 #define MCP_PATH                "/mcp"
 #define MCP_SERVER_NAME         "funcgen"
+#define WEB_CONTROL_PATH        "/control"  //the control page. also at / except in setup (AP) mode
+#define API_STATE_PATH          "/api/state"
+#define API_INFO_PATH           "/api/info"
+#define WEB_POLL_MS             1000        //the control page reads /api/state this often
 #define FIRMWARE_VERSION        "0.1.0"     //reported to MCP clients as serverInfo.version
 
 //Preferences/NVS for the saved credentials

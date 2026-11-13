@@ -366,24 +366,33 @@ TEST(remote_flash_and_badge_change_area_keys) {
     }
 }
 
-TEST(badge_names_mcp_or_ble) {
+TEST(badge_names_mcp_ble_or_web) {
+    CHECK(strcmp(remoteBadgeText(CHANGE_SOURCE::MCP), "MCP") == 0);
+    CHECK(strcmp(remoteBadgeText(CHANGE_SOURCE::BLE), "BLE") == 0);
+    CHECK(strcmp(remoteBadgeText(CHANGE_SOURCE::WEB), "WEB") == 0);
+
     DashboardView v = baseView();
     v.remoteBadge = true;
     Rect sr = statusRect();
-    GFXcanvas16 mcp(sr.w, sr.h), ble(sr.w, sr.h);
+    GFXcanvas16 mcp(sr.w, sr.h), ble(sr.w, sr.h), web(sr.w, sr.h);
     v.badgeSource = CHANGE_SOURCE::MCP;
     renderToCanvas(mcp, STATUS_AREA, v);
     v.badgeSource = CHANGE_SOURCE::BLE;
     renderToCanvas(ble, STATUS_AREA, v);
+    v.badgeSource = CHANGE_SOURCE::WEB;
+    renderToCanvas(web, STATUS_AREA, v);
 
     //same pill, different text: only pixels inside the badge differ
     Rect b = mcpBadgeRect();
-    int inside = 0, outside = 0;
-    for (int y = 0; y < sr.h; y++)
-        for (int x = 0; x < sr.w; x++)
-            if (mcp.getPixel(x, y) != ble.getPixel(x, y)) (b.contains(x, y) ? inside : outside)++;
-    CHECK(inside > 10);
-    CHECK_EQ(outside, 0);
+    GFXcanvas16* others[] = {&ble, &web};
+    for (GFXcanvas16* other : others) {
+        int inside = 0, outside = 0;
+        for (int y = 0; y < sr.h; y++)
+            for (int x = 0; x < sr.w; x++)
+                if (mcp.getPixel(x, y) != other->getPixel(x, y)) (b.contains(x, y) ? inside : outside)++;
+        CHECK(inside > 10);
+        CHECK_EQ(outside, 0);
+    }
 }
 
 TEST(bluetooth_icon_only_while_connected) {

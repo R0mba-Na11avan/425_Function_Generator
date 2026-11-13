@@ -9,6 +9,7 @@
 #include <string>
 #include "esp_http_server.h"
 #include "../src/comms/mcp_server.h"
+#include "../src/comms/api_json.h"
 #include "../src/libs/ArduinoJson/ArduinoJson.h"
 
 //generator + controller + HTTP server + MCP server, all running
@@ -405,29 +406,29 @@ TEST(mcp_request_checks) {
 }
 
 TEST(mcp_origin_rules) {
-    CHECK(mcpOriginAllowed("http://" MDNS_HOSTNAME ".local"));
-    CHECK(mcpOriginAllowed("HTTP://" MDNS_HOSTNAME ".LOCAL:80"));
-    CHECK(mcpOriginAllowed("https://10.0.0.5"));
-    CHECK(mcpOriginAllowed("http://192.168.1.50:3000"));
-    CHECK(!mcpOriginAllowed("http://" MDNS_HOSTNAME ".local.evil.com"));
-    CHECK(!mcpOriginAllowed("http://evil" MDNS_HOSTNAME ".local"));
-    CHECK(!mcpOriginAllowed("http://func"));            //a prefix of the name
-    CHECK(!mcpOriginAllowed("http://" MDNS_HOSTNAME));  //without .local
-    CHECK(!mcpOriginAllowed("http://"));
-    CHECK(!mcpOriginAllowed("http://:80"));
-    CHECK(!mcpOriginAllowed("http://localhost:6274"));
-    CHECK(!mcpOriginAllowed("http://256.1.1.1"));
-    CHECK(!mcpOriginAllowed("http://1.2.3"));
-    CHECK(!mcpOriginAllowed("http://1.2.3.4.5"));
-    CHECK(!mcpOriginAllowed("http://1.2.3.4."));
-    CHECK(!mcpOriginAllowed("http://1.2.3.4/"));
-    CHECK(!mcpOriginAllowed("http://1.2.3.4:"));
-    CHECK(!mcpOriginAllowed("http://1.2.3.4:80x"));
-    CHECK(!mcpOriginAllowed("http://1234.2.3.4"));
-    CHECK(!mcpOriginAllowed("ftp://1.2.3.4"));
-    CHECK(!mcpOriginAllowed("null"));
-    CHECK(!mcpOriginAllowed(""));
-    CHECK(!mcpOriginAllowed(nullptr));
+    CHECK(originAllowed("http://" MDNS_HOSTNAME ".local"));
+    CHECK(originAllowed("HTTP://" MDNS_HOSTNAME ".LOCAL:80"));
+    CHECK(originAllowed("https://10.0.0.5"));
+    CHECK(originAllowed("http://192.168.1.50:3000"));
+    CHECK(!originAllowed("http://" MDNS_HOSTNAME ".local.evil.com"));
+    CHECK(!originAllowed("http://evil" MDNS_HOSTNAME ".local"));
+    CHECK(!originAllowed("http://func"));            //a prefix of the name
+    CHECK(!originAllowed("http://" MDNS_HOSTNAME));  //without .local
+    CHECK(!originAllowed("http://"));
+    CHECK(!originAllowed("http://:80"));
+    CHECK(!originAllowed("http://localhost:6274"));
+    CHECK(!originAllowed("http://256.1.1.1"));
+    CHECK(!originAllowed("http://1.2.3"));
+    CHECK(!originAllowed("http://1.2.3.4.5"));
+    CHECK(!originAllowed("http://1.2.3.4."));
+    CHECK(!originAllowed("http://1.2.3.4/"));
+    CHECK(!originAllowed("http://1.2.3.4:"));
+    CHECK(!originAllowed("http://1.2.3.4:80x"));
+    CHECK(!originAllowed("http://1234.2.3.4"));
+    CHECK(!originAllowed("ftp://1.2.3.4"));
+    CHECK(!originAllowed("null"));
+    CHECK(!originAllowed(""));
+    CHECK(!originAllowed(nullptr));
 }
 
 TEST(mcp_versions) {

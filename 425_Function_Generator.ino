@@ -13,7 +13,9 @@
            and the board restarts into setup mode. let go early and it boots
            normally
         3. generator + controller (output starts OFF, sine, 1 Hz, 1 Vpp, 0 V offset)
-        4. MCP routes on the shared HTTP server (it starts once Wi-Fi is up)
+        4. MCP and web control routes on the shared HTTP server (it starts
+           once Wi-Fi is up). the control page is also the home page (/)
+           except in setup mode, where / is the Wi-Fi setup page
         5. input + display. the network line and the BLE status/pairing popup
            read WifiManager and BleService through functions given to
            DisplayUI (ui and comms never include each other)
@@ -33,6 +35,7 @@
 #include "src/comms/http_server.h"
 #include "src/comms/wifi_manager.h"
 #include "src/comms/mcp_server.h"
+#include "src/comms/rest_api.h"
 #include "src/comms/ble_service.h"
 #include "src/ui/input.h"
 #include "src/ui/display_ui.h"
@@ -102,6 +105,11 @@ void setup() {
     check(mcp->begin(), "MCP routes");
 
     BleService* ble = new BleService(*controller);
+
+    RestApi* web = new RestApi(*controller, *http);
+    web->setInfoSources(readNetStatus, wifi, readBleStatus, ble);
+    check(web->begin(), "web control routes");
+    wifi->setHomePage(RestApi::handlePage, web);
 
     InputManager* input = new InputManager(*lcdBus);
     check(input->begin(), "input");

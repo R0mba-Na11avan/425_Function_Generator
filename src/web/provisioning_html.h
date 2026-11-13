@@ -12,6 +12,8 @@
           a hidden SSID can be typed in
         - Save POSTs {ssid, password} as JSON to /save, then explains that the
           device restarts and the page will lose its connection
+        - links to the control page (WEB_CONTROL_PATH), which also works on
+          the setup network
         - SSIDs come from anyone nearby, so they are only ever inserted with
           textContent, never innerHTML
 */
@@ -53,9 +55,11 @@ button:disabled{opacity:.6;cursor:default}
 .err{color:var(--err)}
 .ok{color:var(--ok)}
 .hint{color:var(--dim);font-size:14px}
+a{color:var(--acc)}
 </style></head><body><main>
 <h1>Function Generator Wi-Fi</h1>
 <p>Pick the network the generator should join.</p>
+<p class="hint">Only want to use the generator? <a href=")HTML" WEB_CONTROL_PATH R"HTML(">Open the controls</a>, they work on this setup network too.</p>
 
 <div class="card" id="pick">
 <div class="row"><h2>Networks</h2><button class="small" id="refresh" type="button">Refresh</button></div>

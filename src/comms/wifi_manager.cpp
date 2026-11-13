@@ -25,12 +25,25 @@ WifiManager::WifiManager(HttpServer& http)
     : _http(http), _provisioning(http), _task(nullptr), _hasCredentials(false),
       _apRunning(false), _scanRunning(false), _mdnsStarted(false), _attemptFailed(false),
       _setupRequested(false), _leaveSetupRequested(false),
+      _homeHandler(nullptr), _homeCtx(nullptr),
       _statusMux(portMUX_INITIALIZER_UNLOCKED) {
     memset(&_creds, 0, sizeof(_creds));
     memset(&_status, 0, sizeof(_status));
     _status.state = WIFI_STATE::IDLE;
     snprintf(_status.hostname, sizeof(_status.hostname), "%s", MDNS_HOSTNAME);
     _apSsid[0] = '\0';
+}
+
+void WifiManager::setHomePage(HttpServer::Handler handler, void* ctx) {
+    _homeHandler = handler;
+    _homeCtx = ctx;
+    if (!_apRunning) registerHome();
+}
+
+void WifiManager::registerHome() {
+    if (_homeHandler && !_http.registerRoute("/", HTTP_METHOD::GET, _homeHandler, _homeCtx)) {
+        log_e("could not register the home page");
+    }
 }
 
 bool WifiManager::begin() {
@@ -158,6 +171,7 @@ void WifiManager::stopAp() {
     if (!_apRunning) return;
     _http.stop(); //no handler may be running while the setup routes go away
     _provisioning.disable();
+    registerHome(); //the control page takes / back from the setup page
     WiFi.softAPdisconnect(true);
     _apRunning = false;
     _scanRunning = false;
@@ -174,6 +188,7 @@ void WifiManager::startAp() {
     _apRunning = true;
 
     _http.stop();
+    if (_homeHandler) _http.unregisterRoute("/", HTTP_METHOD::GET); //in AP mode / is the setup page
     if (!_provisioning.enable()) log_e("could not register the setup routes");
     _provisioning.requestScan(); //so the page has a list right away
     restartServices();

@@ -10,8 +10,7 @@
 #include <stdlib.h>
 #include <string.h>
 #include <strings.h>
-#include <ctype.h>
-#include "../libs/ArduinoJson/ArduinoJson.h"
+#include "api_json.h"
 
 //newest first. initialize falls back to the first one
 static const char* const SUPPORTED_VERSIONS[] = {"2025-11-25", "2025-06-18", "2025-03-26", "2024-11-05"};
@@ -28,13 +27,6 @@ static const char* const INSTRUCTIONS =
     "values: out-of-range values are rejected, not clamped, and the amplitude range depends on "
     "the waveform. Every set_* tool returns the state that was actually applied. The LCD can "
     "change the settings too, so call get_state when in doubt.";
-
-static const char* const WAVEFORM_NAMES[WAVEFORM_COUNT] = {"sine", "square", "triangle"};
-
-static const char* waveformName(WAVEFORM w) {
-    uint8_t i = (uint8_t)w;
-    return (i < WAVEFORM_COUNT) ? WAVEFORM_NAMES[i] : "unknown";
-}
 
 //tool table
 
@@ -67,32 +59,8 @@ struct Tool {
     void (*run)(FuncGenController& controller, const ToolArg& arg, JsonObject out);
 };
 
-static void writeState(FuncGenController& c, JsonObject out) {
-    FuncGenState s = c.state();
-    out["waveform"] = waveformName(s.waveform);
-    out["frequency_hz"] = s.frequency;
-    out["amplitude_vpp"] = s.amplitude;
-    out["phase_deg"] = s.phase;
-    out["dc_offset_v"] = s.dcOffset;
-    out["output_enabled"] = s.outputEnabled;
-}
-
-static void writeRange(JsonObject out, ValueRange r) {
-    out["min"] = r.min;
-    out["max"] = r.max;
-}
-
-static void writeLimits(FuncGenController& c, JsonObject out) {
-    FuncGenLimits l = c.limits();
-    writeRange(out["frequency_hz"].to<JsonObject>(), l.frequency);
-    JsonObject phase = out["phase_deg"].to<JsonObject>();
-    writeRange(phase, l.phase);
-    phase["max_exclusive"] = true;
-    JsonObject amp = out["amplitude_vpp"].to<JsonObject>();
-    for (uint8_t i = 0; i < WAVEFORM_COUNT; i++) writeRange(amp[WAVEFORM_NAMES[i]].to<JsonObject>(), l.amplitude[i]);
-    writeRange(out["dc_offset_v"].to<JsonObject>(), l.dcOffset);
-    out["output_peak_v"] = l.outputPeak;
-}
+static void writeState(FuncGenController& c, JsonObject out) { writeStateJson(c.state(), out); }
+static void writeLimits(FuncGenController& c, JsonObject out) { writeLimitsJson(c.limits(), out); }
 
 static ValueRange frequencyRange(const FuncGenLimits& l, const FuncGenState*) { return l.frequency; }
 static ValueRange phaseRange(const FuncGenLimits& l, const FuncGenState*) { return l.phase; }
@@ -174,7 +142,7 @@ static void writeToolSchema(const Tool& t, const FuncGenLimits& limits, JsonObje
         } else {
             p["type"] = "string";
             JsonArray e = p["enum"].to<JsonArray>();
-            for (uint8_t i = 0; i < WAVEFORM_COUNT; i++) e.add(WAVEFORM_NAMES[i]);
+            for (uint8_t i = 0; i < WAVEFORM_COUNT; i++) e.add(waveformJsonName((WAVEFORM)i));
         }
         schema["required"].to<JsonArray>().add(t.paramName);
     }
@@ -185,12 +153,6 @@ static void writeToolSchema(const Tool& t, const FuncGenLimits& limits, JsonObje
     hints["destructiveHint"] = false;
     hints["idempotentHint"] = true;
     hints["openWorldHint"] = false;
-}
-
-//whole numbers without an exponent (12500000, not 1.25e+07), the rest to float precision
-static void formatNumber(double v, char* out, size_t len) {
-    if (isfinite(v) && fabs(v) < 1e15 && v == floor(v)) snprintf(out, len, "%.0f", v);
-    else snprintf(out, len, "%.7g", v);
 }
 
 //checks the arguments against the tool. false + message (for an isError result) if they don't fit
@@ -233,7 +195,7 @@ static bool readArgument(const Tool& t, JsonObjectConst args, const FuncGenLimit
                 char other[24];
                 if (t.range == amplitudeRange) {
                     formatNumber(state.dcOffset, other, sizeof(other));
-                    snprintf(forWave, sizeof(forWave), " for the %s waveform at %s V offset", waveformName(state.waveform), other);
+                    snprintf(forWave, sizeof(forWave), " for the %s waveform at %s V offset", waveformJsonName(state.waveform), other);
                 } else if (t.range == dcOffsetRange) {
                     formatNumber(state.amplitude, other, sizeof(other));
                     snprintf(forWave, sizeof(forWave), " at %s Vpp amplitude", other);
@@ -257,12 +219,7 @@ static bool readArgument(const Tool& t, JsonObjectConst args, const FuncGenLimit
             return true;
         case PARAM::WAVEFORM: {
             const char* name = v.is<const char*>() ? v.as<const char*>() : nullptr;
-            for (uint8_t i = 0; name && i < WAVEFORM_COUNT; i++) {
-                if (strcasecmp(name, WAVEFORM_NAMES[i]) == 0) {
-                    out.waveform = (WAVEFORM)i;
-                    return true;
-                }
-            }
+            if (parseWaveform(name, out.waveform)) return true;
             snprintf(err, len, "'%s' must be one of \"sine\", \"square\", \"triangle\"", t.paramName);
             return false;
         }
@@ -272,49 +229,7 @@ static bool readArgument(const Tool& t, JsonObjectConst args, const FuncGenLimit
     }
 }
 
-//origin and version checks
-
-static bool isIpv4(const char* s, size_t len) {
-    int groups = 0;
-    size_t i = 0;
-    while (i < len) {
-        int value = 0;
-        size_t digits = 0;
-        while (i < len && isdigit((unsigned char)s[i])) {
-            value = value * 10 + (s[i] - '0');
-            i++;
-            if (++digits > 3) return false;
-        }
-        if (digits == 0 || value > 255) return false;
-        groups++;
-        if (i == len) break;
-        if (s[i] != '.' || groups == 4) return false;
-        i++;
-        if (i == len) return false; //trailing dot
-    }
-    return groups == 4;
-}
-
-bool mcpOriginAllowed(const char* origin) {
-    if (!origin) return false;
-    const char* host;
-    if (strncasecmp(origin, "http://", 7) == 0) host = origin + 7;
-    else if (strncasecmp(origin, "https://", 8) == 0) host = origin + 8;
-    else return false; //includes "null"
-
-    size_t hostLen = strcspn(host, ":/");
-    const char* rest = host + hostLen;
-    if (*rest == ':') {
-        rest++;
-        if (!*rest) return false;
-        while (isdigit((unsigned char)*rest)) rest++;
-    }
-    if (*rest != '\0') return false; //an origin has no path
-
-    static const char LOCAL_NAME[] = MDNS_HOSTNAME ".local";
-    if (hostLen == sizeof(LOCAL_NAME) - 1 && strncasecmp(host, LOCAL_NAME, hostLen) == 0) return true;
-    return isIpv4(host, hostLen);
-}
+//version check
 
 bool mcpVersionSupported(const char* version) {
     if (!version) return false;
@@ -482,7 +397,7 @@ void McpServer::handlePost(HttpRequest& req, void* ctx) {
 
     //checked before the body is read. see the header for why
     char value[96];
-    if (req.hasHeader("Origin") && (!req.header("Origin", value, sizeof(value)) || !mcpOriginAllowed(value))) {
+    if (req.hasHeader("Origin") && (!req.header("Origin", value, sizeof(value)) || !originAllowed(value))) {
         sendRpcError(req, 403, RPC_INVALID_REQUEST, "origin not allowed");
         return;
     }

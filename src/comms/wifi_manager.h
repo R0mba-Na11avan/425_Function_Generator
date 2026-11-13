@@ -27,7 +27,9 @@
           retry (backoff STA_RETRY_MIN_MS..MAX_MS), fall back or try again
         - Provisioning (provisioning.h) owns the setup routes. its routes exist
           only in AP mode, otherwise anyone on the LAN could overwrite the
-          credentials. the MCP route is registered in both modes
+          credentials. the MCP and REST routes are registered in both modes
+        - GET / is the setup page in AP mode and the home page (the control
+          page, setHomePage) otherwise. this class swaps them with the mode
         - this class runs the task that feeds both and drives the radio.
           the core's auto-reconnect is off, reconnecting is done here
 
@@ -61,6 +63,9 @@ class WifiManager {
         //starts and restarts the server whenever the network comes up or changes mode
         explicit WifiManager(HttpServer& http);
 
+        //what GET / serves while not in setup (AP) mode. call before begin()
+        void setHomePage(HttpServer::Handler handler, void* ctx = nullptr);
+
         //starts the Wi-Fi task and returns immediately
         bool begin();
 
@@ -89,6 +94,7 @@ class WifiManager {
         void serviceScan();
         void serviceSave();
         void publishStatus();
+        void registerHome();
 
         bool loadCredentials();
         bool saveCredentials(const WifiCredentials& creds);
@@ -107,6 +113,8 @@ class WifiManager {
         std::atomic<bool> _attemptFailed; //set by the event callback
         std::atomic<bool> _setupRequested;      //requestSetup / requestLeaveSetup, any task
         std::atomic<bool> _leaveSetupRequested;
+        HttpServer::Handler _homeHandler;
+        void* _homeCtx;
 
         mutable portMUX_TYPE _statusMux;
         NetStatus _status;

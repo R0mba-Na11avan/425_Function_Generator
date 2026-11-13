@@ -54,7 +54,7 @@ static const uint8_t UI_FIELD_COUNT = 5;
 */
 Rect statusRect();
 Rect bleSlotRect();     //status bar, right end: Bluetooth icon while a phone is connected
-Rect mcpBadgeRect();    //status bar, left of the BLE slot: "MCP"/"BLE" after a remote change
+Rect mcpBadgeRect();    //status bar, left of the BLE slot: "MCP"/"BLE"/"WEB" after a remote change
 Rect infoRect();        //the info panel, covers everything below the status bar
 Rect infoCloseRect();   //info panel, top right: "close"
 Rect infoButtonRect(uint8_t slot);  //info panel, bottom row: 0 left, 1 right (also the confirm buttons)
@@ -160,7 +160,10 @@ inline uint8_t fieldBit(UI_FIELD field) { return (uint8_t)(1u << (uint8_t)field)
 //fields whose shown value differs between two states (phase isn't on screen)
 uint8_t changedFields(const FuncGenState& before, const FuncGenState& after);
 
-//remembers recent remote (MCP/BLE) changes: which fields flash and whether
+//the badge text for a remote change: "MCP", "BLE" or "WEB" (3 characters)
+const char* remoteBadgeText(CHANGE_SOURCE source);
+
+//remembers recent remote (MCP/BLE/WEB) changes: which fields flash and whether
 //the status bar badge shows, and for whom
 class RemoteHighlight {
     public:

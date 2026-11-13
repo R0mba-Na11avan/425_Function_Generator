@@ -158,7 +158,7 @@ static void renderStatus(Adafruit_GFX& g, Rect r, const DashboardView& v) {
         g.fillRoundRect(b.x, b.y, b.w, b.h, 3, COLOR_REMOTE);
         g.setTextColor(COLOR_TEXT);
         g.setCursor(b.x + (b.w - 3 * 6) / 2, b.y + (b.h - 8) / 2);
-        g.print(v.badgeSource == CHANGE_SOURCE::BLE ? "BLE" : "MCP");
+        g.print(remoteBadgeText(v.badgeSource));
     }
 
     if (v.bleConnected) {

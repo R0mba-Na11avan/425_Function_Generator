@@ -298,6 +298,15 @@ uint8_t changedFields(const FuncGenState& a, const FuncGenState& b) {
 
 //remote highlight
 
+const char* remoteBadgeText(CHANGE_SOURCE source) {
+    switch (source) {
+        case CHANGE_SOURCE::BLE: return "BLE";
+        case CHANGE_SOURCE::WEB: return "WEB";
+        case CHANGE_SOURCE::MCP:
+        default: return "MCP";
+    }
+}
+
 void RemoteHighlight::changed(uint8_t fields, uint32_t nowMs, CHANGE_SOURCE source) {
     for (uint8_t i = 0; i < UI_FIELD_COUNT; i++) {
         if (fields & (1u << i)) _fieldAt[i] = nowMs;

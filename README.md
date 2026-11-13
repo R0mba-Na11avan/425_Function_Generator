@@ -8,6 +8,7 @@ The ESP32 provides three ways to control it:
 
 - **Local:** an ILI9341 LCD dashboard with a rotary encoder and touchscreen
 - **AI agents:** an MCP server over Wi-Fi (required for the project)
+- **Browser:** a control page at `http://funcgen.local/` on the same Wi-Fi
 - **Bluetooth (BLE):** a GATT service a phone can read, write and subscribe to
   (tested with nRF Connect), paired with a passkey shown on the LCD
 
@@ -19,6 +20,7 @@ oui oui baugette
 flowchart LR
     LCD["LCD + encoder + touch"]
     MCP["MCP server (HTTP)"]
+    WEB["Web page + /api (HTTP)"]
     BLE["BLE (NimBLE)"]
     CTRL["FuncGenController<br/>(mutex, listeners)"]
     FG["FunctionGenerator"]
@@ -26,13 +28,14 @@ flowchart LR
 
     LCD --> CTRL
     MCP --> CTRL
+    WEB --> CTRL
     BLE --> CTRL
     CTRL --> FG --> HW
 ```
 
 Every interface is a client of `FuncGenController`. It serializes access to the
 hardware (each interface runs in its own task) and notifies listeners when the
-state changes, so the LCD always shows what an agent or phone just set. Nothing
+state changes, so the LCD always shows what an agent, phone or browser just set. Nothing
 outside `core/` touches `FunctionGenerator` directly.
 
 ## Layout
@@ -50,9 +53,10 @@ src/
              input_logic (debounce/accel/tap/hold), boot_screen (Wi-Fi + phones reset countdown).
              the *_logic/_view files are host-tested
   comms/     wifi_manager (+ wifi_logic state machine, provisioning routes),
-             http_server, mcp_server, ble_service (+ ble_logic GATT layout and
-             encoding), rest_api stub
-  web/       provisioning_html.h (Wi-Fi setup page), index_html.h (deferred)
+             http_server, mcp_server, rest_api (web control endpoints),
+             api_json (state JSON + Origin check shared by MCP and REST),
+             ble_service (+ ble_logic GATT layout and encoding)
+  web/       provisioning_html.h (Wi-Fi setup page), index_html.h (control page)
 ```
 
 Dependencies only point downward: `ui`/`comms` -> `core` -> `libs`. `ui` and
@@ -74,7 +78,7 @@ headers, so include across folders with relative paths (`"../core/..."`).
 | `comms/wifi_manager` (STA, AP fallback, setup page, mDNS, NVS) | done, state machine and setup routes host-tested, radio part only compiled, not tried on hardware yet |
 | `comms/mcp_server` (JSON-RPC, 8 tools) | done, host-tested end to end against a fake httpd, not tried on hardware yet |
 | `comms/ble_service` (NimBLE GATT, passkey pairing, notifications) | done, encoding and range checks host-tested, the stack part only compiled, not tried on hardware yet |
-| `comms/rest_api`, `web/index_html.h` | deferred, may not be built |
+| `comms/rest_api` + `web/index_html.h` (web control page, `/api/state`, `/api/info`) | done, API host-tested end to end against a fake httpd, page JS only syntax-checked, not tried in a browser against hardware yet |
 
 Suggested order: `config.h` -> display + input -> Wi-Fi + HTTP server (STA, then
 AP fallback + provisioning page) -> MCP server -> BLE.
@@ -96,7 +100,13 @@ AP fallback + provisioning page) -> MCP server -> BLE.
   (trusted bench network). Revisit if it is ever exposed more widely.
   Out-of-range values are rejected with a tool error (the LCD clamps instead).
   Requests need `Content-Type: application/json`, and a browser `Origin` must be
-  `funcgen.local` or an IP address, so a web page can't drive the generator.
+  `funcgen.local` or an IP address, so another web site can't drive the generator.
+- **Web control page:** served by the generator itself (one embedded HTML file,
+  no CDNs, so it also works on the setup AP). It talks to a small JSON API with
+  the same request checks and no auth as MCP. Unlike MCP it **clamps** out-of-range
+  values (like the knob) and says so. One setting per POST, so the peak rule
+  never depends on the order of two changes. The page polls once a second
+  instead of holding a socket open. Plain styling for now.
 - **BLE:** NimBLE (built into the ESP32 core) through its C API. The Arduino BLE
   wrapper always answers a write with success, so it couldn't reject bad values.
   Every characteristic needs an encrypted, MITM-authenticated link: a new phone
@@ -138,8 +148,9 @@ setup routes and the MCP server, include it as
   on screen. In MHz the 0.1 Hz digit isn't shown, so that step acts as 1 Hz.
 - **Touch:** tap a field to select it, tap it again to edit, tap a frequency
   digit to step that digit. Tap the status bar for the network info panel.
-- **Remote changes:** a field changed over MCP or BLE flashes magenta and an
-  "MCP" or "BLE" badge shows in the status bar for a few seconds. If you were
+- **Remote changes:** a field changed over MCP, BLE or the web page flashes
+  magenta and an "MCP", "BLE" or "WEB" badge shows in the status bar for a few
+  seconds. If you were
   editing that field, editing stops and your next turn starts from the new value.
 - **Bluetooth:** a Bluetooth icon at the right of the status bar means a phone is
   connected. When a new phone pairs, a full-screen popup shows the code to type
@@ -174,6 +185,32 @@ CORS, which this server doesn't offer).
 
 Tools: `set_waveform`, `set_frequency`, `set_amplitude`, `set_phase`,
 `set_dc_offset`, `set_output`, `get_state`, `get_limits`.
+
+## Web control page
+
+Open `http://funcgen.local/` (or the IP from the LCD) on any phone or laptop on
+the same network. In setup mode `/` is the Wi-Fi setup page; the controls are
+at `http://192.168.4.1/control` (the setup page links to them).
+
+- **Controls tab:** output on/off, waveform, and fields for frequency (pick
+  Hz/kHz/MHz), amplitude, DC offset and phase. A field is sent when you press
+  Enter or leave it; Esc undoes the typing. Amplitude and offset show the range
+  allowed right now. A value past the edge is clamped and a note says what was
+  set. The sketch shows two cycles of the output against the ±peak limit.
+- **Device tab:** firmware, Wi-Fi and Bluetooth info. Changing Wi-Fi and
+  forgetting phones stay on the LCD only.
+- Changes made elsewhere (knob, MCP, BLE, another browser) show up within about
+  a second and flash.
+
+API (JSON, the same names as MCP's `get_state`):
+
+| Route | What |
+|---|---|
+| `GET /api/state` | `{"state": {...}, "ranges": {...}, "output_peak_v"}`, ranges are the ones allowed right now |
+| `POST /api/state` | exactly one setting, e.g. `{"amplitude_vpp": 2.5}`, `{"waveform": "square"}`, `{"output_enabled": true}`. Answers like GET plus `"clamped"` (and a `"note"` when it was). Needs `Content-Type: application/json` |
+| `GET /api/info` | firmware, `poll_ms`, Wi-Fi and BLE status |
+
+    curl -X POST -H "Content-Type: application/json" -d "{\"frequency_hz\": 1000}" http://funcgen.local/api/state
 
 ## Connecting a phone (BLE)
 
@@ -211,7 +248,7 @@ the AD9833, both AD5452s and the path switch, and render the dashboard with the 
 to BMP screenshots in `test/build/screens`. The HTTP server, Wi-Fi state machine
 and setup routes run against a fake esp_http_server. The BLE value encoding and
 range checks run against the real controller; the NimBLE stack itself isn't
-faked. Needs g++ (on Windows:
+faked. The web API runs end to end like MCP; the page's JavaScript isn't run. Needs g++ (on Windows:
 `scoop install mingw`):
 
     bash test/run_tests.sh

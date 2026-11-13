@@ -22,10 +22,10 @@
         - Content-Type must be application/json (415). a cross-site form or a
           "simple" fetch can't send that, so a web page can't reach the tools
           without a CORS preflight, which this server never answers
-        - Origin, if present, must be http(s)://<MDNS_HOSTNAME>.local or an
-          IPv4 address (403). browsers always send Origin on POST, so this stops
-          DNS rebinding (an attacker's domain resolving to the device's IP),
-          as the MCP spec requires. clients outside a browser send no Origin
+        - Origin, if present, must pass originAllowed (api_json.h, 403):
+          http(s)://<MDNS_HOSTNAME>.local or an IPv4 address. this stops DNS
+          rebinding, as the MCP spec requires. clients outside a browser send
+          no Origin
         - MCP-Protocol-Version, if present, must be one we support (400)
 
     JSON-RPC methods
@@ -59,9 +59,6 @@
 #include "../config.h"
 #include "../core/funcgen_controller.h"
 #include "http_server.h"
-
-//true if a browser Origin header may talk to the server (see above). exposed for the tests
-bool mcpOriginAllowed(const char* origin);
 
 //true for protocol versions this server speaks
 bool mcpVersionSupported(const char* version);

@@ -31,8 +31,12 @@ BLE (last). Read `README.md` for the architecture and status. Each stub header i
   only sets a flag and wakes the radio's task.
 - Controller listeners are called from whatever task made the change. A listener
   must only copy state / set a flag. It must not draw, block, or call a setter.
-- Setters take a `CHANGE_SOURCE` (default `LOCAL`). MCP (and later BLE) pass
-  their own source so the LCD can flash what an agent changed.
+- Setters take a `CHANGE_SOURCE` (default `LOCAL`). MCP, BLE and the web API
+  (`WEB`) pass their own source so the LCD can flash what a remote client changed.
+- MCP and the web API (`comms/rest_api`) share the state JSON and the Origin
+  check through `comms/api_json`. MCP rejects out-of-range values, the web API
+  clamps them (like the knob). `/` is the setup page in AP mode and the control
+  page otherwise; `WifiManager::setHomePage` swaps it.
 - Input events carry an `INPUT_SOURCE` (which encoder/button/touch), so new
   controls are added as new sources in `InputManager`.
 - All pins, limits, task settings and network constants live in `src/config.h`.

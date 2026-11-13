@@ -23,7 +23,8 @@ struct FuncGenState {
 enum class CHANGE_SOURCE : uint8_t {
     LOCAL,  //LCD, encoder, touch
     MCP,
-    BLE
+    BLE,
+    WEB     //the control page (comms/rest_api)
 };
 
 //every valid range, in one struct so the LCD, MCP schemas and get_limits
