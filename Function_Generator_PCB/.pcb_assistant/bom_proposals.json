@@ -1,0 +1,300 @@
+{
+  "proposals": [
+    {
+      "id": "sch:e741d79c8d87",
+      "refdes": [
+        "R1",
+        "R2"
+      ],
+      "qty": 2,
+      "value": "50",
+      "footprint": null,
+      "current_mpn": null,
+      "current_price": null,
+      "offer": {
+        "mpn": "CRCW060350R0FKEA",
+        "manufacturer": "Vishay Dale",
+        "description": "RES SMD 50 OHM 1% 1/10W 0603",
+        "digikey_pn": "541-3318-1-ND",
+        "packaging": "Cut Tape (CT)",
+        "unit_price": 0.1,
+        "stock": 318807,
+        "lifecycle": "Active",
+        "product_url": "https://www.digikey.com/en/products/detail/vishay-dale/CRCW060350R0FKEA/5072766",
+        "datasheet_url": "https://www.vishay.com/docs/20035/dcrcwe3.pdf",
+        "min_order": 1,
+        "min_order_cost": null,
+        "bulk_only": false,
+        "photo_url": "https://mm.digikey.com/Volume0/opasdata/d220001/medias/images/2491/CRCW%200603%20%281608metric%29.jpg",
+        "category": "Resistors",
+        "parameters": {
+          "Resistance": "50 Ohms",
+          "Tolerance": "\u00b11%",
+          "Power (Watts)": "0.1W, 1/10W",
+          "Composition": "Thick Film",
+          "Features": "Automotive AEC-Q200",
+          "Temperature Coefficient": "\u00b1100ppm/\u00b0C",
+          "Operating Temperature": "-55\u00b0C ~ 155\u00b0C",
+          "Package / Case": "0603 (1608 Metric)",
+          "Supplier Device Package": "0603",
+          "Ratings": "-",
+          "Size / Dimension": "0.061\" L x 0.033\" W (1.55mm x 0.85mm)",
+          "Height - Seated (Max)": "0.020\" (0.50mm)",
+          "Number of Terminations": "2",
+          "Failure Rate": "-"
+        }
+      },
+      "alternatives": [
+        {
+          "mpn": "RN73R1ETTP50R0F50",
+          "manufacturer": "KOA Speer Electronics, Inc.",
+          "description": "RESISTOR",
+          "digikey_pn": "2019-RN73R1ETTP50R0F50CT-ND",
+          "packaging": "Cut Tape (CT)",
+          "unit_price": 0.12,
+          "stock": 112299,
+          "lifecycle": "Active",
+          "product_url": "https://www.digikey.com/en/products/detail/koa-speer-electronics-inc/RN73R1ETTP50R0F50/11476551",
+          "datasheet_url": "https://www.koaspeer.com/pdfs/RN73R.pdf",
+          "min_order": 1,
+          "min_order_cost": null,
+          "bulk_only": false,
+          "photo_url": "https://mm.digikey.com/Volume0/opasdata/d220001/medias/images/696/KOA-Speer-RK73Z-0402-%281005-Metric%29.jpg",
+          "category": "Resistors",
+          "parameters": {
+            "Resistance": "50 Ohms",
+            "Tolerance": "\u00b11%",
+            "Power (Watts)": "0.063W, 1/16W",
+            "Composition": "Thin Film",
+            "Features": "Automotive AEC-Q200, Moisture Resistant",
+            "Temperature Coefficient": "\u00b150ppm/\u00b0C",
+            "Operating Temperature": "-55\u00b0C ~ 155\u00b0C",
+            "Package / Case": "0402 (1005 Metric)",
+            "Supplier Device Package": "0402",
+            "Ratings": "-",
+            "Size / Dimension": "0.039\" L x 0.020\" W (1.00mm x 0.50mm)",
+            "Height - Seated (Max)": "0.016\" (0.40mm)",
+            "Number of Terminations": "2"
+          }
+        },
+        {
+          "mpn": "CRCW080550R0FKTA",
+          "manufacturer": "Vishay Dale",
+          "description": "CRCW0805 50 1% 100 RT1",
+          "digikey_pn": "541-CRCW080550R0FKTACT-ND",
+          "packaging": "Cut Tape (CT)",
+          "unit_price": 0.23,
+          "stock": 18305,
+          "lifecycle": "Active",
+          "product_url": "https://www.digikey.com/en/products/detail/vishay-dale/CRCW080550R0FKTA/21556509",
+          "datasheet_url": "https://www.vishay.com/docs/20008/dcrcw.pdf",
+          "min_order": 1,
+          "min_order_cost": null,
+          "bulk_only": false,
+          "photo_url": "https://mm.digikey.com/Volume0/opasdata/d220001/medias/images/4849/541_CRCW-0805-%282125metric%29.jpg",
+          "category": "Resistors",
+          "parameters": {
+            "Resistance": "50 Ohms",
+            "Tolerance": "\u00b11%",
+            "Power (Watts)": "0.125W, 1/8W",
+            "Composition": "Thick Film",
+            "Features": "Automotive AEC-Q200",
+            "Temperature Coefficient": "\u00b1100ppm/\u00b0C",
+            "Operating Temperature": "-55\u00b0C ~ 155\u00b0C",
+            "Package / Case": "0805 (2012 Metric)",
+            "Supplier Device Package": "0805",
+            "Ratings": "-",
+            "Size / Dimension": "0.079\" L x 0.049\" W (2.00mm x 1.25mm)",
+            "Height - Seated (Max)": "0.020\" (0.50mm)",
+            "Number of Terminations": "2",
+            "Failure Rate": "-"
+          }
+        },
+        {
+          "mpn": "TNPR020150R0FEED",
+          "manufacturer": "Vishay",
+          "description": "TNPR0201 50R0 1% T-9 ET7 E3",
+          "digikey_pn": "749-TNPR020150R0FEEDCT-ND",
+          "packaging": "Cut Tape (CT)",
+          "unit_price": 0.37,
+          "stock": 4243,
+          "lifecycle": "Active",
+          "product_url": "https://www.digikey.com/en/products/detail/vishay/TNPR020150R0FEED/22111418",
+          "datasheet_url": "https://www.vishay.com/docs/28949/tnpr_e3.pdf",
+          "min_order": 1,
+          "min_order_cost": null,
+          "bulk_only": false,
+          "photo_url": "https://mm.digikey.com/Volume0/opasdata/d220001/medias/images/5765/MFG_TNPR0201.jpg",
+          "category": "Resistors",
+          "parameters": {
+            "Resistance": "50 Ohms",
+            "Tolerance": "\u00b11%",
+            "Power (Watts)": "0.05W, 1/20W",
+            "Composition": "Thin Film",
+            "Features": "Anti-Sulfur, Moisture Resistant, RF, High Frequency",
+            "Temperature Coefficient": "\u00b125ppm/\u00b0C",
+            "Operating Temperature": "-55\u00b0C ~ 155\u00b0C",
+            "Package / Case": "0201 (0603 Metric)",
+            "Supplier Device Package": "0201",
+            "Size / Dimension": "0.024\" L x 0.012\" W (0.60mm x 0.30mm)",
+            "Height - Seated (Max)": "0.010\" (0.26mm)",
+            "Number of Terminations": "2",
+            "Failure Rate": "-"
+          }
+        }
+      ],
+      "rationale": "50\u03a9, \u22645%",
+      "status": "approved",
+      "created_at": "2026-11-12T22:39:00+00:00"
+    },
+    {
+      "id": "sch:e9fc555a7773",
+      "refdes": [
+        "U2"
+      ],
+      "qty": 1,
+      "value": "TEC2-1221WI",
+      "footprint": "Converter_DCDC:Converter_DCDC_TRACO_TEC2-12xxWI_24xxWI_48xxWI_THT",
+      "current_mpn": "TEC 2-1222WI",
+      "current_price": null,
+      "offer": {
+        "mpn": "TEC 2-1222WI",
+        "manufacturer": "Traco Power",
+        "description": "DC DC CONVERTER +/-12V 2W",
+        "digikey_pn": "1951-1405-ND",
+        "packaging": "",
+        "unit_price": null,
+        "stock": null,
+        "lifecycle": "Active",
+        "product_url": "https://www.digikey.com/en/products/detail/traco-power/TEC-2-1222WI/9382442",
+        "datasheet_url": "https://www.tracopower.com/products/tec2wi.pdf",
+        "min_order": null,
+        "min_order_cost": null,
+        "bulk_only": false,
+        "photo_url": "https://mm.digikey.com/Volume0/opasdata/d220001/medias/images/2581/MFG_TEC%202-2415WI.jpg",
+        "category": "Power Supplies - Board Mount",
+        "parameters": {
+          "Type": "Isolated Module",
+          "Number of Outputs": "2",
+          "Voltage - Input (Min)": "4.5V",
+          "Voltage - Input (Max)": "18V",
+          "Voltage - Output 1": "12V",
+          "Voltage - Output 2": "-12V",
+          "Voltage - Output 3": "-",
+          "Voltage - Output 4": "-",
+          "Current - Output (Max)": "83mA, 83mA",
+          "Power (Watts)": "2 W",
+          "Voltage - Isolation": "1.6 kV",
+          "Applications": "ITE (Commercial)",
+          "Features": "Remote On/Off, SCP",
+          "Operating Temperature": "-40\u00b0C ~ 93\u00b0C (With Derating)",
+          "Efficiency": "82%",
+          "Mounting Type": "Through Hole",
+          "Package / Case": "8-SIP Module, 7 Leads",
+          "Size / Dimension": "0.86\" L x 0.36\" W x 0.44\" H (21.8mm x 9.1mm x 11.2mm)",
+          "Supplier Device Package": "-"
+        }
+      },
+      "alternatives": [],
+      "rationale": "exact part number TEC 2-1222WI \u2014 but only 0 in stock; alternatives are versions of TEC 2-1222WI you can buy 1 of",
+      "status": "approved",
+      "created_at": "2026-11-12T22:39:00+00:00"
+    },
+    {
+      "id": "sch:89e9bc41c75c",
+      "refdes": [
+        "DS1"
+      ],
+      "qty": 1,
+      "value": "ILI9341",
+      "footprint": null,
+      "current_mpn": null,
+      "current_price": null,
+      "offer": null,
+      "alternatives": [],
+      "rationale": "no exact match for ILI9341; cheapest orderable version \u2014 nothing active and in stock matched.",
+      "status": "skipped",
+      "created_at": "2026-11-13T00:03:06+00:00"
+    },
+    {
+      "id": "sch:479812578b86",
+      "refdes": [
+        "J1"
+      ],
+      "qty": 1,
+      "value": "Conn_Coaxial_CH1",
+      "footprint": null,
+      "current_mpn": null,
+      "current_price": null,
+      "offer": null,
+      "alternatives": [],
+      "rationale": "generic symbol \u2014 set an MPN on the part (or ask the copilot to pick one)",
+      "status": "skipped",
+      "created_at": "2026-11-13T00:03:06+00:00"
+    },
+    {
+      "id": "sch:afe2ce9a8248",
+      "refdes": [
+        "J2"
+      ],
+      "qty": 1,
+      "value": "Conn_Coaxial_CH2",
+      "footprint": null,
+      "current_mpn": null,
+      "current_price": null,
+      "offer": null,
+      "alternatives": [],
+      "rationale": "generic symbol \u2014 set an MPN on the part (or ask the copilot to pick one)",
+      "status": "skipped",
+      "created_at": "2026-11-13T00:03:06+00:00"
+    },
+    {
+      "id": "sch:231e513c745f",
+      "refdes": [
+        "J3"
+      ],
+      "qty": 1,
+      "value": "PWR_IN",
+      "footprint": null,
+      "current_mpn": null,
+      "current_price": null,
+      "offer": null,
+      "alternatives": [],
+      "rationale": "generic symbol \u2014 set an MPN on the part (or ask the copilot to pick one)",
+      "status": "skipped",
+      "created_at": "2026-11-13T00:03:06+00:00"
+    },
+    {
+      "id": "sch:446b4cf6fcdb",
+      "refdes": [
+        "SW1"
+      ],
+      "qty": 1,
+      "value": "Rotary_Encoder_Module",
+      "footprint": "Connector_PinSocket_2.54mm:PinSocket_1x05_P2.54mm_Vertical",
+      "current_mpn": null,
+      "current_price": null,
+      "offer": null,
+      "alternatives": [],
+      "rationale": "generic symbol \u2014 set an MPN on the part (or ask the copilot to pick one)",
+      "status": "skipped",
+      "created_at": "2026-11-13T00:03:06+00:00"
+    },
+    {
+      "id": "sch:efc27355d572",
+      "refdes": [
+        "U1"
+      ],
+      "qty": 1,
+      "value": "ESP32-S3-DevKitC-N16R8",
+      "footprint": "ESP32-S3-DevKitC:ESP32-S3-DevKitC-1_DualUSB",
+      "current_mpn": null,
+      "current_price": null,
+      "offer": null,
+      "alternatives": [],
+      "rationale": "no exact match for ESP32-S3-DevKitC-N16R8; cheapest orderable version \u2014 nothing active and in stock matched.",
+      "status": "skipped",
+      "created_at": "2026-11-13T00:03:06+00:00"
+    }
+  ]
+}

@@ -1,0 +1,161 @@
+{
+  "parts": {
+    "ILI9341": {
+      "key": "ILI9341",
+      "refs": [
+        "DS1"
+      ],
+      "status": "missing",
+      "file": null,
+      "source": null,
+      "url": null,
+      "sha256": null,
+      "pages": 0,
+      "tried": [],
+      "fetched_at": 0.0,
+      "origin": "board"
+    },
+    "ESP32-S3-DevKitC-N16R8": {
+      "key": "ESP32-S3-DevKitC-N16R8",
+      "refs": [
+        "U1"
+      ],
+      "status": "ok",
+      "file": "datasheets/ESP32-S3-DevKitC-N16R8.pdf",
+      "source": "schematic",
+      "url": "https://docs.espressif.com/projects/esp-dev-kits/en/latest/esp32s3/esp-dev-kits-en-master-esp32s3.pdf",
+      "sha256": "a81c88301be797d53a15ced1b36b9528471e0d9a3c314556bc567f177f2d1896",
+      "pages": 120,
+      "tried": [],
+      "fetched_at": 1794498175.8620527,
+      "origin": "board"
+    },
+    "tec2": {
+      "key": "tec2",
+      "refs": [],
+      "status": "ok",
+      "file": "datasheets/.research/tec2.pdf",
+      "source": "url",
+      "url": "https://www.tracopower.com/products/tec2.pdf",
+      "sha256": "70596f2f95d6f989be86834b804b02cb85ce1541f8fd37936686b23b77a5e9d5",
+      "pages": 4,
+      "tried": [],
+      "fetched_at": 1794520468.877719,
+      "origin": "research"
+    },
+    "tec2wi": {
+      "key": "tec2wi",
+      "refs": [],
+      "status": "ok",
+      "file": "datasheets/.research/tec2wi.pdf",
+      "source": "url",
+      "url": "https://www.tracopower.com/products/tec2wi.pdf",
+      "sha256": "d5fd8a0a7cff402a71982dbe49a48f92912533253a7c1ce31fdb674c2929bb2d",
+      "pages": 4,
+      "tried": [],
+      "fetched_at": 1794521071.6651402,
+      "origin": "research"
+    },
+    "TEC2-1221WI": {
+      "key": "TEC2-1221WI",
+      "refs": [
+        "U2"
+      ],
+      "status": "ok",
+      "file": "datasheets/TEC2-1221WI.pdf",
+      "source": "schematic",
+      "url": "https://www.tracopower.com/products/tec2wi.pdf",
+      "sha256": "d5fd8a0a7cff402a71982dbe49a48f92912533253a7c1ce31fdb674c2929bb2d",
+      "pages": 4,
+      "tried": [],
+      "fetched_at": 1794522603.4973774,
+      "origin": "board"
+    },
+    "OPA2810IDR": {
+      "key": "OPA2810IDR",
+      "refs": [],
+      "status": "ok",
+      "file": "datasheets/.research/OPA2810IDR.pdf",
+      "source": "manufacturer",
+      "url": "https://www.ti.com/lit/ds/symlink/opa2810.pdf",
+      "sha256": "6ee8a464a8f0bd03c16fc91e594a017d3c3956e6bf53c80e01611fb34876506d",
+      "pages": 52,
+      "tried": [],
+      "fetched_at": 1794523043.6025398,
+      "origin": "research"
+    },
+    "TL071CP": {
+      "key": "TL071CP",
+      "refs": [],
+      "status": "ok",
+      "file": "datasheets/.research/TL071CP.pdf",
+      "source": "manufacturer",
+      "url": "https://www.ti.com/lit/ds/symlink/tl071.pdf",
+      "sha256": "d6e672f79ba4941d864de72e5d93983e5fd3dbe50f3bcbaac3d83d5007333689",
+      "pages": 89,
+      "tried": [],
+      "fetched_at": 1794523044.4825418,
+      "origin": "research"
+    },
+    "TSR2-2450N": {
+      "key": "TSR2-2450N",
+      "refs": [],
+      "status": "ok",
+      "file": "datasheets/.research/TSR2-2450N.pdf",
+      "source": "url",
+      "url": "https://www.tracopower.com/tsr2n-datasheet",
+      "sha256": "b8ea4a84eb89204040299323e29feb5a67bb97692b32708ad51fbc908773ae92",
+      "pages": 4,
+      "tried": [],
+      "fetched_at": 1794523360.0006838,
+      "origin": "research"
+    },
+    "TEC2-non-WI": {
+      "key": "TEC2-non-WI",
+      "refs": [],
+      "status": "ok",
+      "file": "datasheets/.research/TEC2-non-WI.pdf",
+      "source": "url",
+      "url": "https://www.tracopower.com/products/tec2.pdf",
+      "sha256": "70596f2f95d6f989be86834b804b02cb85ce1541f8fd37936686b23b77a5e9d5",
+      "pages": 4,
+      "tried": [],
+      "fetched_at": 1794526281.7452118,
+      "origin": "research"
+    },
+    "LM7805MPX/NOPB": {
+      "key": "LM7805MPX/NOPB",
+      "refs": [],
+      "status": "ok",
+      "file": "datasheets/.research/LM7805MPX_NOPB.pdf",
+      "source": "digikey",
+      "url": "https://www.ti.com/lit/ds/symlink/lm7800.pdf",
+      "sha256": "49391342cf3b05f89ae94607257ef03f678ae9f1a3bdd388252adb8b00da043d",
+      "pages": 38,
+      "tried": [
+        {
+          "source": "manufacturer",
+          "url": "https://www.ti.com/lit/ds/symlink/lm7805.pdf",
+          "error": "https://www.ti.com/lit/ds/symlink/lm7805.pdf: HTTP 404"
+        },
+        {
+          "source": "manufacturer",
+          "url": "https://www.ti.com/lit/ds/symlink/lm7805mpx/nopb.pdf",
+          "error": "https://www.ti.com/lit/ds/symlink/lm7805mpx/nopb.pdf: HTTP 404"
+        },
+        {
+          "source": "manufacturer",
+          "url": "https://www.ti.com/lit/ds/symlink/snlm7805.pdf",
+          "error": "https://www.ti.com/lit/ds/symlink/snlm7805.pdf: HTTP 404"
+        },
+        {
+          "source": "manufacturer",
+          "url": "https://www.ti.com/lit/ds/symlink/snlm7805mpx/nopb.pdf",
+          "error": "https://www.ti.com/lit/ds/symlink/snlm7805mpx/nopb.pdf: HTTP 404"
+        }
+      ],
+      "fetched_at": 1794528374.3972058,
+      "origin": "research"
+    }
+  }
+}
