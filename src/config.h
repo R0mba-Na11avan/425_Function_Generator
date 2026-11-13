@@ -24,7 +24,7 @@
     REAL WIRING. Change them here only: every file includes this header, so the
     sketch and all modules pick the new pins up on the next build.
 
-    Bus plan: the generator chips (AD9833 + both AD5452s) share the default
+    Bus plan: the generator chips (AD9833 + two AD5452s per channel) share the default
     SPI object (FSPI). The display + touch share a second bus (HSPI object),
     so a slow LCD redraw never delays a frequency change.
 */
@@ -36,6 +36,15 @@
 #define PIN_AD9833_CS       10
 #define PIN_AMP_DAC_CS      9       //AD5452 #1 SYNC: scales the amplified wave (amplitude)
 #define PIN_OFFSET_DAC_CS   14      //AD5452 #2 SYNC: sets the DC offset
+
+//second channel (CH2) chips, on the same generator bus. reserved: nothing
+//drives these until CH2 is in the firmware, so each needs a 10k pull-up to
+//3.3 V to keep the chip deselected while CH1 talks on the bus
+//(GPIO38 and 48 are skipped: one of them drives the board's RGB LED,
+//depending on the board revision)
+#define PIN_AD9833_CS_2     39
+#define PIN_AMP_DAC_CS_2    40      //CH2 AD5452 (amplitude) SYNC
+#define PIN_OFFSET_DAC_CS_2 41      //CH2 AD5452 (DC offset) SYNC
 
 //TS5A23157 analog switch, channel 1 IN1 pin: LOW = NC1 = filtered
 //sine/triangle path, HIGH = NO1 = divided square path. put a pull-down on it

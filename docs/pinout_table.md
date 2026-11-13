@@ -5,12 +5,21 @@ What every pin on every part connects to. GPIO numbers come from
 if a pin moves, change it in `config.h` first, then update this file.
 
 Rules for the ESP32-S3 N16R8: don't use GPIO26-37 (octal flash/PSRAM) or the
-strapping pins 0/3/45/46. Everything is 3.3 V logic; never put 5 V on a GPIO.
+strapping pins 0/3/45/46. The board breaks out 35/36/37, but they're PSRAM
+pins on the N16R8, so leave them alone. Also skip GPIO38 and GPIO48: the RGB
+LED is on GPIO48 on early DevKitC-1 boards and GPIO38 on v1.1, and clones vary.
+Everything is 3.3 V logic; never put 5 V on a GPIO.
 
 ## ESP32-S3 GPIO summary
 
-Sorted by GPIO. Two SPI buses: the **generator bus** (FSPI: AD9833 and both
-AD5452s) and the **display bus** (HSPI: LCD and touch).
+Sorted by GPIO. Two SPI buses: the **generator bus** (FSPI: each channel's
+AD9833 and two AD5452s) and the **display bus** (HSPI: LCD and touch).
+
+CH2 rows are reserved: the pins are fixed in `config.h`, but the firmware
+doesn't drive them until CH2 is added. Their pull-ups and pull-downs keep the
+CH2 chips deselected and on the sine path until then. CH2's AD9833 and AD5452s
+wire up exactly like CH1's (same tables below), except for the pins listed
+here.
 
 | GPIO | `config.h` name | Connects to | Notes |
 |---|---|---|---|
@@ -23,8 +32,8 @@ AD5452s) and the **display bus** (HSPI: LCD and touch).
 | 8 | `PIN_TOUCH_IRQ` | `T_IRQ` | Internal pull-up |
 | 9 | `PIN_AMP_DAC_CS` | AD5452 #1 (amplitude) `SYNC` | 10 kΩ pull-up to 3.3 V |
 | 10 | `PIN_AD9833_CS` | AD9833 `FSYNC` | |
-| 11 | `PIN_GEN_MOSI` | AD9833 `SDATA`, AD5452 #1 `SDIN`, AD5452 #2 `SDIN` | Generator bus data out |
-| 12 | `PIN_GEN_SCK` | AD9833 `SCLK`, AD5452 #1 `SCLK`, AD5452 #2 `SCLK` | Generator bus clock |
+| 11 | `PIN_GEN_MOSI` | `SDATA` on both AD9833s, `SDIN` on all four AD5452s | Generator bus data out |
+| 12 | `PIN_GEN_SCK` | `SCLK` on both AD9833s and all four AD5452s | Generator bus clock |
 | 13 | `PIN_GEN_MISO` | Nothing | Reserved by the SPI bus; none of the chips send data back |
 | 14 | `PIN_OFFSET_DAC_CS` | AD5452 #2 (offset) `SYNC` | 10 kΩ pull-up to 3.3 V |
 | 15 | `PIN_LCD_DC` | LCD `DC` | |
@@ -32,6 +41,9 @@ AD5452s) and the **display bus** (HSPI: LCD and touch).
 | 17 | `PIN_LCD_BL` | LCD `LED` | Backlight, driven HIGH |
 | 18 | `PIN_TOUCH_CS` | `T_CS` | |
 | 21 | `PIN_WAVE_SWITCH` | TS5A23157 `IN1` | 10 kΩ pull-down to GND (sine path at boot) |
+| 39 | `PIN_AD9833_CS_2` | CH2 AD9833 `FSYNC` | 10 kΩ pull-up to 3.3 V. Reserved for CH2, not driven yet |
+| 40 | `PIN_AMP_DAC_CS_2` | CH2 AD5452 (amplitude) `SYNC` | 10 kΩ pull-up to 3.3 V. Reserved for CH2, not driven yet |
+| 41 | `PIN_OFFSET_DAC_CS_2` | CH2 AD5452 (offset) `SYNC` | 10 kΩ pull-up to 3.3 V. Reserved for CH2, not driven yet |
 | 42 | `PIN_ENC_SW` | Encoder `SW` | Internal pull-up. Held at power-on = forget Wi-Fi/phones |
 | 47 | `PIN_WAVE_SWITCH_2` | TS5A23157 `IN2` | 10 kΩ pull-down to GND. Reserved for CH2, not driven yet |
 | 3V3 | | Every 3.3 V part's supply pin | See [Power](#power) |
@@ -79,7 +91,9 @@ If turning the knob clockwise lowers the value, swap the `CLK` and `DT` wires
 
 ## AD9833 DDS module
 
-7-pin header, top to bottom as printed on the board.
+7-pin header, top to bottom as printed on the board. The table is CH1's
+module; CH2's is wired the same except `FSYNC` goes to GPIO39 (with a 10 kΩ
+pull-up to 3.3 V) and `OUT` feeds CH2's own low-pass and divider.
 
 | Module pin | Connects to | Notes |
 |---|---|---|
@@ -93,7 +107,9 @@ If turning the knob clockwise lowers the value, swap the `CLK` and `DT` wires
 
 ## AD5452 MDAC × 2 (MSOP-8, on adapter boards)
 
-Same pinout for both chips; only `SYNC` and the analog pins differ.
+Same pinout for both chips; only `SYNC` and the analog pins differ. The table
+is CH1's pair; CH2 has its own pair wired the same way, with `SYNC` on GPIO40
+(amplitude) and GPIO41 (offset), each with a 10 kΩ pull-up to 3.3 V.
 Pin numbers are the MSOP-8 package (AD5452YRMZ), which is what the adapter's
 DIP pins follow.
 
@@ -140,7 +156,7 @@ Only the 3.3 V side is decided. The ±12 V analog rails are still open (see
 
 | Rail | Source | Feeds |
 |---|---|---|
-| 3.3 V | ESP32 board `3V3` pin | Display `VCC`, encoder `+`, AD9833 `VCC`, both AD5452 `VDD`, TS5A23157 `V+`, the SYNC pull-ups |
+| 3.3 V | ESP32 board `3V3` pin | Display `VCC`, encoder `+`, both AD9833 `VCC`, all four AD5452 `VDD`, TS5A23157 `V+`, the SYNC/FSYNC pull-ups |
 | GND | ESP32 board `GND` | Every ground above, tied to the analog supply's ground |
 | ±12 V | TBD | OPA2810 × 2, TL071 (must stay at or below ±13.5 V) |
 
