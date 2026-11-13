@@ -37,10 +37,15 @@
 #define PIN_AMP_DAC_CS      9       //AD5452 #1 SYNC: scales the amplified wave (amplitude)
 #define PIN_OFFSET_DAC_CS   14      //AD5452 #2 SYNC: sets the DC offset
 
-//TS5A3159A analog switch IN pin: LOW = NC = filtered sine/triangle path,
-//HIGH = NO = divided square path. put a pull-down on it so the sine path is
-//selected while the ESP32 boots
+//TS5A23157 analog switch, channel 1 IN1 pin: LOW = NC1 = filtered
+//sine/triangle path, HIGH = NO1 = divided square path. put a pull-down on it
+//so the sine path is selected while the ESP32 boots
 #define PIN_WAVE_SWITCH     21
+
+//TS5A23157 channel 2 IN2 pin, same logic for the second generator channel.
+//reserved: nothing drives it until CH2 is in the firmware, so the pull-down
+//keeps CH2 on its sine path
+#define PIN_WAVE_SWITCH_2   47
 
 //display + touch bus (HSPI). wire T_CLK/T_DIN/T_DO to the same SCK/MOSI/MISO.
 //MISO is only for the touch chip's T_DO: leave the LCD's own SDO(MISO) pin
@@ -77,7 +82,7 @@
 #define PHASE_MAX_DEG       360.0f
 
 /*
-    Output stage (see docs/parts.md): AD9833 -> TS5A3159A (sine/triangle or
+    Output stage (see docs/parts.md): AD9833 -> TS5A23157 (sine/triangle or
     divided square) -> x20 gain -> AD5452 #1 (0..100 %) -> summer with
     AD5452 #2 (DC offset) -> 50 ohm -> output.
 

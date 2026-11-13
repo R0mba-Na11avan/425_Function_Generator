@@ -1,7 +1,7 @@
 /**************************************************************************
 *   Author: Parikshith Venkataraghavan
 *   Purpose: function generator class used to interface with the AD9833
-             DDS, the TS5A3159A waveform path switch and the two AD5452
+             DDS, the TS5A23157 waveform path switch and the two AD5452
              multiplying DACs (amplitude and DC offset)
 *   Date: Oct-30-2026
 **************************************************************************/

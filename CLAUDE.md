@@ -1,7 +1,7 @@
 # Function Generator (ECE 425)
 
 ESP32-S3 (N16R8) firmware: AD9833 waveform generator + two AD5452 MDACs
-(amplitude, DC offset) + a TS5A3159A path switch (parts: `docs/parts.md`),
+(amplitude, DC offset) + a TS5A23157 path switch (parts: `docs/parts.md`),
 controlled by an ILI9341 LCD (encoder + touch), an MCP server over Wi-Fi, and
 BLE (last). Read `README.md` for the architecture and status. Each stub header in
 `src/` contains the spec for that module, so read it before implementing a file.

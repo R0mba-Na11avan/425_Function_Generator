@@ -23,7 +23,7 @@ flowchart TD
     DDS["AD9833 VOUT"]
     LPF["RC low-pass"]
     DIV["Divider<br/>3.3 V to 0.6 V"]
-    SW["TS5A3159A<br/>COM"]
+    SW["TS5A23157 ch 1<br/>COM1"]
     GPIO["ESP32 GPIO"]
     G1["Gain 1<br/>OPA2810 A, x5<br/>subtracts ~0.3 V"]
     G2["Gain 2<br/>OPA2810 B, x4"]
@@ -50,14 +50,14 @@ wide bandwidth (see [Op-amp notes](#op-amp-notes)).
 | Part | Qty | Status | Role |
 |---|---|---|---|
 | AD9833 DDS breakout module (25 MHz oscillator on board) | 1 | in use | Makes the sine, triangle and square. Power it from 3.3 V so the square is 3.3 Vpp and the SPI logic matches the ESP32. Sine/triangle come out at about 38 mV to 650 mV. |
-| TS5A3159A SPDT analog switch (TS5A3159ADBVR, SOT-23-6) | 1 | in firmware | Picks the filtered sine/triangle path (NC) or the divided square path (NO). Driven by one ESP32 GPIO (`PIN_WAVE_SWITCH`). |
+| TS5A23157 dual SPDT analog switch module (VSSOP-10 on a breakout) | 1 | in firmware | Channel 1 picks CH1's filtered sine/triangle path (NC1) or divided square path (NO1), driven by `PIN_WAVE_SWITCH` (`IN1`). Channel 2 does the same for CH2; `PIN_WAVE_SWITCH_2` (`IN2`) is reserved but not driven yet. |
 | AD5452 12-bit multiplying DAC (AD5452YRMZ, MSOP-8) | 2 | in firmware | #1 scales the amplified wave from 0 to 100 %. #2 sets the DC offset. Driver: `src/libs/AD5452/` (see `docs/AD5452.md`). About $9.50 each at DigiKey (≈1,600 in stock, Nov 2026). Needs one 100 nF cap from VDD to GND, right at the chip. |
 | OPA2810 dual FET op-amp (OPA2810IDR, SOIC-8) | 2 (+1 spare) | chosen | The four fast stages: gain 1, gain 2, the amplitude AD5452's I/V, and the summer that drives the output. See [Op-amp notes](#op-amp-notes). |
 | TL071CP low-noise JFET op-amp (DIP-8) | 1 | chosen | I/V for the offset AD5452. The offset is DC, so speed doesn't matter here. |
 | Resistors and capacitors | — | values TBD | Square divider, RC low-pass on the sine path, gain-setting resistors, summer resistors, 1–2 pF compensation across each AD5452's RFB, and decoupling (100 nF at every chip, plus 10 µF per rail near the OPA2810s). |
 | 50 Ω output resistor, 0.5 W (or two 100 Ω 1/4 W in parallel) | 1 | chosen | Protects the summer op-amp and keeps it stable into the cable. See "Output current and the 50 Ω resistor" below. |
 | Output connector (BNC) | 1 | TBD | Scope cable. |
-| SOT-23-6, MSOP-8 and SOIC-8 to DIP adapter boards | 1 + 2 + 2 | — | For breadboard or perfboard. |
+| MSOP-8 and SOIC-8 to DIP adapter boards | 2 + 2 | — | For breadboard or perfboard. The switch comes on its own module, so it needs no adapter. |
 
 ### Replaced
 
@@ -65,6 +65,7 @@ wide bandwidth (see [Op-amp notes](#op-amp-notes)).
 |---|---|---|
 | MCP4131 digital pot (in the op-amp gain loop) | AD5452 | The MCP4131's signal has to stay within 0..VDD, it has only 7 bits (129 steps), and its wiper resistance and capacitance limit bandwidth to about 2 MHz. The AD5452 takes ±10 V straight on VREF and has 4096 steps. |
 | 2N7000 MOSFET (square divider switch) | TS5A3159A | A real SPDT analog switch selects between two paths cleanly. A MOSFET in the divider only switches one leg to ground. |
+| TS5A3159A SPDT analog switch (SOT-23-6) | TS5A23157 | Sold as a ready-made breakout module, so it's easier to buy and wire. It's a dual switch, so one chip covers both channels. Its higher on-resistance doesn't matter here (see below). |
 
 The MCP4131 library and its doc were removed from the project (still in git history).
 
@@ -98,13 +99,13 @@ Alternatives considered:
 - **AD5415 (dual 12-bit, TSSOP-24)**: one chip for both channels, but the package is harder to hand-solder and the driver is different.
 - **MCP4131 / MCP4151**: see Replaced above.
 
-### Analog switch: TS5A3159A
+### Analog switch: TS5A23157
 
-- SPDT: one input (COM) connects to NC when IN is low, to NO when IN is high. Wired as a 2:1 mux: COM goes to the gain stage, NC to the sine path, NO to the square divider.
-- 1.65–5.5 V supply, powered from 3.3 V. Both inputs are 0–0.65 V after the divider, well inside the supply.
-- On-resistance about 1 Ω (3.5 Ω max), about 100 MHz bandwidth, break-before-make.
-- SOT-23-6, cheap.
-- Put a pull-down on IN so the sine path is selected while the ESP32 boots.
+- Dual SPDT, one control pin per channel: COMx connects to NCx when INx is low, to NOx when INx is high. Each channel is wired as a 2:1 mux: COM goes to the gain stage, NC to the sine path, NO to the square divider. Channel 1 is CH1, channel 2 is CH2.
+- 1.65–5.5 V supply, powered from 3.3 V. Both inputs are 0–0.65 V after the divider, well inside the supply. Control inputs are 5 V tolerant.
+- On-resistance about 10 Ω, 220 MHz bandwidth, break-before-make. COM drives an op-amp's high-impedance + input, so the 10 Ω adds no error worth measuring.
+- VSSOP-10, bought as a breakout module.
+- Put a pull-down on each IN so both channels sit on the sine path while the ESP32 boots.
 
 Alternative considered: **ADG719** (Analog Devices, SOT-23-6, 4 Ω max, >200 MHz).
 It works just as well but costs more. Either is far faster than the op-amps.
@@ -182,7 +183,7 @@ the screen means "into high-Z".
 Done (host-tested, compiled, not tried on hardware). All pins and constants are
 in `src/config.h`; only `core/func_gen.*` drives the chips.
 
-- **TS5A3159A:** `PIN_WAVE_SWITCH`, HIGH for square, set in `setWaveform`.
+- **TS5A23157:** `PIN_WAVE_SWITCH` (`IN1`), HIGH for square, set in `setWaveform`. `PIN_WAVE_SWITCH_2` (`IN2`) is reserved for CH2 and not driven yet.
 - **AD5452 × 2:** `PIN_AMP_DAC_CS` and `PIN_OFFSET_DAC_CS` on the generator bus, driver in `src/libs/AD5452/`.
 - **Amplitude:** code = amplitude / `AMP_FULL_CODE_VPP_*` × 4095 (per waveform).
 - **DC offset:** straight line between `OFFSET_V_AT_CODE_0` and `OFFSET_V_AT_FULL_CODE`.
@@ -201,7 +202,7 @@ in `src/config.h`; only `core/func_gen.*` drives the chips.
 ## Sources
 
 - AD5450/AD5451/AD5452 datasheet, Rev. 0 (Analog Devices): spec table, serial interface section (Table 10), amplifier selection, ordering guide.
-- TS5A3159A and ADG719 parametric listings (TI, Analog Devices).
+- TS5A23157 datasheet SCDS165 and product page (TI); TS5A3159A and ADG719 parametric listings (TI, Analog Devices).
 - TL071 and LM318 datasheets (TI).
 - OPA2810 product page (TI): supply, GBW, slew rate, output current, packages.
 - AD8066 and LT1364 product pages (Analog Devices).
