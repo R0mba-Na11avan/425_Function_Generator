@@ -31,7 +31,7 @@ flowchart TD
     AIV["OPA2810 I/V"]
     OREF["Offset reference"]
     OFS["AD5452 #2<br/>DC offset"]
-    OIV["TL071 I/V"]
+    OIV["OPA2810 I/V<br/>(shared offset chip)"]
     SUM["OPA2810<br/>inverting summer"]
     R50["50 Ω"]
     OUT(["Output"])
@@ -52,8 +52,7 @@ wide bandwidth (see [Op-amp notes](#op-amp-notes)).
 | AD9833 DDS breakout module (25 MHz oscillator on board) | 1 | in use | Makes the sine, triangle and square. Power it from 3.3 V so the square is 3.3 Vpp and the SPI logic matches the ESP32. Sine/triangle come out at about 38 mV to 650 mV. |
 | TS5A23157 dual SPDT analog switch module (VSSOP-10 on a breakout) | 1 | in firmware | Channel 1 picks CH1's filtered sine/triangle path (NC1) or divided square path (NO1), driven by `PIN_WAVE_SWITCH` (`IN1`). Channel 2 does the same for CH2; `PIN_WAVE_SWITCH_2` (`IN2`) is reserved but not driven yet. |
 | AD5452 12-bit multiplying DAC (AD5452YRMZ, MSOP-8) | 2 | in firmware | #1 scales the amplified wave from 0 to 100 %. #2 sets the DC offset. Driver: `src/libs/AD5452/` (see `docs/AD5452.md`). About $9.50 each at DigiKey (≈1,600 in stock, Nov 2026). Needs one 100 nF cap from VDD to GND, right at the chip. |
-| OPA2810 dual FET op-amp (OPA2810IDR, SOIC-8) | 2 (+1 spare) | chosen | The four fast stages: gain 1, gain 2, the amplitude AD5452's I/V, and the summer that drives the output. See [Op-amp notes](#op-amp-notes). |
-| TL071CP low-noise JFET op-amp (DIP-8) | 1 | chosen | I/V for the offset AD5452. The offset is DC, so speed doesn't matter here. |
+| OPA2810 dual FET op-amp (OPA2810IDGKT, VSSOP-8) | 2 per channel + 1 shared (5 for two channels) | chosen | Per channel, two chips for the four fast stages: gain 1, gain 2, the amplitude AD5452's I/V, and the summer that drives the output. The fifth chip holds both channels' offset AD5452 I/V stages (A = CH1, B = CH2). See [Op-amp notes](#op-amp-notes). |
 | Resistors and capacitors | — | values TBD | Square divider, RC low-pass on the sine path, gain-setting resistors, summer resistors, 1–2 pF compensation across each AD5452's RFB, and decoupling (100 nF at every chip, plus 10 µF per rail near the OPA2810s). |
 | 50 Ω output resistor, 0.5 W (or two 100 Ω 1/4 W in parallel) | 1 | chosen | Protects the summer op-amp and keeps it stable into the cable. See "Output current and the 50 Ω resistor" below. |
 | Output connector (BNC) | 1 | TBD | Scope cable. |
@@ -112,8 +111,12 @@ It works just as well but costs more. Either is far faster than the op-amps.
 
 ### Op-amp notes
 
-Signal path: **OPA2810** (TI, dual, SOIC-8, about $4–5 each). Two of them
-give the four fast op-amps. The TL071CP stays only on the DC offset path.
+Every op-amp is an **OPA2810** (TI, dual, VSSOP-8, about $4–5 each). Two per
+channel give the four fast op-amps; a fifth chip holds both channels' offset
+I/V stages. The offset path is DC, so it doesn't need the speed, but one part
+type keeps the BOM simple and its low offset voltage suits the MDAC I/V stage.
+The TL071CP was the earlier pick for the offset I/V; it's kept in the table
+below for comparison.
 
 | Spec (TI product page) | OPA2810 | TL071CP |
 |---|---|---|
@@ -144,6 +147,8 @@ about GBW / gain. One ×20 stage gets 70 / 20 = 3.5 MHz; two stages get about
 
 The FET input matters for the AD5452's I/V stage: the datasheet asks for low
 bias current and low offset voltage, and the OPA2810 has both (2 pA, ±1.5 mV max).
+That applies to both AD5452s, so the offset I/V uses it too (the TL071's offset
+voltage is up to about 10 mV).
 
 Alternatives considered:
 

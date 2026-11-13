@@ -115,14 +115,14 @@ DIP pins follow.
 
 | Pin | Name | #1 amplitude connects to | #2 offset connects to |
 |---|---|---|---|
-| 1 | `IOUT1` | OPA2810 I/V op-amp inverting (−) input | TL071 I/V op-amp inverting (−) input |
+| 1 | `IOUT1` | OPA2810 I/V op-amp inverting (−) input | Offset OPA2810 I/V op-amp inverting (−) input (half A for CH1, B for CH2) |
 | 2 | `GND` | GND (also the I/V op-amp's + input) | GND (also the I/V op-amp's + input) |
 | 3 | `SCLK` | GPIO12 | GPIO12 |
 | 4 | `SDIN` | GPIO11 | GPIO11 |
 | 5 | `SYNC` | GPIO9 + 10 kΩ pull-up to 3.3 V | GPIO14 + 10 kΩ pull-up to 3.3 V |
 | 6 | `VDD` | 3.3 V + 100 nF to GND at the chip | 3.3 V + 100 nF to GND at the chip |
 | 7 | `VREF` | Gain 2 output (OPA2810 B, ±6 V max) | Offset reference (voltage not chosen yet) |
-| 8 | `RFB` | OPA2810 I/V op-amp output (1–2 pF to `IOUT1` if it rings) | TL071 I/V op-amp output |
+| 8 | `RFB` | OPA2810 I/V op-amp output (1–2 pF to `IOUT1` if it rings) | Offset OPA2810 I/V op-amp output |
 
 The AD5452 has no data-out pin, so nothing connects to the generator bus MISO.
 
@@ -158,7 +158,7 @@ Only the 3.3 V side is decided. The ±12 V analog rails are still open (see
 |---|---|---|
 | 3.3 V | ESP32 board `3V3` pin | Display `VCC`, encoder `+`, both AD9833 `VCC`, all four AD5452 `VDD`, TS5A23157 `V+`, the SYNC/FSYNC pull-ups |
 | GND | ESP32 board `GND` | Every ground above, tied to the analog supply's ground |
-| ±12 V | TBD | OPA2810 × 2, TL071 (must stay at or below ±13.5 V) |
+| ±12 V | TBD | OPA2810 × 5: two per channel plus the shared offset chip (must stay at or below ±13.5 V) |
 
 ## Sources
 

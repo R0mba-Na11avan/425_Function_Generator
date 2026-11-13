@@ -285,8 +285,8 @@
     "meta": {
       "version": 5
     },
-    "net_colors": {},
-    "netclass_assignments": {},
+    "net_colors": null,
+    "netclass_assignments": null,
     "netclass_patterns": []
   },
   "pcbnew": {
@@ -430,7 +430,7 @@
         "uuid": "36137b94-4d12-4e7a-a065-7ebda7200b05"
       }
     ],
-    "used_designators": "#FLG1-2,#PWR1-20,C1-2,DS1,J1-3,R1-2,S1,SW1-2,U1-3",
+    "used_designators": "#FLG1-2,R1-24,J1-5,#PWR1-62,S1,C1-2,DS1,SW1-4,U1-14",
     "variants": []
   },
   "sheets": [
@@ -449,6 +449,14 @@
     [
       "7ec88967-ea79-4b58-af79-23082afca02d",
       "Function_Generation"
+    ],
+    [
+      "07502400-127d-4cf0-baa0-9575a9bce397",
+      "FG_CH1"
+    ],
+    [
+      "4daaf45d-3ec7-48d0-bf01-79c4b9f7e034",
+      "FG_CH2"
     ]
   ],
   "text_variables": {},

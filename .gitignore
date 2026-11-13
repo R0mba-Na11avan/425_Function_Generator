@@ -17,3 +17,4 @@ Function_Generator_PCB/*.kicad_prl
 #PCB assistant chat history (other assistant files are shared)
 Function_Generator_PCB/.pcb_assistant/chats.json
 Function_Generator_PCB/.pcb_assistant/usage.jsonl
+Function_Generator_PCB/.pcb_assistant/chat_images/
