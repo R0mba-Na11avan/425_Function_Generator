@@ -2138,7 +2138,7 @@
 				)
 			)
 		)
-		(property "Footprint" ""
+		(property "Footprint" "Connector_BarrelJack:BarrelJack_CUI_PJ-102AH_Horizontal"
 			(at 45.72 45.72 0)
 			(hide yes)
 			(show_name no)
@@ -2694,7 +2694,7 @@
 				(justify right)
 			)
 		)
-		(property "Footprint" ""
+		(property "Footprint" "Button_Switch_THT:SW_PUSH-12mm_Wuerth-430476085716"
 			(at 53.34 36.83 0)
 			(hide yes)
 			(show_name no)
@@ -2854,7 +2854,7 @@
 				(justify left)
 			)
 		)
-		(property "Footprint" ""
+		(property "Footprint" "Capacitor_SMD:C_0805_2012Metric"
 			(at 120.65 39.37 0)
 			(hide yes)
 			(show_name no)
@@ -3014,7 +3014,7 @@
 				(justify left)
 			)
 		)
-		(property "Footprint" ""
+		(property "Footprint" "Capacitor_THT:CP_Radial_D6.3mm_P2.50mm"
 			(at 151.13 39.37 0)
 			(hide yes)
 			(show_name no)

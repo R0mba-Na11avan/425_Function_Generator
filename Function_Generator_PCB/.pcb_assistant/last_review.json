@@ -40,8 +40,8 @@
     },
     {
       "severity": "must-fix",
-      "title": "Pin not connected (\u00d76)",
-      "detail": "Symbol U2 Pin 2 [+Vin, Power input, Line]\nSymbol U2 Pin 3 [Remote, Input, Line]\nSymbol U2 Pin 1 [-Vin, Power input, Line]\nSymbol U2 Pin 6 [+Vout, Power output, Line]\nSymbol U2 Pin 7 [Com, Power output, Line]\nSymbol U2 Pin 8 [-Vout, Power output, Line]",
+      "title": "Pin not connected",
+      "detail": "Symbol U2 Pin 3 [Remote, Input, Line]",
       "failure_mode": "",
       "citation": "KiCad ERC rule pin_not_connected",
       "source": "erc",
@@ -56,25 +56,6 @@
       "excerpt": null,
       "rank": 0,
       "mute_key": "erc:pin_not_connected#U2"
-    },
-    {
-      "severity": "must-fix",
-      "title": "Input Power pin not driven by any Output Power pins (\u00d72)",
-      "detail": "Symbol U2 Pin 2 [+Vin, Power input, Line]\nSymbol U2 Pin 1 [-Vin, Power input, Line]",
-      "failure_mode": "",
-      "citation": "KiCad ERC rule power_pin_not_driven",
-      "source": "erc",
-      "pattern_status": null,
-      "connectivity_verified": "verified",
-      "component_ref": "U2",
-      "net": null,
-      "rule_id": "erc:power_pin_not_driven",
-      "labels": [],
-      "datasheet": null,
-      "page": null,
-      "excerpt": null,
-      "rank": 0,
-      "mute_key": "erc:power_pin_not_driven#U2"
     },
     {
       "severity": "must-fix",
@@ -97,8 +78,8 @@
     },
     {
       "severity": "must-fix",
-      "title": "Input Power pin not driven by any Output Power pins (\u00d74)",
-      "detail": "Symbol #PWR04 Pin 1 [Power input, Line]\nSymbol #PWR01 Pin 1 [Power input, Line]\nSymbol #PWR02 Pin 1 [Power input, Line]\nSymbol #PWR03 Pin 1 [Power input, Line]",
+      "title": "Input Power pin not driven by any Output Power pins (\u00d75)",
+      "detail": "Symbol #PWR011 Pin 1 [Power input, Line]\nSymbol #PWR04 Pin 1 [Power input, Line]\nSymbol #PWR03 Pin 1 [Power input, Line]\nSymbol #PWR038 Pin 1 [Power input, Line]\nSymbol #PWR034 Pin 1 [Power input, Line]",
       "failure_mode": "",
       "citation": "KiCad ERC rule power_pin_not_driven",
       "source": "erc",
@@ -113,6 +94,25 @@
       "excerpt": null,
       "rank": 0,
       "mute_key": "erc:power_pin_not_driven#"
+    },
+    {
+      "severity": "must-fix",
+      "title": "Pins of type Power output and Power output are connected",
+      "detail": "Symbol #FLG02 Pin 1 [Power output, Line]\nSymbol U2 Pin 7 [Com, Power output, Line]",
+      "failure_mode": "",
+      "citation": "KiCad ERC rule pin_to_pin",
+      "source": "erc",
+      "pattern_status": null,
+      "connectivity_verified": "verified",
+      "component_ref": "U2",
+      "net": null,
+      "rule_id": "erc:pin_to_pin",
+      "labels": [],
+      "datasheet": null,
+      "page": null,
+      "excerpt": null,
+      "rank": 0,
+      "mute_key": "erc:pin_to_pin#U2"
     },
     {
       "severity": "must-fix",
@@ -132,6 +132,25 @@
       "excerpt": null,
       "rank": 0,
       "mute_key": "erc:pin_not_driven#U1"
+    },
+    {
+      "severity": "must-fix",
+      "title": "Board has malformed outline (no edges found on Edge.Cuts layer)",
+      "detail": "PCB",
+      "failure_mode": "",
+      "citation": "KiCad DRC rule invalid_outline",
+      "source": "drc",
+      "pattern_status": null,
+      "connectivity_verified": "verified",
+      "component_ref": null,
+      "net": null,
+      "rule_id": "drc:invalid_outline",
+      "labels": [],
+      "datasheet": null,
+      "page": null,
+      "excerpt": null,
+      "rank": 0,
+      "mute_key": "drc:invalid_outline#"
     },
     {
       "severity": "verify",
@@ -173,8 +192,103 @@
     },
     {
       "severity": "verify",
-      "title": "Label connected to only one pin (\u00d727)",
-      "detail": "Global Label 'GPIO19'\nGlobal Label 'GPIO20'\nGlobal Label 'GPIO21'\nGlobal Label 'GPIO47'\nGlobal Label 'GPIO48'\nGlobal Label 'GPIO45'\nGlobal Label 'GPIO0'\nGlobal Label 'GPIO35'\nGlobal Label 'GPIO36'\nGlobal Label 'GPIO37'\nGlobal Label 'GPIO38'\nGlobal Label 'GPIO39'\nGlobal Label 'GPIO40'\nGlobal Label 'GPIO41'\nGlobal Label 'GPIO44/RX'\nGlobal Label 'GPIO43/TX'\nGlobal Label 'GPIO14'\nGlobal Label 'GPIO13'\nGlobal Label 'GPIO12'\nGlobal Label 'GPIO11'\nGlobal Label 'GPIO10'\nGlobal Label 'GPIO9'\nGlobal Label 'GPIO46'\nGlobal Label 'GPIO3'\nGlobal Label 'RST'\nGlobal Label 'CH1'\nGlobal Label 'CH2'",
+      "title": "The current configuration does not include the footprint library '' (\u00d73)",
+      "detail": "Symbol U10 [OPA2810IDGKT]",
+      "failure_mode": "",
+      "citation": "KiCad ERC rule footprint_link_issues",
+      "source": "erc",
+      "pattern_status": null,
+      "connectivity_verified": "verified",
+      "component_ref": "U10",
+      "net": null,
+      "rule_id": "erc:footprint_link_issues",
+      "labels": [],
+      "datasheet": null,
+      "page": null,
+      "excerpt": null,
+      "rank": 1,
+      "mute_key": "erc:footprint_link_issues#U10"
+    },
+    {
+      "severity": "verify",
+      "title": "The current configuration does not include the footprint library '' (\u00d73)",
+      "detail": "Symbol U12 [OPA2810IDGKT]",
+      "failure_mode": "",
+      "citation": "KiCad ERC rule footprint_link_issues",
+      "source": "erc",
+      "pattern_status": null,
+      "connectivity_verified": "verified",
+      "component_ref": "U12",
+      "net": null,
+      "rule_id": "erc:footprint_link_issues",
+      "labels": [],
+      "datasheet": null,
+      "page": null,
+      "excerpt": null,
+      "rank": 1,
+      "mute_key": "erc:footprint_link_issues#U12"
+    },
+    {
+      "severity": "verify",
+      "title": "The current configuration does not include the footprint library '' (\u00d73)",
+      "detail": "Symbol U4 [OPA2810IDGKT]",
+      "failure_mode": "",
+      "citation": "KiCad ERC rule footprint_link_issues",
+      "source": "erc",
+      "pattern_status": null,
+      "connectivity_verified": "verified",
+      "component_ref": "U4",
+      "net": null,
+      "rule_id": "erc:footprint_link_issues",
+      "labels": [],
+      "datasheet": null,
+      "page": null,
+      "excerpt": null,
+      "rank": 1,
+      "mute_key": "erc:footprint_link_issues#U4"
+    },
+    {
+      "severity": "verify",
+      "title": "The current configuration does not include the footprint library '' (\u00d73)",
+      "detail": "Symbol U5 [OPA2810IDGKT]",
+      "failure_mode": "",
+      "citation": "KiCad ERC rule footprint_link_issues",
+      "source": "erc",
+      "pattern_status": null,
+      "connectivity_verified": "verified",
+      "component_ref": "U5",
+      "net": null,
+      "rule_id": "erc:footprint_link_issues",
+      "labels": [],
+      "datasheet": null,
+      "page": null,
+      "excerpt": null,
+      "rank": 1,
+      "mute_key": "erc:footprint_link_issues#U5"
+    },
+    {
+      "severity": "verify",
+      "title": "The current configuration does not include the footprint library '' (\u00d73)",
+      "detail": "Symbol U11 [OPA2810IDGKT]",
+      "failure_mode": "",
+      "citation": "KiCad ERC rule footprint_link_issues",
+      "source": "erc",
+      "pattern_status": null,
+      "connectivity_verified": "verified",
+      "component_ref": "U11",
+      "net": null,
+      "rule_id": "erc:footprint_link_issues",
+      "labels": [],
+      "datasheet": null,
+      "page": null,
+      "excerpt": null,
+      "rank": 1,
+      "mute_key": "erc:footprint_link_issues#U11"
+    },
+    {
+      "severity": "verify",
+      "title": "Label connected to only one pin (\u00d715)",
+      "detail": "Global Label 'GPIO19'\nGlobal Label 'GPIO20'\nGlobal Label 'GPIO48'\nGlobal Label 'GPIO45'\nGlobal Label 'GPIO0'\nGlobal Label 'GPIO35'\nGlobal Label 'GPIO36'\nGlobal Label 'GPIO37'\nGlobal Label 'GPIO38'\nGlobal Label 'GPIO44/RX'\nGlobal Label 'GPIO43/TX'\nGlobal Label 'GPIO13'\nGlobal Label 'GPIO46'\nGlobal Label 'GPIO3'\nGlobal Label 'RST'",
       "failure_mode": "",
       "citation": "KiCad ERC rule isolated_pin_label",
       "source": "erc",
@@ -189,24 +303,62 @@
       "excerpt": null,
       "rank": 1,
       "mute_key": "erc:isolated_pin_label#"
+    },
+    {
+      "severity": "verify",
+      "title": "Both 10V_ref and scaled_func are attached to the same items; 10V_ref will be used in the netlist (\u00d72)",
+      "detail": "Label '10V_ref'\nLabel 'scaled_func'\nLabel 'dc_offset'",
+      "failure_mode": "",
+      "citation": "KiCad ERC rule multiple_net_names",
+      "source": "erc",
+      "pattern_status": null,
+      "connectivity_verified": "verified",
+      "component_ref": null,
+      "net": null,
+      "rule_id": "erc:multiple_net_names",
+      "labels": [],
+      "datasheet": null,
+      "page": null,
+      "excerpt": null,
+      "rank": 1,
+      "mute_key": "erc:multiple_net_names#"
+    },
+    {
+      "severity": "verify",
+      "title": "Missing footprint C1 (C_Small_US) (\u00d749)",
+      "detail": "",
+      "failure_mode": "",
+      "citation": "KiCad DRC rule missing_footprint",
+      "source": "drc",
+      "pattern_status": null,
+      "connectivity_verified": "verified",
+      "component_ref": null,
+      "net": null,
+      "rule_id": "drc:missing_footprint",
+      "labels": [],
+      "datasheet": null,
+      "page": null,
+      "excerpt": null,
+      "rank": 1,
+      "mute_key": "drc:missing_footprint#"
     }
   ],
   "runs": {
     "erc": {
-      "ts": 1794521047.6652746,
-      "hash": "2fdfd9585e5a9b76"
+      "ts": 1794601705.182703,
+      "hash": "57d7dd675cd6a927"
     },
     "pattern": {
-      "ts": 1794521047.6652746,
-      "hash": "2fdfd9585e5a9b76"
+      "ts": 1794601705.182703,
+      "hash": "57d7dd675cd6a927"
     },
     "drc": {
-      "ts": 1794521047.6652746,
-      "hash": "2fdfd9585e5a9b76"
+      "ts": 1794601705.182703,
+      "hash": "57d7dd675cd6a927"
     },
     "distributor": {
-      "ts": 1794521047.6652746,
-      "hash": "2fdfd9585e5a9b76"
+      "ts": 1794601705.182703,
+      "hash": "57d7dd675cd6a927"
     }
   },
   "coverage": [
@@ -216,5 +368,5 @@
       "checks": 5
     }
   ],
-  "components": 8
+  "components": 49
 }

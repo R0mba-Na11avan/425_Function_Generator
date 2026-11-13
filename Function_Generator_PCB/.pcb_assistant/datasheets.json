@@ -156,6 +156,121 @@
       ],
       "fetched_at": 1794528374.3972058,
       "origin": "research"
+    },
+    "FC68148": {
+      "key": "FC68148",
+      "refs": [],
+      "status": "ok",
+      "file": "datasheets/.research/FC68148.pdf",
+      "source": "digikey",
+      "url": "https://mm.digikey.com/Volume0/opasdata/d220001/medias/docus/5482/FC68148.pdf",
+      "sha256": "80f52d835130f8d6935d020790aea12c967c8f42fec19256ac5bb981713ebe41",
+      "pages": 1,
+      "tried": [],
+      "fetched_at": 1794529459.7550194,
+      "origin": "research"
+    },
+    "LM7805": {
+      "key": "LM7805",
+      "refs": [],
+      "status": "missing",
+      "file": null,
+      "source": null,
+      "url": null,
+      "sha256": null,
+      "pages": 0,
+      "tried": [
+        {
+          "source": "manufacturer",
+          "url": "https://www.ti.com/lit/ds/symlink/lm7805.pdf",
+          "error": "https://www.ti.com/lit/ds/symlink/lm7805.pdf: HTTP 404"
+        },
+        {
+          "source": "manufacturer",
+          "url": "https://www.ti.com/lit/ds/symlink/snlm7805.pdf",
+          "error": "https://www.ti.com/lit/ds/symlink/snlm7805.pdf: HTTP 404"
+        },
+        {
+          "source": "manufacturer+browser",
+          "url": "https://www.ti.com/lit/ds/symlink/lm7805.pdf",
+          "error": "browser fetch failed: {\"error\":\"the browser got a web page, not a PDF\"}"
+        },
+        {
+          "source": "manufacturer+browser",
+          "url": "https://www.ti.com/lit/ds/symlink/snlm7805.pdf",
+          "error": "browser fetch failed: {\"error\":\"the browser got a web page, not a PDF\"}"
+        }
+      ],
+      "fetched_at": 0.0,
+      "origin": "research"
+    },
+    "TS5A23157": {
+      "key": "TS5A23157",
+      "refs": [
+        "SW3"
+      ],
+      "status": "missing",
+      "file": null,
+      "source": null,
+      "url": null,
+      "sha256": null,
+      "pages": 0,
+      "tried": [],
+      "fetched_at": 0.0,
+      "origin": "board"
+    },
+    "OPA2810IDGKT": {
+      "key": "OPA2810IDGKT",
+      "refs": [
+        "U4",
+        "U5",
+        "U10",
+        "U11",
+        "U12"
+      ],
+      "status": "ok",
+      "file": "datasheets/OPA2810IDGKT.pdf",
+      "source": "schematic",
+      "url": "https://www.ti.com/lit/ds/symlink/opa2810.pdf?ts=1794600189865",
+      "sha256": "6ee8a464a8f0bd03c16fc91e594a017d3c3956e6bf53c80e01611fb34876506d",
+      "pages": 52,
+      "tried": [],
+      "fetched_at": 1794600188.7665114,
+      "origin": "board"
+    },
+    "AD9833": {
+      "key": "AD9833",
+      "refs": [
+        "U6",
+        "U7"
+      ],
+      "status": "missing",
+      "file": null,
+      "source": null,
+      "url": null,
+      "sha256": null,
+      "pages": 0,
+      "tried": [],
+      "fetched_at": 0.0,
+      "origin": "board"
+    },
+    "AD5452": {
+      "key": "AD5452",
+      "refs": [
+        "U8",
+        "U9",
+        "U13",
+        "U14"
+      ],
+      "status": "missing",
+      "file": null,
+      "source": null,
+      "url": null,
+      "sha256": null,
+      "pages": 0,
+      "tried": [],
+      "fetched_at": 0.0,
+      "origin": "board"
     }
   }
 }

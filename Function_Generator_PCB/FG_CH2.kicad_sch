@@ -3068,6 +3068,28 @@
 			)
 		)
 	)
+	(global_label "CH2"
+		(shape input)
+		(at 222.25 118.11 0)
+		(effects
+			(font
+				(size 1.27 1.27)
+			)
+			(justify left)
+		)
+		(uuid "cfd9406a-20a0-40b0-9c43-c76077dcc087")
+		(property "Intersheetrefs" "${INTERSHEET_REFS}"
+			(at 222.25 118.11 0)
+			(hide yes)
+			(show_name no)
+			(do_not_autoplace no)
+			(effects
+				(font
+					(size 1.27 1.27)
+				)
+			)
+		)
+	)
 	(global_label "GPIO47"
 		(shape bidirectional)
 		(at 85.09 25.4 90)
@@ -4604,28 +4626,28 @@
 			)
 		)
 		(pin "1"
-			(uuid "5104454d-eee1-4aac-a854-b00fced3e7da")
+			(uuid "5104454d-eee1-4aac-a854-b00fced3e7db")
 		)
 		(pin "5"
-			(uuid "8a4a109c-f531-4242-9bf3-3da08d511ffa")
+			(uuid "8a4a109c-f531-4242-9bf3-3da08d511ffb")
 		)
 		(pin "3"
-			(uuid "88d0a311-1bf7-4cbd-b34a-111ad19483bb")
+			(uuid "88d0a311-1bf7-4cbd-b34a-111ad19483bc")
 		)
 		(pin "6"
-			(uuid "80e2ae53-0fc8-4aee-97d9-750377f37564")
+			(uuid "80e2ae53-0fc8-4aee-97d9-750377f37565")
 		)
 		(pin "7"
-			(uuid "e81fd672-b588-4432-9640-9064d2f5b7e2")
+			(uuid "e81fd672-b588-4432-9640-9064d2f5b7e3")
 		)
 		(pin "2"
-			(uuid "9b4d5963-4ac1-453b-bda4-0c92eecb65e4")
+			(uuid "9b4d5963-4ac1-453b-bda4-0c92eecb65e5")
 		)
 		(pin "4"
-			(uuid "7f523e1d-2596-44b1-85fb-096d999e9d22")
+			(uuid "7f523e1d-2596-44b1-85fb-096d999e9d23")
 		)
 		(pin "8"
-			(uuid "fb92be43-ff74-47a2-a079-2a3aa3bfc988")
+			(uuid "fb92be43-ff74-47a2-a079-2a3aa3bfc989")
 		)
 		(instances
 			(project "Function_Generator_PCB"
@@ -5537,28 +5559,28 @@
 			)
 		)
 		(pin "1"
-			(uuid "7d0c4f1a-4f40-4795-a9ea-d3dabc59a77a")
+			(uuid "7d0c4f1a-4f40-4795-a9ea-d3dabc59a77b")
 		)
 		(pin "2"
-			(uuid "65437d02-6871-4aea-a1c0-b298dcd8e06f")
+			(uuid "65437d02-6871-4aea-a1c0-b298dcd8e070")
 		)
 		(pin "3"
-			(uuid "476dcc42-c87d-49ed-871b-65717f36848a")
+			(uuid "476dcc42-c87d-49ed-871b-65717f36848b")
 		)
 		(pin "5"
-			(uuid "41326597-7ff2-4efa-b58e-85eed021446d")
+			(uuid "41326597-7ff2-4efa-b58e-85eed021446e")
 		)
 		(pin "6"
-			(uuid "6aa4dd13-a8cf-466c-940d-0d573f60e6ea")
+			(uuid "6aa4dd13-a8cf-466c-940d-0d573f60e6eb")
 		)
 		(pin "7"
-			(uuid "3e22b0dc-5feb-4f70-ab17-3b60b49f3b64")
+			(uuid "3e22b0dc-5feb-4f70-ab17-3b60b49f3b65")
 		)
 		(pin "4"
-			(uuid "e33167ac-ce4b-4f86-b116-ca11c49f0990")
+			(uuid "e33167ac-ce4b-4f86-b116-ca11c49f0991")
 		)
 		(pin "8"
-			(uuid "998601c5-396a-42b6-8e89-70d93295a7b7")
+			(uuid "998601c5-396a-42b6-8e89-70d93295a7b8")
 		)
 		(instances
 			(project "Function_Generator_PCB"

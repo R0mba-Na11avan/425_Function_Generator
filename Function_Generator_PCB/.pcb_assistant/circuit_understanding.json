@@ -1,0 +1,187 @@
+{
+  "netlist_hash": "5935b23571d5c6e0",
+  "summary": "A dual-channel arbitrary function generator controlled by an ESP32-S3 DevKit with an ILI9341 touch display and rotary encoder. Two AD9833 DDS sources are selected or gained via a TS5A23157 switch and OPA2810 amplifiers, then feed AD5452 multiplying DACs with OPA2810 output stages to produce CH1 and CH2 outputs on coaxial connectors, powered from a barrel jack through an isolated DC/DC converter and a 7805.",
+  "blocks": [
+    {
+      "name": "power-input",
+      "purpose": "Barrel jack input with a push-button switch feeds the isolated DC/DC converter that makes the +12V rail.",
+      "refs": [
+        "J3",
+        "SW2",
+        "U2",
+        "C1"
+      ]
+    },
+    {
+      "name": "5v-regulator",
+      "purpose": "Linear regulator derives +5V from +12V for the ESP32 dev kit 5V pin.",
+      "refs": [
+        "U3",
+        "C2"
+      ]
+    },
+    {
+      "name": "mcu-ui",
+      "purpose": "ESP32-S3 dev kit runs the system, drives the TFT/touch display, reads the encoder, and controls the DDS, switch, and DACs over SPI-like buses.",
+      "refs": [
+        "U1",
+        "DS1",
+        "SW1"
+      ]
+    },
+    {
+      "name": "dds-sources",
+      "purpose": "Two AD9833 DDS chips generate the waveforms for channel 1 and channel 2.",
+      "refs": [
+        "U6",
+        "U7"
+      ]
+    },
+    {
+      "name": "waveform-select",
+      "purpose": "Analog switch routes between DDS outputs and the resistor-divider paths into the input amplifiers.",
+      "refs": [
+        "SW3",
+        "R3",
+        "R4",
+        "R16",
+        "R17"
+      ]
+    },
+    {
+      "name": "ch1-gain-stage",
+      "purpose": "Dual op-amp U4 conditions the CH1 function signal into the gained reference for the DAC.",
+      "refs": [
+        "U4",
+        "R5",
+        "R6",
+        "R9",
+        "R10"
+      ]
+    },
+    {
+      "name": "ch2-gain-stage",
+      "purpose": "Dual op-amp U11 conditions the CH2 function signal into the gained reference for the DAC.",
+      "refs": [
+        "U11",
+        "R18",
+        "R19",
+        "R21",
+        "R22"
+      ]
+    },
+    {
+      "name": "ch1-dac-output",
+      "purpose": "AD5452 multiplying DACs with op-amp I/V converters and output buffer generate the CH1 output.",
+      "refs": [
+        "U8",
+        "U9",
+        "U5",
+        "U10",
+        "R11",
+        "R12",
+        "R13",
+        "R1"
+      ]
+    },
+    {
+      "name": "ch2-dac-output",
+      "purpose": "AD5452 multiplying DACs with op-amp I/V converters generate the CH2 signal path.",
+      "refs": [
+        "U13",
+        "U14",
+        "U12",
+        "R14",
+        "R15",
+        "R20",
+        "R2"
+      ]
+    },
+    {
+      "name": "outputs",
+      "purpose": "Coaxial and header connectors bring out the channel signals.",
+      "refs": [
+        "J1",
+        "J2",
+        "J4",
+        "J5"
+      ]
+    }
+  ],
+  "parts": {
+    "U1": "ESP32-S3 DevKitC controller providing the 3.3V rail, SPI-style clock/data, chip selects, display and encoder interfaces, and switch control.",
+    "U2": "TEC2-1221WI isolated DC/DC converter producing +12V from the switched input; Remote and -Vout are unused.",
+    "U3": "LM7805 regulator producing +5V from +12V for the ESP32 5V pin.",
+    "DS1": "ILI9341 TFT display with touch controller on shared SPI lines.",
+    "J3": "Barrel jack power input.",
+    "SW2": "Push switch that connects the barrel jack supply to the DC/DC input.",
+    "SW1": "Rotary encoder module for user input.",
+    "SW3": "TS5A23157 dual analog switch selecting between the DDS output and the divider path for each channel, controlled by GPIO21 and GPIO47.",
+    "U6": "AD9833 DDS generator for channel 1, framed by GPIO10, output to SW3 COM1.",
+    "U7": "AD9833 DDS generator for channel 2, framed by GPIO39, output to SW3 COM2.",
+    "U4": "OPA2810 dual op-amp: stage A with R5/R6 feedback and 0.3V bias, stage B with R9/R10 feedback producing CH1 gained_func used as the U8 VREF.",
+    "U11": "OPA2810 dual op-amp for CH2: stage A with R18/R19 and 0.3V bias, stage B with R21/R22 feedback producing CH2 gained_func for the U13 VREF.",
+    "U8": "AD5452 DAC for CH1 with VREF from gained_func, current output into U5 and RFB from the 10V_ref node.",
+    "U9": "AD5452 DAC with VREF from +10V and output into U10A, with RFB from U10A output.",
+    "U13": "AD5452 DAC for CH2 with VREF from gained_func, current output into U12A.",
+    "U14": "AD5452 DAC with VREF from +10V and output into U10B, with RFB from U10B output.",
+    "U5": "OPA2810 I/V converter for U8 and output driver for CH1.",
+    "U10": "OPA2810 dual I/V converter for U9 and U14.",
+    "U12": "OPA2810 I/V converter for U13 with an additional stage whose output goes through R20.",
+    "R1": "50 ohm series output resistor between CH1 and the CH1 coaxial connector.",
+    "R2": "50 ohm series resistor on the CH2 connector, but its CH2 side is unconnected.",
+    "R7": "10k pull-up holding U8 *SYNC high.",
+    "R8": "10k pull-up holding U9 *SYNC high.",
+    "R23": "10k pull-up holding U13 *SYNC high.",
+    "R24": "10k pull-up holding U14 *SYNC high.",
+    "R3": "Upper divider resistor from the NO1 switch contact into CH1 func_in.",
+    "R4": "Lower divider resistor to GND on CH1 func_in.",
+    "R16": "Upper divider resistor from the NO2 switch contact into CH2 func_in.",
+    "R17": "Lower divider resistor to GND on CH2 func_in.",
+    "R5": "Biases U4A inverting input from the +0.3V rail.",
+    "R6": "Feedback resistor of U4A.",
+    "R9": "Lower leg of the U4B feedback divider to GND.",
+    "R10": "Feedback resistor of U4B from gained_func.",
+    "R18": "Biases U11A inverting input from the +0.3V rail.",
+    "R19": "Feedback resistor of U11A.",
+    "R21": "Lower leg of the U11B feedback divider to GND.",
+    "R22": "Feedback resistor of U11B from gained_func.",
+    "R11": "Sums the U10A output into the CH1 10V_ref node.",
+    "R12": "Ties the CH1 10V_ref node to +10V.",
+    "R13": "Couples the CH1 10V_ref node to the CH1 output.",
+    "R14": "Ties the CH2 10V_ref node to +10V.",
+    "R15": "Couples U10B output into the CH2 10V_ref node.",
+    "R20": "Couples U12B output into the CH2 10V_ref node.",
+    "C1": "Bulk bypass capacitor on the +12V rail.",
+    "C2": "Radial capacitor on the +5V rail.",
+    "J1": "CH1 coaxial output connector.",
+    "J2": "CH2 coaxial output connector.",
+    "J4": "CH1 header in parallel with the CH1 coax.",
+    "J5": "CH2 header in parallel with the CH2 coax."
+  },
+  "nets": {
+    "+12V": "Isolated DC/DC output powering the op-amps and the 7805.",
+    "+12C": "Switched barrel-jack supply feeding the DC/DC input.",
+    "+5V": "7805 output to the ESP32 5V pin.",
+    "+3.3V": "ESP32 3V3 output powering the display, encoder, DDS, DACs, and analog switch.",
+    "+10V": "Reference rail for the U9 and U14 VREF pins and pull-ups R12/R14.",
+    "+0.3V": "Bias rail for the inverting inputs of U4A and U11A.",
+    "GNDA": "Analog ground for the AD9833 AGND pins and ESP32 GND pins 43/44.",
+    "GPIO11": "Shared serial data line to the DDS chips and DACs.",
+    "GPIO12": "Shared serial clock to the DDS chips and DACs.",
+    "GPIO9": "SYNC select for U8.",
+    "GPIO14": "SYNC select for U9.",
+    "GPIO40": "SYNC select for U13.",
+    "GPIO41": "SYNC select for U14.",
+    "GPIO10": "FSYNC for U6.",
+    "GPIO39": "FSYNC for U7.",
+    "GPIO21": "Controls SW3 section 1.",
+    "GPIO47": "Controls SW3 section 2.",
+    "/Function_Generation/FG_CH1/gained_func": "U4B output feeding the U8 VREF.",
+    "/Function_Generation/FG_CH2/gained_func": "U11B output feeding the U13 VREF.",
+    "/Function_Generation/FG_CH1/10V_ref": "Summing node for the CH1 DAC feedback and output stage.",
+    "/Function_Generation/FG_CH2/10V_ref": "Summing node for the CH2 DAC feedback.",
+    "CH1": "U5 output through R1 to the CH1 connectors.",
+    "Net-(J3-Pin_2)": "Barrel jack center pin feeding the power switch SW2."
+  }
+}
