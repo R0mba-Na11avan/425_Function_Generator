@@ -173,35 +173,14 @@
     "LM7805": {
       "key": "LM7805",
       "refs": [],
-      "status": "missing",
-      "file": null,
-      "source": null,
-      "url": null,
-      "sha256": null,
-      "pages": 0,
-      "tried": [
-        {
-          "source": "manufacturer",
-          "url": "https://www.ti.com/lit/ds/symlink/lm7805.pdf",
-          "error": "https://www.ti.com/lit/ds/symlink/lm7805.pdf: HTTP 404"
-        },
-        {
-          "source": "manufacturer",
-          "url": "https://www.ti.com/lit/ds/symlink/snlm7805.pdf",
-          "error": "https://www.ti.com/lit/ds/symlink/snlm7805.pdf: HTTP 404"
-        },
-        {
-          "source": "manufacturer+browser",
-          "url": "https://www.ti.com/lit/ds/symlink/lm7805.pdf",
-          "error": "browser fetch failed: {\"error\":\"the browser got a web page, not a PDF\"}"
-        },
-        {
-          "source": "manufacturer+browser",
-          "url": "https://www.ti.com/lit/ds/symlink/snlm7805.pdf",
-          "error": "browser fetch failed: {\"error\":\"the browser got a web page, not a PDF\"}"
-        }
-      ],
-      "fetched_at": 0.0,
+      "status": "ok",
+      "file": "datasheets/.research/LM7805.pdf",
+      "source": "url",
+      "url": "https://www.ti.com/lit/ds/symlink/lm340.pdf",
+      "sha256": "49391342cf3b05f89ae94607257ef03f678ae9f1a3bdd388252adb8b00da043d",
+      "pages": 38,
+      "tried": [],
+      "fetched_at": 1794649207.5983846,
       "origin": "research"
     },
     "TS5A23157": {
@@ -244,14 +223,14 @@
         "U6",
         "U7"
       ],
-      "status": "missing",
-      "file": null,
-      "source": null,
+      "status": "ok",
+      "file": "datasheets/AD9833.pdf",
+      "source": "upload",
       "url": null,
-      "sha256": null,
-      "pages": 0,
+      "sha256": "04e5a8a25ae38fd39751488c450533786a55047c2961b54dd10fe094167fb26f",
+      "pages": 25,
       "tried": [],
-      "fetched_at": 0.0,
+      "fetched_at": 1794632964.1513286,
       "origin": "board"
     },
     "AD5452": {
@@ -262,14 +241,14 @@
         "U13",
         "U14"
       ],
-      "status": "missing",
-      "file": null,
-      "source": null,
+      "status": "ok",
+      "file": "datasheets/AD5452.pdf",
+      "source": "upload",
       "url": null,
-      "sha256": null,
-      "pages": 0,
+      "sha256": "6be2f2663e55e3c1711414cac82d1e6652db1e74af90ce89c62f459064a0c646",
+      "pages": 28,
       "tried": [],
-      "fetched_at": 0.0,
+      "fetched_at": 1794640655.4514716,
       "origin": "board"
     }
   }
