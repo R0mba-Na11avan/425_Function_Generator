@@ -78,25 +78,6 @@
     },
     {
       "severity": "must-fix",
-      "title": "Input Power pin not driven by any Output Power pins (\u00d75)",
-      "detail": "Symbol #PWR011 Pin 1 [Power input, Line]\nSymbol #PWR04 Pin 1 [Power input, Line]\nSymbol #PWR03 Pin 1 [Power input, Line]\nSymbol #PWR038 Pin 1 [Power input, Line]\nSymbol #PWR034 Pin 1 [Power input, Line]",
-      "failure_mode": "",
-      "citation": "KiCad ERC rule power_pin_not_driven",
-      "source": "erc",
-      "pattern_status": null,
-      "connectivity_verified": "verified",
-      "component_ref": null,
-      "net": null,
-      "rule_id": "erc:power_pin_not_driven",
-      "labels": [],
-      "datasheet": null,
-      "page": null,
-      "excerpt": null,
-      "rank": 0,
-      "mute_key": "erc:power_pin_not_driven#"
-    },
-    {
-      "severity": "must-fix",
       "title": "Pins of type Power output and Power output are connected",
       "detail": "Symbol #FLG02 Pin 1 [Power output, Line]\nSymbol U2 Pin 7 [Com, Power output, Line]",
       "failure_mode": "",
@@ -113,6 +94,25 @@
       "excerpt": null,
       "rank": 0,
       "mute_key": "erc:pin_to_pin#U2"
+    },
+    {
+      "severity": "must-fix",
+      "title": "Input Power pin not driven by any Output Power pins (\u00d73)",
+      "detail": "Symbol #PWR04 Pin 1 [Power input, Line]\nSymbol #PWR03 Pin 1 [Power input, Line]\nSymbol #PWR038 Pin 1 [Power input, Line]",
+      "failure_mode": "",
+      "citation": "KiCad ERC rule power_pin_not_driven",
+      "source": "erc",
+      "pattern_status": null,
+      "connectivity_verified": "verified",
+      "component_ref": null,
+      "net": null,
+      "rule_id": "erc:power_pin_not_driven",
+      "labels": [],
+      "datasheet": null,
+      "page": null,
+      "excerpt": null,
+      "rank": 0,
+      "mute_key": "erc:power_pin_not_driven#"
     },
     {
       "severity": "must-fix",
@@ -192,101 +192,6 @@
     },
     {
       "severity": "verify",
-      "title": "The current configuration does not include the footprint library '' (\u00d73)",
-      "detail": "Symbol U10 [OPA2810IDGKT]",
-      "failure_mode": "",
-      "citation": "KiCad ERC rule footprint_link_issues",
-      "source": "erc",
-      "pattern_status": null,
-      "connectivity_verified": "verified",
-      "component_ref": "U10",
-      "net": null,
-      "rule_id": "erc:footprint_link_issues",
-      "labels": [],
-      "datasheet": null,
-      "page": null,
-      "excerpt": null,
-      "rank": 1,
-      "mute_key": "erc:footprint_link_issues#U10"
-    },
-    {
-      "severity": "verify",
-      "title": "The current configuration does not include the footprint library '' (\u00d73)",
-      "detail": "Symbol U12 [OPA2810IDGKT]",
-      "failure_mode": "",
-      "citation": "KiCad ERC rule footprint_link_issues",
-      "source": "erc",
-      "pattern_status": null,
-      "connectivity_verified": "verified",
-      "component_ref": "U12",
-      "net": null,
-      "rule_id": "erc:footprint_link_issues",
-      "labels": [],
-      "datasheet": null,
-      "page": null,
-      "excerpt": null,
-      "rank": 1,
-      "mute_key": "erc:footprint_link_issues#U12"
-    },
-    {
-      "severity": "verify",
-      "title": "The current configuration does not include the footprint library '' (\u00d73)",
-      "detail": "Symbol U4 [OPA2810IDGKT]",
-      "failure_mode": "",
-      "citation": "KiCad ERC rule footprint_link_issues",
-      "source": "erc",
-      "pattern_status": null,
-      "connectivity_verified": "verified",
-      "component_ref": "U4",
-      "net": null,
-      "rule_id": "erc:footprint_link_issues",
-      "labels": [],
-      "datasheet": null,
-      "page": null,
-      "excerpt": null,
-      "rank": 1,
-      "mute_key": "erc:footprint_link_issues#U4"
-    },
-    {
-      "severity": "verify",
-      "title": "The current configuration does not include the footprint library '' (\u00d73)",
-      "detail": "Symbol U5 [OPA2810IDGKT]",
-      "failure_mode": "",
-      "citation": "KiCad ERC rule footprint_link_issues",
-      "source": "erc",
-      "pattern_status": null,
-      "connectivity_verified": "verified",
-      "component_ref": "U5",
-      "net": null,
-      "rule_id": "erc:footprint_link_issues",
-      "labels": [],
-      "datasheet": null,
-      "page": null,
-      "excerpt": null,
-      "rank": 1,
-      "mute_key": "erc:footprint_link_issues#U5"
-    },
-    {
-      "severity": "verify",
-      "title": "The current configuration does not include the footprint library '' (\u00d73)",
-      "detail": "Symbol U11 [OPA2810IDGKT]",
-      "failure_mode": "",
-      "citation": "KiCad ERC rule footprint_link_issues",
-      "source": "erc",
-      "pattern_status": null,
-      "connectivity_verified": "verified",
-      "component_ref": "U11",
-      "net": null,
-      "rule_id": "erc:footprint_link_issues",
-      "labels": [],
-      "datasheet": null,
-      "page": null,
-      "excerpt": null,
-      "rank": 1,
-      "mute_key": "erc:footprint_link_issues#U11"
-    },
-    {
-      "severity": "verify",
       "title": "Label connected to only one pin (\u00d715)",
       "detail": "Global Label 'GPIO19'\nGlobal Label 'GPIO20'\nGlobal Label 'GPIO48'\nGlobal Label 'GPIO45'\nGlobal Label 'GPIO0'\nGlobal Label 'GPIO35'\nGlobal Label 'GPIO36'\nGlobal Label 'GPIO37'\nGlobal Label 'GPIO38'\nGlobal Label 'GPIO44/RX'\nGlobal Label 'GPIO43/TX'\nGlobal Label 'GPIO13'\nGlobal Label 'GPIO46'\nGlobal Label 'GPIO3'\nGlobal Label 'RST'",
       "failure_mode": "",
@@ -307,7 +212,7 @@
     {
       "severity": "verify",
       "title": "Both 10V_ref and dc_offset are attached to the same items; 10V_ref will be used in the netlist (\u00d72)",
-      "detail": "Label '10V_ref'\nLabel 'dc_offset'\nLabel 'scaled_func'",
+      "detail": "Label '10V_ref'\nLabel 'dc_offset'",
       "failure_mode": "",
       "citation": "KiCad ERC rule multiple_net_names",
       "source": "erc",
@@ -325,7 +230,7 @@
     },
     {
       "severity": "verify",
-      "title": "Missing footprint C1 (C_Small_US) (\u00d749)",
+      "title": "Missing footprint C1 (C_Small_US) (\u00d785)",
       "detail": "",
       "failure_mode": "",
       "citation": "KiCad DRC rule missing_footprint",
@@ -345,20 +250,20 @@
   ],
   "runs": {
     "erc": {
-      "ts": 1794603541.1345897,
-      "hash": "728adcd19c834d41"
+      "ts": 1794850496.3042111,
+      "hash": "e32da05f8d41948e"
     },
     "pattern": {
-      "ts": 1794603541.1345897,
-      "hash": "728adcd19c834d41"
+      "ts": 1794850496.3042111,
+      "hash": "e32da05f8d41948e"
     },
     "drc": {
-      "ts": 1794603541.1345897,
-      "hash": "728adcd19c834d41"
+      "ts": 1794850496.3042111,
+      "hash": "e32da05f8d41948e"
     },
     "distributor": {
-      "ts": 1794603541.1345897,
-      "hash": "728adcd19c834d41"
+      "ts": 1794850496.3042111,
+      "hash": "e32da05f8d41948e"
     }
   },
   "coverage": [
@@ -368,5 +273,5 @@
       "checks": 5
     }
   ],
-  "components": 49
+  "components": 85
 }

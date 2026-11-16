@@ -250,6 +250,19 @@
       "tried": [],
       "fetched_at": 1794640655.4514716,
       "origin": "board"
+    },
+    "AP2112K-3.3": {
+      "key": "AP2112K-3.3",
+      "refs": [],
+      "status": "ok",
+      "file": "datasheets/.research/AP2112K-3.3.pdf",
+      "source": "manufacturer",
+      "url": "https://www.diodes.com/assets/Datasheets/AP2112.pdf",
+      "sha256": "ef8d376f2ec356e29172eb9e053819a0ebdcc576dba7fc9ab0505c568427920f",
+      "pages": 18,
+      "tried": [],
+      "fetched_at": 1794851617.3180106,
+      "origin": "research"
     }
   }
 }
