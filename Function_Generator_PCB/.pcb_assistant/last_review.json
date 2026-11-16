@@ -97,8 +97,8 @@
     },
     {
       "severity": "must-fix",
-      "title": "Input Power pin not driven by any Output Power pins (\u00d73)",
-      "detail": "Symbol #PWR04 Pin 1 [Power input, Line]\nSymbol #PWR03 Pin 1 [Power input, Line]\nSymbol #PWR038 Pin 1 [Power input, Line]",
+      "title": "Input Power pin not driven by any Output Power pins (\u00d72)",
+      "detail": "Symbol #PWR04 Pin 1 [Power input, Line]\nSymbol #PWR038 Pin 1 [Power input, Line]",
       "failure_mode": "",
       "citation": "KiCad ERC rule power_pin_not_driven",
       "source": "erc",
@@ -132,6 +132,25 @@
       "excerpt": null,
       "rank": 0,
       "mute_key": "erc:pin_not_driven#U1"
+    },
+    {
+      "severity": "must-fix",
+      "title": "Input Power pin not driven by any Output Power pins",
+      "detail": "Symbol U1 Pin 1 [3V3, Power input, Line]",
+      "failure_mode": "",
+      "citation": "KiCad ERC rule power_pin_not_driven",
+      "source": "erc",
+      "pattern_status": null,
+      "connectivity_verified": "verified",
+      "component_ref": "U1",
+      "net": null,
+      "rule_id": "erc:power_pin_not_driven",
+      "labels": [],
+      "datasheet": null,
+      "page": null,
+      "excerpt": null,
+      "rank": 0,
+      "mute_key": "erc:power_pin_not_driven#U1"
     },
     {
       "severity": "must-fix",
@@ -192,6 +211,25 @@
     },
     {
       "severity": "verify",
+      "title": "U1 pin 3V3 is on 'Net-(R31-Pad1)', expected a net containing '3.3'",
+      "detail": "",
+      "failure_mode": "Module supply off the 3.3V rail is out of spec.",
+      "citation": "ESP32-S3-WROOM-1 datasheet, Pin definitions (3V3): module supply is 3.3V.",
+      "source": "pattern",
+      "pattern_status": "trusted",
+      "connectivity_verified": "verified",
+      "component_ref": "U1",
+      "net": "Net-(R31-Pad1)",
+      "rule_id": "esp32s3-wroom:3v3-rail",
+      "labels": [],
+      "datasheet": null,
+      "page": null,
+      "excerpt": null,
+      "rank": 1,
+      "mute_key": "esp32s3-wroom:3v3-rail#U1"
+    },
+    {
+      "severity": "verify",
       "title": "Label connected to only one pin (\u00d715)",
       "detail": "Global Label 'GPIO19'\nGlobal Label 'GPIO20'\nGlobal Label 'GPIO48'\nGlobal Label 'GPIO45'\nGlobal Label 'GPIO0'\nGlobal Label 'GPIO35'\nGlobal Label 'GPIO36'\nGlobal Label 'GPIO37'\nGlobal Label 'GPIO38'\nGlobal Label 'GPIO44/RX'\nGlobal Label 'GPIO43/TX'\nGlobal Label 'GPIO13'\nGlobal Label 'GPIO46'\nGlobal Label 'GPIO3'\nGlobal Label 'RST'",
       "failure_mode": "",
@@ -211,8 +249,8 @@
     },
     {
       "severity": "verify",
-      "title": "Both 10V_ref and dc_offset are attached to the same items; 10V_ref will be used in the netlist (\u00d72)",
-      "detail": "Label '10V_ref'\nLabel 'dc_offset'",
+      "title": "Both 10V_ref and scaled_func are attached to the same items; 10V_ref will be used in the netlist (\u00d72)",
+      "detail": "Label '10V_ref'\nLabel 'scaled_func'",
       "failure_mode": "",
       "citation": "KiCad ERC rule multiple_net_names",
       "source": "erc",
@@ -230,7 +268,7 @@
     },
     {
       "severity": "verify",
-      "title": "Missing footprint C1 (C_Small_US) (\u00d785)",
+      "title": "Missing footprint C1 (C_Small_US) (\u00d789)",
       "detail": "",
       "failure_mode": "",
       "citation": "KiCad DRC rule missing_footprint",
@@ -250,20 +288,20 @@
   ],
   "runs": {
     "erc": {
-      "ts": 1794850496.3042111,
-      "hash": "e32da05f8d41948e"
+      "ts": 1794852053.9676356,
+      "hash": "e49f4e37bc49b895"
     },
     "pattern": {
-      "ts": 1794850496.3042111,
-      "hash": "e32da05f8d41948e"
+      "ts": 1794852053.9676356,
+      "hash": "e49f4e37bc49b895"
     },
     "drc": {
-      "ts": 1794850496.3042111,
-      "hash": "e32da05f8d41948e"
+      "ts": 1794852053.9676356,
+      "hash": "e49f4e37bc49b895"
     },
     "distributor": {
-      "ts": 1794850496.3042111,
-      "hash": "e32da05f8d41948e"
+      "ts": 1794852053.9676356,
+      "hash": "e49f4e37bc49b895"
     }
   },
   "coverage": [
@@ -271,7 +309,12 @@
       "ref": "U1",
       "part": "ESP32-S3-WROOM-1 module",
       "checks": 5
+    },
+    {
+      "ref": "U16",
+      "part": "AP2112 3.3V LDO",
+      "checks": 2
     }
   ],
-  "components": 85
+  "components": 89
 }
