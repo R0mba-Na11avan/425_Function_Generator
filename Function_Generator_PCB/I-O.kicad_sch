@@ -2564,7 +2564,7 @@
 		(at 86.36 91.44)
 		(diameter 0)
 		(color 0 0 0 0)
-		(uuid "ef9685db-5b2c-4b42-963b-830e21cd4baa")
+		(uuid "ee97f785-56ac-43b0-b9a9-4e57254898fd")
 	)
 	(no_connect
 		(at 193.04 54.61)
@@ -2619,16 +2619,6 @@
 			(type default)
 		)
 		(uuid "2ba76c29-baca-40f4-b1d7-cd650103fe43")
-	)
-	(wire
-		(pts
-			(xy 96.52 91.44) (xy 86.36 91.44)
-		)
-		(stroke
-			(width 0)
-			(type default)
-		)
-		(uuid "343d06d3-5a33-4f5d-a84a-7e3115423371")
 	)
 	(wire
 		(pts
@@ -2799,6 +2789,16 @@
 			(type default)
 		)
 		(uuid "8470061b-4614-40aa-9a80-3f5daafcbad2")
+	)
+	(wire
+		(pts
+			(xy 93.98 91.44) (xy 96.52 91.44)
+		)
+		(stroke
+			(width 0)
+			(type default)
+		)
+		(uuid "8a575fd5-c26c-4159-9645-d61935825899")
 	)
 	(wire
 		(pts
@@ -5083,6 +5083,85 @@
 			(project "Function_Generator_PCB"
 				(path "/36137b94-4d12-4e7a-a065-7ebda7200b05/3d0a80e5-cf3f-4611-8c8d-1db3166782f3"
 					(reference "#PWR07")
+					(unit 1)
+				)
+			)
+		)
+	)
+	(symbol
+		(lib_id "Device:R")
+		(at 90.17 91.44 90)
+		(unit 1)
+		(body_style 1)
+		(exclude_from_sim no)
+		(in_bom yes)
+		(on_board yes)
+		(in_pos_files yes)
+		(dnp no)
+		(uuid "78ca4d3c-895c-4cf8-87e0-c5cd096ddda0")
+		(property "Reference" "R31"
+			(at 90.424 94.234 90)
+			(show_name no)
+			(do_not_autoplace no)
+			(effects
+				(font
+					(size 1.27 1.27)
+				)
+			)
+		)
+		(property "Value" "0"
+			(at 90.424 96.774 90)
+			(show_name no)
+			(do_not_autoplace no)
+			(effects
+				(font
+					(size 1.27 1.27)
+				)
+			)
+		)
+		(property "Footprint" ""
+			(at 90.17 93.218 90)
+			(hide yes)
+			(show_name no)
+			(do_not_autoplace no)
+			(effects
+				(font
+					(size 1.27 1.27)
+				)
+			)
+		)
+		(property "Datasheet" ""
+			(at 90.17 91.44 0)
+			(hide yes)
+			(show_name no)
+			(do_not_autoplace no)
+			(effects
+				(font
+					(size 1.27 1.27)
+				)
+			)
+		)
+		(property "Description" "Resistor"
+			(at 90.17 91.44 0)
+			(hide yes)
+			(show_name no)
+			(do_not_autoplace no)
+			(effects
+				(font
+					(size 1.27 1.27)
+				)
+			)
+		)
+		(pin "2"
+			(uuid "7a4d182f-7522-4861-83fc-04457d7b5f1a")
+		)
+		(pin "1"
+			(uuid "d3cf32a7-f76d-4611-93b7-1ec59e51db79")
+		)
+		(instances
+			(project "Function_Generator_PCB"
+				(path "/36137b94-4d12-4e7a-a065-7ebda7200b05/3d0a80e5-cf3f-4611-8c8d-1db3166782f3"
+					(reference "R31")
 					(unit 1)
 				)
 			)
