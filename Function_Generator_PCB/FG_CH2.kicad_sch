@@ -4493,7 +4493,7 @@
 				)
 			)
 		)
-		(property "Footprint" ""
+		(property "Footprint" "ohmen:TS5A23157_Module"
 			(at 86.36 36.83 0)
 			(hide yes)
 			(show_name no)

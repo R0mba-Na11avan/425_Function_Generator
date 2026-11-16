@@ -4504,28 +4504,28 @@
 			)
 		)
 		(pin "5"
-			(uuid "4475387f-cff0-467f-9b9a-44749ac8e838")
+			(uuid "4475387f-cff0-467f-9b9a-44749ac8e839")
 		)
 		(pin "2"
-			(uuid "8d27f98c-a5b7-4885-9e7f-9f2c01bde961")
+			(uuid "8d27f98c-a5b7-4885-9e7f-9f2c01bde962")
 		)
 		(pin "1"
-			(uuid "a6f5524f-0f40-4529-b65e-da7506d18320")
+			(uuid "a6f5524f-0f40-4529-b65e-da7506d18321")
 		)
 		(pin "8"
-			(uuid "d9d06f4e-48e6-48d4-87d9-9a0b0f74be98")
+			(uuid "d9d06f4e-48e6-48d4-87d9-9a0b0f74be99")
 		)
 		(pin "7"
-			(uuid "90a477c5-b704-4cc3-840b-141f9f9627d7")
+			(uuid "90a477c5-b704-4cc3-840b-141f9f9627d8")
 		)
 		(pin "4"
-			(uuid "5a5de6d2-df32-4ece-b9a6-eb141c7c7597")
+			(uuid "5a5de6d2-df32-4ece-b9a6-eb141c7c7598")
 		)
 		(pin "6"
-			(uuid "5e716f7a-6373-4a96-98d1-e653358a61b9")
+			(uuid "5e716f7a-6373-4a96-98d1-e653358a61ba")
 		)
 		(pin "3"
-			(uuid "7984ac30-a412-4f4b-a95a-676643994557")
+			(uuid "7984ac30-a412-4f4b-a95a-676643994558")
 		)
 		(instances
 			(project "Function_Generator_PCB"
@@ -7432,28 +7432,28 @@
 			)
 		)
 		(pin "5"
-			(uuid "4475387f-cff0-467f-9b9a-44749ac8e838")
+			(uuid "4475387f-cff0-467f-9b9a-44749ac8e83a")
 		)
 		(pin "2"
-			(uuid "8d27f98c-a5b7-4885-9e7f-9f2c01bde961")
+			(uuid "8d27f98c-a5b7-4885-9e7f-9f2c01bde963")
 		)
 		(pin "1"
-			(uuid "a6f5524f-0f40-4529-b65e-da7506d18320")
+			(uuid "a6f5524f-0f40-4529-b65e-da7506d18322")
 		)
 		(pin "8"
-			(uuid "d9d06f4e-48e6-48d4-87d9-9a0b0f74be98")
+			(uuid "d9d06f4e-48e6-48d4-87d9-9a0b0f74be9a")
 		)
 		(pin "7"
-			(uuid "90a477c5-b704-4cc3-840b-141f9f9627d7")
+			(uuid "90a477c5-b704-4cc3-840b-141f9f9627d9")
 		)
 		(pin "4"
-			(uuid "5a5de6d2-df32-4ece-b9a6-eb141c7c7597")
+			(uuid "5a5de6d2-df32-4ece-b9a6-eb141c7c7599")
 		)
 		(pin "6"
-			(uuid "5e716f7a-6373-4a96-98d1-e653358a61b9")
+			(uuid "5e716f7a-6373-4a96-98d1-e653358a61bb")
 		)
 		(pin "3"
-			(uuid "7984ac30-a412-4f4b-a95a-676643994557")
+			(uuid "7984ac30-a412-4f4b-a95a-676643994559")
 		)
 		(instances
 			(project "Function_Generator_PCB"
