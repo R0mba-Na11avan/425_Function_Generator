@@ -3033,7 +3033,7 @@
 	)
 	(text "DC offset opamp shares\nbulk cap with the v-ref\nbuffers"
 		(exclude_from_sim no)
-		(at 246.126 90.17 0)
+		(at 271.526 90.17 0)
 		(effects
 			(font
 				(size 0.762 0.762)
@@ -3082,6 +3082,12 @@
 		(diameter 0)
 		(color 0 0 0 0)
 		(uuid "12471998-3ac3-4cdb-975a-f47978e34fa0")
+	)
+	(junction
+		(at 234.95 125.73)
+		(diameter 0)
+		(color 0 0 0 0)
+		(uuid "180100e5-b7b8-471d-a680-592ee2fe2589")
 	)
 	(junction
 		(at 222.25 55.88)
@@ -3148,6 +3154,12 @@
 		(diameter 0)
 		(color 0 0 0 0)
 		(uuid "6a7705cc-fb66-415b-b640-7e00a5092119")
+	)
+	(junction
+		(at 245.11 118.11)
+		(diameter 0)
+		(color 0 0 0 0)
+		(uuid "6afdcb5e-2218-4de8-b8b2-242c410d91ea")
 	)
 	(junction
 		(at 48.26 33.02)
@@ -3288,6 +3300,16 @@
 			(type default)
 		)
 		(uuid "155408b3-d6f8-43d5-902a-24ed6e786921")
+	)
+	(wire
+		(pts
+			(xy 234.95 125.73) (xy 245.11 125.73)
+		)
+		(stroke
+			(width 0)
+			(type default)
+		)
+		(uuid "16169fc5-1e3a-4e84-a814-efe3fee863ce")
 	)
 	(wire
 		(pts
@@ -3551,6 +3573,16 @@
 	)
 	(wire
 		(pts
+			(xy 234.95 118.11) (xy 245.11 118.11)
+		)
+		(stroke
+			(width 0)
+			(type default)
+		)
+		(uuid "6e7f46c7-7888-4d6c-88e2-7afbca3ed57e")
+	)
+	(wire
+		(pts
 			(xy 52.07 91.44) (xy 57.15 91.44)
 		)
 		(stroke
@@ -3791,6 +3823,16 @@
 	)
 	(wire
 		(pts
+			(xy 245.11 118.11) (xy 245.11 90.17)
+		)
+		(stroke
+			(width 0)
+			(type default)
+		)
+		(uuid "a8ce5310-d803-47a5-bf33-4e252b7d5d4b")
+	)
+	(wire
+		(pts
 			(xy 95.25 101.6) (xy 116.84 101.6)
 		)
 		(stroke
@@ -3858,6 +3900,16 @@
 			(type default)
 		)
 		(uuid "b04df47a-399c-4f92-a423-67605a7e49a4")
+	)
+	(wire
+		(pts
+			(xy 234.95 90.17) (xy 245.11 90.17)
+		)
+		(stroke
+			(width 0)
+			(type default)
+		)
+		(uuid "b3857337-26b7-4dd6-ad6d-9f9c99c15ff9")
 	)
 	(wire
 		(pts
@@ -7862,6 +7914,87 @@
 			(project "Function_Generator_PCB"
 				(path "/36137b94-4d12-4e7a-a065-7ebda7200b05/a31713eb-2df0-4696-94ed-7e7663aff47a"
 					(reference "#PWR034")
+					(unit 1)
+				)
+			)
+		)
+	)
+	(symbol
+		(lib_id "Device:C")
+		(at 245.11 121.92 0)
+		(unit 1)
+		(body_style 1)
+		(exclude_from_sim no)
+		(in_bom yes)
+		(on_board yes)
+		(in_pos_files yes)
+		(dnp no)
+		(uuid "c607f2c9-1753-46b6-9ea5-e779437dfd54")
+		(property "Reference" "C34"
+			(at 248.412 120.396 0)
+			(show_name no)
+			(do_not_autoplace no)
+			(effects
+				(font
+					(size 1.27 1.27)
+				)
+				(justify left)
+			)
+		)
+		(property "Value" "4.7μ"
+			(at 248.412 122.936 0)
+			(show_name no)
+			(do_not_autoplace no)
+			(effects
+				(font
+					(size 1.27 1.27)
+				)
+				(justify left)
+			)
+		)
+		(property "Footprint" ""
+			(at 246.0752 125.73 0)
+			(hide yes)
+			(show_name no)
+			(do_not_autoplace no)
+			(effects
+				(font
+					(size 1.27 1.27)
+				)
+			)
+		)
+		(property "Datasheet" ""
+			(at 245.11 121.92 0)
+			(hide yes)
+			(show_name no)
+			(do_not_autoplace no)
+			(effects
+				(font
+					(size 1.27 1.27)
+				)
+			)
+		)
+		(property "Description" "Unpolarized capacitor"
+			(at 245.11 121.92 0)
+			(hide yes)
+			(show_name no)
+			(do_not_autoplace no)
+			(effects
+				(font
+					(size 1.27 1.27)
+				)
+			)
+		)
+		(pin "1"
+			(uuid "970da7d7-1e8e-465f-8ee0-892f9391a5cf")
+		)
+		(pin "2"
+			(uuid "df4c8ea7-6f8f-4c5d-9dc0-cb08d9d4584a")
+		)
+		(instances
+			(project "Function_Generator_PCB"
+				(path "/36137b94-4d12-4e7a-a065-7ebda7200b05/a31713eb-2df0-4696-94ed-7e7663aff47a"
+					(reference "C34")
 					(unit 1)
 				)
 			)
