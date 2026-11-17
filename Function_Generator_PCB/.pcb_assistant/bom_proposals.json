@@ -352,40 +352,6 @@
       "created_at": "2026-11-13T20:58:28+00:00"
     },
     {
-      "id": "sch:b958fb089b52",
-      "refdes": [
-        "C1",
-        "C32",
-        "C33"
-      ],
-      "qty": 3,
-      "value": "C_Small_US",
-      "footprint": "Capacitor_SMD:C_0805_2012Metric",
-      "current_mpn": null,
-      "current_price": null,
-      "offer": null,
-      "alternatives": [],
-      "rationale": "generic symbol \u2014 set an MPN on the part (or ask the copilot to pick one)",
-      "status": "skipped",
-      "created_at": "2026-11-17T00:43:26+00:00"
-    },
-    {
-      "id": "sch:c2d74ca10a02",
-      "refdes": [
-        "C2"
-      ],
-      "qty": 1,
-      "value": "C_Small_US",
-      "footprint": "Capacitor_THT:CP_Radial_D6.3mm_P2.50mm",
-      "current_mpn": null,
-      "current_price": null,
-      "offer": null,
-      "alternatives": [],
-      "rationale": "generic symbol \u2014 set an MPN on the part (or ask the copilot to pick one)",
-      "status": "skipped",
-      "created_at": "2026-11-17T00:43:26+00:00"
-    },
-    {
       "id": "sch:4da95b094057",
       "refdes": [
         "C3",
@@ -550,23 +516,6 @@
       "created_at": "2026-11-17T00:43:26+00:00"
     },
     {
-      "id": "sch:66827c172b3b",
-      "refdes": [
-        "C15",
-        "C16"
-      ],
-      "qty": 2,
-      "value": "1\u03bc",
-      "footprint": null,
-      "current_mpn": null,
-      "current_price": null,
-      "offer": null,
-      "alternatives": [],
-      "rationale": "1\u00b5F, \u226516 V (no rail voltage known \u2014 assumed), X7R/X5R \u2014 nothing active and in stock matched.",
-      "status": "skipped",
-      "created_at": "2026-11-17T00:43:26+00:00"
-    },
-    {
       "id": "sch:0c68dae394dd",
       "refdes": [
         "C17",
@@ -721,25 +670,6 @@
       ],
       "rationale": "100nF, \u226510 V (2\u00d7 its 3.3 V rail), X7R/X5R",
       "status": "approved",
-      "created_at": "2026-11-17T00:43:26+00:00"
-    },
-    {
-      "id": "sch:e5ad21b94fac",
-      "refdes": [
-        "C21",
-        "C22",
-        "C27",
-        "C28"
-      ],
-      "qty": 4,
-      "value": "1.5p",
-      "footprint": null,
-      "current_mpn": null,
-      "current_price": null,
-      "offer": null,
-      "alternatives": [],
-      "rationale": "1.5pF, \u226516 V (no rail voltage known \u2014 assumed), X7R/X5R \u2014 nothing active and in stock matched.",
-      "status": "skipped",
       "created_at": "2026-11-17T00:43:26+00:00"
     },
     {
@@ -1058,87 +988,6 @@
       ],
       "rationale": "4.7\u00b5F, \u226525 V (2\u00d7 its 12 V rail), X7R/X5R",
       "status": "approved",
-      "created_at": "2026-11-17T00:43:26+00:00"
-    },
-    {
-      "id": "sch:89e9bc41c75c",
-      "refdes": [
-        "DS1"
-      ],
-      "qty": 1,
-      "value": "ILI9341",
-      "footprint": null,
-      "current_mpn": null,
-      "current_price": null,
-      "offer": null,
-      "alternatives": [],
-      "rationale": "no exact match for ILI9341; cheapest orderable version \u2014 nothing active and in stock matched.",
-      "status": "skipped",
-      "created_at": "2026-11-17T00:43:26+00:00"
-    },
-    {
-      "id": "sch:479812578b86",
-      "refdes": [
-        "J1"
-      ],
-      "qty": 1,
-      "value": "Conn_Coaxial_CH1",
-      "footprint": null,
-      "current_mpn": null,
-      "current_price": null,
-      "offer": null,
-      "alternatives": [],
-      "rationale": "generic symbol \u2014 set an MPN on the part (or ask the copilot to pick one)",
-      "status": "skipped",
-      "created_at": "2026-11-17T00:43:26+00:00"
-    },
-    {
-      "id": "sch:afe2ce9a8248",
-      "refdes": [
-        "J2"
-      ],
-      "qty": 1,
-      "value": "Conn_Coaxial_CH2",
-      "footprint": null,
-      "current_mpn": null,
-      "current_price": null,
-      "offer": null,
-      "alternatives": [],
-      "rationale": "generic symbol \u2014 set an MPN on the part (or ask the copilot to pick one)",
-      "status": "skipped",
-      "created_at": "2026-11-17T00:43:26+00:00"
-    },
-    {
-      "id": "sch:cdeee9933325",
-      "refdes": [
-        "J3"
-      ],
-      "qty": 1,
-      "value": "PWR_IN",
-      "footprint": "Connector_BarrelJack:BarrelJack_CUI_PJ-102AH_Horizontal",
-      "current_mpn": null,
-      "current_price": null,
-      "offer": null,
-      "alternatives": [],
-      "rationale": "generic symbol \u2014 set an MPN on the part (or ask the copilot to pick one)",
-      "status": "skipped",
-      "created_at": "2026-11-17T00:43:26+00:00"
-    },
-    {
-      "id": "sch:de5cb7b0a3a8",
-      "refdes": [
-        "J4",
-        "J5"
-      ],
-      "qty": 2,
-      "value": "Conn_01x02_Socket_CH1",
-      "footprint": null,
-      "current_mpn": null,
-      "current_price": null,
-      "offer": null,
-      "alternatives": [],
-      "rationale": "generic symbol \u2014 set an MPN on the part (or ask the copilot to pick one)",
-      "status": "skipped",
       "created_at": "2026-11-17T00:43:26+00:00"
     },
     {
@@ -2333,348 +2182,6 @@
       "created_at": "2026-11-17T00:43:27+00:00"
     },
     {
-      "id": "sch:c7a745e3d625",
-      "refdes": [
-        "R27"
-      ],
-      "qty": 1,
-      "value": "20K",
-      "footprint": null,
-      "current_mpn": null,
-      "current_price": null,
-      "offer": {
-        "mpn": "RC0402FR-0720KL",
-        "manufacturer": "YAGEO",
-        "description": "RES 20K OHM 1% 1/16W 0402",
-        "digikey_pn": "311-20.0KLRCT-ND",
-        "packaging": "Cut Tape (CT)",
-        "unit_price": 0.1,
-        "stock": 2511072,
-        "lifecycle": "Active",
-        "product_url": "https://www.digikey.com/en/products/detail/yageo/RC0402FR-0720KL/726557",
-        "datasheet_url": "https://yageogroup.com/content/datasheet/asset/file/PYU-RC_GROUP_51_ROHS_L",
-        "min_order": 1,
-        "min_order_cost": null,
-        "bulk_only": false,
-        "photo_url": "https://mm.digikey.com/Volume0/opasdata/d220001/medias/images/4849/13_0402-%281005-metric%29.jpg",
-        "category": "Resistors",
-        "parameters": {
-          "Resistance": "20 kOhms",
-          "Tolerance": "\u00b11%",
-          "Power (Watts)": "0.063W, 1/16W",
-          "Composition": "Thick Film",
-          "Features": "Moisture Resistant",
-          "Temperature Coefficient": "\u00b1100ppm/\u00b0C",
-          "Operating Temperature": "-55\u00b0C ~ 155\u00b0C",
-          "Package / Case": "0402 (1005 Metric)",
-          "Supplier Device Package": "0402",
-          "Size / Dimension": "0.039\" L x 0.020\" W (1.00mm x 0.50mm)",
-          "Height - Seated (Max)": "0.016\" (0.40mm)",
-          "Number of Terminations": "2",
-          "Failure Rate": "-"
-        }
-      },
-      "alternatives": [
-        {
-          "mpn": "CRCW040220K0FKED",
-          "manufacturer": "Vishay Dale",
-          "description": "RES 20K OHM 1% 1/16W 0402",
-          "digikey_pn": "541-20.0KLCT-ND",
-          "packaging": "Cut Tape (CT)",
-          "unit_price": 0.1,
-          "stock": 1749672,
-          "lifecycle": "Active",
-          "product_url": "https://www.digikey.com/en/products/detail/vishay-dale/CRCW040220K0FKED/1178153",
-          "datasheet_url": "https://www.vishay.com/docs/20035/dcrcwe3.pdf",
-          "min_order": 1,
-          "min_order_cost": null,
-          "bulk_only": false,
-          "photo_url": "https://mm.digikey.com/Volume0/opasdata/d220001/medias/images/596/Vishay-CRCW-0402.jpg",
-          "category": "Resistors",
-          "parameters": {
-            "Resistance": "20 kOhms",
-            "Tolerance": "\u00b11%",
-            "Power (Watts)": "0.063W, 1/16W",
-            "Composition": "Thick Film",
-            "Features": "Automotive AEC-Q200",
-            "Temperature Coefficient": "\u00b1100ppm/\u00b0C",
-            "Operating Temperature": "-55\u00b0C ~ 155\u00b0C",
-            "Package / Case": "0402 (1005 Metric)",
-            "Supplier Device Package": "0402",
-            "Ratings": "-",
-            "Size / Dimension": "0.039\" L x 0.020\" W (1.00mm x 0.50mm)",
-            "Height - Seated (Max)": "0.016\" (0.40mm)",
-            "Number of Terminations": "2",
-            "Failure Rate": "-"
-          }
-        },
-        {
-          "mpn": "RMCF0402FT20K0",
-          "manufacturer": "Stackpole Electronics Inc",
-          "description": "RES 20K OHM 1% 1/16W 0402",
-          "digikey_pn": "RMCF0402FT20K0CT-ND",
-          "packaging": "Cut Tape (CT)",
-          "unit_price": 0.1,
-          "stock": 2487730,
-          "lifecycle": "Active",
-          "product_url": "https://www.digikey.com/en/products/detail/stackpole-electronics-inc/RMCF0402FT20K0/1714541",
-          "datasheet_url": "https://www.seielect.com/catalog/SEI-RMCF_RMCP.pdf",
-          "min_order": 1,
-          "min_order_cost": null,
-          "bulk_only": false,
-          "photo_url": "https://mm.digikey.com/Volume0/opasdata/d220001/medias/images/7182/MFG_RMCF_series.jpg",
-          "category": "Resistors",
-          "parameters": {
-            "Resistance": "20 kOhms",
-            "Tolerance": "\u00b11%",
-            "Power (Watts)": "0.063W, 1/16W",
-            "Composition": "Thick Film",
-            "Features": "Automotive AEC-Q200",
-            "Temperature Coefficient": "\u00b1100ppm/\u00b0C",
-            "Operating Temperature": "-55\u00b0C ~ 155\u00b0C",
-            "Package / Case": "0402 (1005 Metric)",
-            "Supplier Device Package": "0402",
-            "Ratings": "-",
-            "Size / Dimension": "0.039\" L x 0.020\" W (1.00mm x 0.50mm)",
-            "Height - Seated (Max)": "0.016\" (0.40mm)",
-            "Number of Terminations": "2",
-            "Failure Rate": "-"
-          }
-        },
-        {
-          "mpn": "RMCF0603FT20K0",
-          "manufacturer": "Stackpole Electronics Inc",
-          "description": "RES 20K OHM 1% 1/10W 0603",
-          "digikey_pn": "RMCF0603FT20K0CT-ND",
-          "packaging": "Cut Tape (CT)",
-          "unit_price": 0.1,
-          "stock": 1455062,
-          "lifecycle": "Active",
-          "product_url": "https://www.digikey.com/en/products/detail/stackpole-electronics-inc/RMCF0603FT20K0/1760829",
-          "datasheet_url": "https://www.seielect.com/catalog/SEI-RMCF_RMCP.pdf",
-          "min_order": 1,
-          "min_order_cost": null,
-          "bulk_only": false,
-          "photo_url": "https://mm.digikey.com/Volume0/opasdata/d220001/medias/images/7182/MFG_RMCF_series.jpg",
-          "category": "Resistors",
-          "parameters": {
-            "Resistance": "20 kOhms",
-            "Tolerance": "\u00b11%",
-            "Power (Watts)": "0.1W, 1/10W",
-            "Composition": "Thick Film",
-            "Features": "Automotive AEC-Q200",
-            "Temperature Coefficient": "\u00b1100ppm/\u00b0C",
-            "Operating Temperature": "-55\u00b0C ~ 155\u00b0C",
-            "Package / Case": "0603 (1608 Metric)",
-            "Supplier Device Package": "0603",
-            "Ratings": "-",
-            "Size / Dimension": "0.061\" L x 0.031\" W (1.55mm x 0.80mm)",
-            "Height - Seated (Max)": "0.024\" (0.60mm)",
-            "Number of Terminations": "2",
-            "Failure Rate": "-"
-          }
-        }
-      ],
-      "rationale": "20k\u03a9, \u22641% (feedback divider)",
-      "status": "approved",
-      "created_at": "2026-11-17T00:43:27+00:00"
-    },
-    {
-      "id": "sch:5af7d376bb24",
-      "refdes": [
-        "R28"
-      ],
-      "qty": 1,
-      "value": "100K",
-      "footprint": null,
-      "current_mpn": null,
-      "current_price": null,
-      "offer": {
-        "mpn": "RK73H1ETTP1003F",
-        "manufacturer": "KOA Speer Electronics, Inc.",
-        "description": "RES 100K OHM 1% 1/10W 0402",
-        "digikey_pn": "2019-RK73H1ETTP1003FCT-ND",
-        "packaging": "Cut Tape (CT)",
-        "unit_price": 0.1,
-        "stock": 5464439,
-        "lifecycle": "Active",
-        "product_url": "https://www.digikey.com/en/products/detail/koa-speer-electronics-inc/RK73H1ETTP1003F/9844156",
-        "datasheet_url": "https://www.koaspeer.com/pdfs/RK73H.pdf",
-        "min_order": 1,
-        "min_order_cost": null,
-        "bulk_only": false,
-        "photo_url": "https://mm.digikey.com/Volume0/opasdata/d220001/medias/images/5572/MFG_RK73H1HTTCM12R7D.jpg",
-        "category": "Resistors",
-        "parameters": {
-          "Resistance": "100 kOhms",
-          "Tolerance": "\u00b11%",
-          "Power (Watts)": "0.1W, 1/10W",
-          "Composition": "Thick Film",
-          "Features": "Automotive AEC-Q200",
-          "Temperature Coefficient": "\u00b1100ppm/\u00b0C",
-          "Operating Temperature": "-55\u00b0C ~ 155\u00b0C",
-          "Package / Case": "0402 (1005 Metric)",
-          "Supplier Device Package": "0402",
-          "Ratings": "-",
-          "Size / Dimension": "0.039\" L x 0.020\" W (1.00mm x 0.50mm)",
-          "Height - Seated (Max)": "0.016\" (0.40mm)",
-          "Number of Terminations": "2",
-          "Failure Rate": "-"
-        }
-      },
-      "alternatives": [
-        {
-          "mpn": "RMCF0402FT100K",
-          "manufacturer": "Stackpole Electronics Inc",
-          "description": "RES 100K OHM 1% 1/16W 0402",
-          "digikey_pn": "RMCF0402FT100KCT-ND",
-          "packaging": "Cut Tape (CT)",
-          "unit_price": 0.1,
-          "stock": 4724630,
-          "lifecycle": "Active",
-          "product_url": "https://www.digikey.com/en/products/detail/stackpole-electronics-inc/RMCF0402FT100K/1761803",
-          "datasheet_url": "https://www.seielect.com/catalog/SEI-RMCF_RMCP.pdf",
-          "min_order": 1,
-          "min_order_cost": null,
-          "bulk_only": false,
-          "photo_url": "https://mm.digikey.com/Volume0/opasdata/d220001/medias/images/7182/MFG_RMCF_series.jpg",
-          "category": "Resistors",
-          "parameters": {
-            "Resistance": "100 kOhms",
-            "Tolerance": "\u00b11%",
-            "Power (Watts)": "0.063W, 1/16W",
-            "Composition": "Thick Film",
-            "Features": "Automotive AEC-Q200",
-            "Temperature Coefficient": "\u00b1100ppm/\u00b0C",
-            "Operating Temperature": "-55\u00b0C ~ 155\u00b0C",
-            "Package / Case": "0402 (1005 Metric)",
-            "Supplier Device Package": "0402",
-            "Ratings": "-",
-            "Size / Dimension": "0.039\" L x 0.020\" W (1.00mm x 0.50mm)",
-            "Height - Seated (Max)": "0.016\" (0.40mm)",
-            "Number of Terminations": "2",
-            "Failure Rate": "-"
-          }
-        },
-        {
-          "mpn": "RC0402FR-07100KL",
-          "manufacturer": "YAGEO",
-          "description": "RES 100K OHM 1% 1/16W 0402",
-          "digikey_pn": "311-100KLRCT-ND",
-          "packaging": "Cut Tape (CT)",
-          "unit_price": 0.1,
-          "stock": 4138325,
-          "lifecycle": "Active",
-          "product_url": "https://www.digikey.com/en/products/detail/yageo/RC0402FR-07100KL/726526",
-          "datasheet_url": "https://yageogroup.com/content/datasheet/asset/file/PYU-RC_GROUP_51_ROHS_L",
-          "min_order": 1,
-          "min_order_cost": null,
-          "bulk_only": false,
-          "photo_url": "https://mm.digikey.com/Volume0/opasdata/d220001/medias/images/4849/13_0402-%281005-metric%29.jpg",
-          "category": "Resistors",
-          "parameters": {
-            "Resistance": "100 kOhms",
-            "Tolerance": "\u00b11%",
-            "Power (Watts)": "0.063W, 1/16W",
-            "Composition": "Thick Film",
-            "Features": "Moisture Resistant",
-            "Temperature Coefficient": "\u00b1100ppm/\u00b0C",
-            "Operating Temperature": "-55\u00b0C ~ 155\u00b0C",
-            "Package / Case": "0402 (1005 Metric)",
-            "Supplier Device Package": "0402",
-            "Size / Dimension": "0.039\" L x 0.020\" W (1.00mm x 0.50mm)",
-            "Height - Seated (Max)": "0.016\" (0.40mm)",
-            "Number of Terminations": "2",
-            "Failure Rate": "-"
-          }
-        },
-        {
-          "mpn": "CRCW0402100KFKED",
-          "manufacturer": "Vishay Dale",
-          "description": "RES 100K OHM 1% 1/16W 0402",
-          "digikey_pn": "541-100KLCT-ND",
-          "packaging": "Cut Tape (CT)",
-          "unit_price": 0.1,
-          "stock": 4034652,
-          "lifecycle": "Active",
-          "product_url": "https://www.digikey.com/en/products/detail/vishay-dale/CRCW0402100KFKED/1178235",
-          "datasheet_url": "https://www.vishay.com/docs/20035/dcrcwe3.pdf",
-          "min_order": 1,
-          "min_order_cost": null,
-          "bulk_only": false,
-          "photo_url": "https://mm.digikey.com/Volume0/opasdata/d220001/medias/images/596/Vishay-CRCW-0402.jpg",
-          "category": "Resistors",
-          "parameters": {
-            "Resistance": "100 kOhms",
-            "Tolerance": "\u00b11%",
-            "Power (Watts)": "0.063W, 1/16W",
-            "Composition": "Thick Film",
-            "Features": "Automotive AEC-Q200",
-            "Temperature Coefficient": "\u00b1100ppm/\u00b0C",
-            "Operating Temperature": "-55\u00b0C ~ 155\u00b0C",
-            "Package / Case": "0402 (1005 Metric)",
-            "Supplier Device Package": "0402",
-            "Ratings": "-",
-            "Size / Dimension": "0.039\" L x 0.020\" W (1.00mm x 0.50mm)",
-            "Height - Seated (Max)": "0.016\" (0.40mm)",
-            "Number of Terminations": "2",
-            "Failure Rate": "-"
-          }
-        }
-      ],
-      "rationale": "100k\u03a9, \u22641% (feedback divider)",
-      "status": "approved",
-      "created_at": "2026-11-17T00:43:27+00:00"
-    },
-    {
-      "id": "sch:1cdc317b3af2",
-      "refdes": [
-        "R31"
-      ],
-      "qty": 1,
-      "value": "0",
-      "footprint": null,
-      "current_mpn": null,
-      "current_price": null,
-      "offer": null,
-      "alternatives": [],
-      "rationale": "generic symbol \u2014 set an MPN on the part (or ask the copilot to pick one)",
-      "status": "skipped",
-      "created_at": "2026-11-17T00:43:27+00:00"
-    },
-    {
-      "id": "sch:446b4cf6fcdb",
-      "refdes": [
-        "SW1"
-      ],
-      "qty": 1,
-      "value": "Rotary_Encoder_Module",
-      "footprint": "Connector_PinSocket_2.54mm:PinSocket_1x05_P2.54mm_Vertical",
-      "current_mpn": null,
-      "current_price": null,
-      "offer": null,
-      "alternatives": [],
-      "rationale": "generic symbol \u2014 set an MPN on the part (or ask the copilot to pick one)",
-      "status": "skipped",
-      "created_at": "2026-11-17T00:43:27+00:00"
-    },
-    {
-      "id": "sch:f54d8b90e995",
-      "refdes": [
-        "SW2"
-      ],
-      "qty": 1,
-      "value": "SW_SPST",
-      "footprint": "Button_Switch_THT:SW_PUSH-12mm_Wuerth-430476085716",
-      "current_mpn": null,
-      "current_price": null,
-      "offer": null,
-      "alternatives": [],
-      "rationale": "generic symbol \u2014 set an MPN on the part (or ask the copilot to pick one)",
-      "status": "skipped",
-      "created_at": "2026-11-17T00:43:27+00:00"
-    },
-    {
       "id": "sch:f8560581f06d",
       "refdes": [
         "SW3"
@@ -2764,38 +2271,6 @@
       ],
       "rationale": "no exact match for TS5A23157; cheapest orderable version",
       "status": "approved",
-      "created_at": "2026-11-17T00:43:27+00:00"
-    },
-    {
-      "id": "sch:efc27355d572",
-      "refdes": [
-        "U1"
-      ],
-      "qty": 1,
-      "value": "ESP32-S3-DevKitC-N16R8",
-      "footprint": "ESP32-S3-DevKitC:ESP32-S3-DevKitC-1_DualUSB",
-      "current_mpn": null,
-      "current_price": null,
-      "offer": null,
-      "alternatives": [],
-      "rationale": "no exact match for ESP32-S3-DevKitC-N16R8; cheapest orderable version \u2014 nothing active and in stock matched.",
-      "status": "skipped",
-      "created_at": "2026-11-17T00:43:27+00:00"
-    },
-    {
-      "id": "sch:904de2c71506",
-      "refdes": [
-        "U3"
-      ],
-      "qty": 1,
-      "value": "LM7805_TO220",
-      "footprint": "Package_TO_SOT_THT:TO-220-3_Vertical",
-      "current_mpn": null,
-      "current_price": null,
-      "offer": null,
-      "alternatives": [],
-      "rationale": "generic symbol \u2014 set an MPN on the part (or ask the copilot to pick one)",
-      "status": "skipped",
       "created_at": "2026-11-17T00:43:27+00:00"
     },
     {
@@ -3036,57 +2511,579 @@
       "created_at": "2026-11-17T00:43:27+00:00"
     },
     {
-      "id": "sch:e9fc555a7773",
+      "id": "sch:c7a745e3d625",
+      "refdes": [
+        "R27"
+      ],
+      "qty": 1,
+      "value": "20K",
+      "footprint": null,
+      "current_mpn": null,
+      "current_price": null,
+      "offer": {
+        "mpn": "RC0402FR-0720KL",
+        "manufacturer": "YAGEO",
+        "description": "RES 20K OHM 1% 1/16W 0402",
+        "digikey_pn": "311-20.0KLRCT-ND",
+        "packaging": "Cut Tape (CT)",
+        "unit_price": 0.1,
+        "stock": 2511072,
+        "lifecycle": "Active",
+        "product_url": "https://www.digikey.com/en/products/detail/yageo/RC0402FR-0720KL/726557",
+        "datasheet_url": "https://yageogroup.com/content/datasheet/asset/file/PYU-RC_GROUP_51_ROHS_L",
+        "min_order": 1,
+        "min_order_cost": null,
+        "bulk_only": false,
+        "photo_url": "https://mm.digikey.com/Volume0/opasdata/d220001/medias/images/4849/13_0402-%281005-metric%29.jpg",
+        "category": "Resistors",
+        "parameters": {
+          "Resistance": "20 kOhms",
+          "Tolerance": "\u00b11%",
+          "Power (Watts)": "0.063W, 1/16W",
+          "Composition": "Thick Film",
+          "Features": "Moisture Resistant",
+          "Temperature Coefficient": "\u00b1100ppm/\u00b0C",
+          "Operating Temperature": "-55\u00b0C ~ 155\u00b0C",
+          "Package / Case": "0402 (1005 Metric)",
+          "Supplier Device Package": "0402",
+          "Size / Dimension": "0.039\" L x 0.020\" W (1.00mm x 0.50mm)",
+          "Height - Seated (Max)": "0.016\" (0.40mm)",
+          "Number of Terminations": "2",
+          "Failure Rate": "-"
+        }
+      },
+      "alternatives": [
+        {
+          "mpn": "CRCW040220K0FKED",
+          "manufacturer": "Vishay Dale",
+          "description": "RES 20K OHM 1% 1/16W 0402",
+          "digikey_pn": "541-20.0KLCT-ND",
+          "packaging": "Cut Tape (CT)",
+          "unit_price": 0.1,
+          "stock": 1749672,
+          "lifecycle": "Active",
+          "product_url": "https://www.digikey.com/en/products/detail/vishay-dale/CRCW040220K0FKED/1178153",
+          "datasheet_url": "https://www.vishay.com/docs/20035/dcrcwe3.pdf",
+          "min_order": 1,
+          "min_order_cost": null,
+          "bulk_only": false,
+          "photo_url": "https://mm.digikey.com/Volume0/opasdata/d220001/medias/images/596/Vishay-CRCW-0402.jpg",
+          "category": "Resistors",
+          "parameters": {
+            "Resistance": "20 kOhms",
+            "Tolerance": "\u00b11%",
+            "Power (Watts)": "0.063W, 1/16W",
+            "Composition": "Thick Film",
+            "Features": "Automotive AEC-Q200",
+            "Temperature Coefficient": "\u00b1100ppm/\u00b0C",
+            "Operating Temperature": "-55\u00b0C ~ 155\u00b0C",
+            "Package / Case": "0402 (1005 Metric)",
+            "Supplier Device Package": "0402",
+            "Ratings": "-",
+            "Size / Dimension": "0.039\" L x 0.020\" W (1.00mm x 0.50mm)",
+            "Height - Seated (Max)": "0.016\" (0.40mm)",
+            "Number of Terminations": "2",
+            "Failure Rate": "-"
+          }
+        },
+        {
+          "mpn": "RMCF0402FT20K0",
+          "manufacturer": "Stackpole Electronics Inc",
+          "description": "RES 20K OHM 1% 1/16W 0402",
+          "digikey_pn": "RMCF0402FT20K0CT-ND",
+          "packaging": "Cut Tape (CT)",
+          "unit_price": 0.1,
+          "stock": 2487730,
+          "lifecycle": "Active",
+          "product_url": "https://www.digikey.com/en/products/detail/stackpole-electronics-inc/RMCF0402FT20K0/1714541",
+          "datasheet_url": "https://www.seielect.com/catalog/SEI-RMCF_RMCP.pdf",
+          "min_order": 1,
+          "min_order_cost": null,
+          "bulk_only": false,
+          "photo_url": "https://mm.digikey.com/Volume0/opasdata/d220001/medias/images/7182/MFG_RMCF_series.jpg",
+          "category": "Resistors",
+          "parameters": {
+            "Resistance": "20 kOhms",
+            "Tolerance": "\u00b11%",
+            "Power (Watts)": "0.063W, 1/16W",
+            "Composition": "Thick Film",
+            "Features": "Automotive AEC-Q200",
+            "Temperature Coefficient": "\u00b1100ppm/\u00b0C",
+            "Operating Temperature": "-55\u00b0C ~ 155\u00b0C",
+            "Package / Case": "0402 (1005 Metric)",
+            "Supplier Device Package": "0402",
+            "Ratings": "-",
+            "Size / Dimension": "0.039\" L x 0.020\" W (1.00mm x 0.50mm)",
+            "Height - Seated (Max)": "0.016\" (0.40mm)",
+            "Number of Terminations": "2",
+            "Failure Rate": "-"
+          }
+        },
+        {
+          "mpn": "RMCF0603FT20K0",
+          "manufacturer": "Stackpole Electronics Inc",
+          "description": "RES 20K OHM 1% 1/10W 0603",
+          "digikey_pn": "RMCF0603FT20K0CT-ND",
+          "packaging": "Cut Tape (CT)",
+          "unit_price": 0.1,
+          "stock": 1455062,
+          "lifecycle": "Active",
+          "product_url": "https://www.digikey.com/en/products/detail/stackpole-electronics-inc/RMCF0603FT20K0/1760829",
+          "datasheet_url": "https://www.seielect.com/catalog/SEI-RMCF_RMCP.pdf",
+          "min_order": 1,
+          "min_order_cost": null,
+          "bulk_only": false,
+          "photo_url": "https://mm.digikey.com/Volume0/opasdata/d220001/medias/images/7182/MFG_RMCF_series.jpg",
+          "category": "Resistors",
+          "parameters": {
+            "Resistance": "20 kOhms",
+            "Tolerance": "\u00b11%",
+            "Power (Watts)": "0.1W, 1/10W",
+            "Composition": "Thick Film",
+            "Features": "Automotive AEC-Q200",
+            "Temperature Coefficient": "\u00b1100ppm/\u00b0C",
+            "Operating Temperature": "-55\u00b0C ~ 155\u00b0C",
+            "Package / Case": "0603 (1608 Metric)",
+            "Supplier Device Package": "0603",
+            "Ratings": "-",
+            "Size / Dimension": "0.061\" L x 0.031\" W (1.55mm x 0.80mm)",
+            "Height - Seated (Max)": "0.024\" (0.60mm)",
+            "Number of Terminations": "2",
+            "Failure Rate": "-"
+          }
+        }
+      ],
+      "rationale": "20k\u03a9, \u22641% (feedback divider)",
+      "status": "approved",
+      "created_at": "2026-11-17T02:40:02+00:00"
+    },
+    {
+      "id": "sch:5af7d376bb24",
+      "refdes": [
+        "R28"
+      ],
+      "qty": 1,
+      "value": "100K",
+      "footprint": null,
+      "current_mpn": null,
+      "current_price": null,
+      "offer": {
+        "mpn": "RK73H1ETTP1003F",
+        "manufacturer": "KOA Speer Electronics, Inc.",
+        "description": "RES 100K OHM 1% 1/10W 0402",
+        "digikey_pn": "2019-RK73H1ETTP1003FCT-ND",
+        "packaging": "Cut Tape (CT)",
+        "unit_price": 0.1,
+        "stock": 5464439,
+        "lifecycle": "Active",
+        "product_url": "https://www.digikey.com/en/products/detail/koa-speer-electronics-inc/RK73H1ETTP1003F/9844156",
+        "datasheet_url": "https://www.koaspeer.com/pdfs/RK73H.pdf",
+        "min_order": 1,
+        "min_order_cost": null,
+        "bulk_only": false,
+        "photo_url": "https://mm.digikey.com/Volume0/opasdata/d220001/medias/images/5572/MFG_RK73H1HTTCM12R7D.jpg",
+        "category": "Resistors",
+        "parameters": {
+          "Resistance": "100 kOhms",
+          "Tolerance": "\u00b11%",
+          "Power (Watts)": "0.1W, 1/10W",
+          "Composition": "Thick Film",
+          "Features": "Automotive AEC-Q200",
+          "Temperature Coefficient": "\u00b1100ppm/\u00b0C",
+          "Operating Temperature": "-55\u00b0C ~ 155\u00b0C",
+          "Package / Case": "0402 (1005 Metric)",
+          "Supplier Device Package": "0402",
+          "Ratings": "-",
+          "Size / Dimension": "0.039\" L x 0.020\" W (1.00mm x 0.50mm)",
+          "Height - Seated (Max)": "0.016\" (0.40mm)",
+          "Number of Terminations": "2",
+          "Failure Rate": "-"
+        }
+      },
+      "alternatives": [
+        {
+          "mpn": "RMCF0402FT100K",
+          "manufacturer": "Stackpole Electronics Inc",
+          "description": "RES 100K OHM 1% 1/16W 0402",
+          "digikey_pn": "RMCF0402FT100KCT-ND",
+          "packaging": "Cut Tape (CT)",
+          "unit_price": 0.1,
+          "stock": 4724630,
+          "lifecycle": "Active",
+          "product_url": "https://www.digikey.com/en/products/detail/stackpole-electronics-inc/RMCF0402FT100K/1761803",
+          "datasheet_url": "https://www.seielect.com/catalog/SEI-RMCF_RMCP.pdf",
+          "min_order": 1,
+          "min_order_cost": null,
+          "bulk_only": false,
+          "photo_url": "https://mm.digikey.com/Volume0/opasdata/d220001/medias/images/7182/MFG_RMCF_series.jpg",
+          "category": "Resistors",
+          "parameters": {
+            "Resistance": "100 kOhms",
+            "Tolerance": "\u00b11%",
+            "Power (Watts)": "0.063W, 1/16W",
+            "Composition": "Thick Film",
+            "Features": "Automotive AEC-Q200",
+            "Temperature Coefficient": "\u00b1100ppm/\u00b0C",
+            "Operating Temperature": "-55\u00b0C ~ 155\u00b0C",
+            "Package / Case": "0402 (1005 Metric)",
+            "Supplier Device Package": "0402",
+            "Ratings": "-",
+            "Size / Dimension": "0.039\" L x 0.020\" W (1.00mm x 0.50mm)",
+            "Height - Seated (Max)": "0.016\" (0.40mm)",
+            "Number of Terminations": "2",
+            "Failure Rate": "-"
+          }
+        },
+        {
+          "mpn": "RC0402FR-07100KL",
+          "manufacturer": "YAGEO",
+          "description": "RES 100K OHM 1% 1/16W 0402",
+          "digikey_pn": "311-100KLRCT-ND",
+          "packaging": "Cut Tape (CT)",
+          "unit_price": 0.1,
+          "stock": 4138325,
+          "lifecycle": "Active",
+          "product_url": "https://www.digikey.com/en/products/detail/yageo/RC0402FR-07100KL/726526",
+          "datasheet_url": "https://yageogroup.com/content/datasheet/asset/file/PYU-RC_GROUP_51_ROHS_L",
+          "min_order": 1,
+          "min_order_cost": null,
+          "bulk_only": false,
+          "photo_url": "https://mm.digikey.com/Volume0/opasdata/d220001/medias/images/4849/13_0402-%281005-metric%29.jpg",
+          "category": "Resistors",
+          "parameters": {
+            "Resistance": "100 kOhms",
+            "Tolerance": "\u00b11%",
+            "Power (Watts)": "0.063W, 1/16W",
+            "Composition": "Thick Film",
+            "Features": "Moisture Resistant",
+            "Temperature Coefficient": "\u00b1100ppm/\u00b0C",
+            "Operating Temperature": "-55\u00b0C ~ 155\u00b0C",
+            "Package / Case": "0402 (1005 Metric)",
+            "Supplier Device Package": "0402",
+            "Size / Dimension": "0.039\" L x 0.020\" W (1.00mm x 0.50mm)",
+            "Height - Seated (Max)": "0.016\" (0.40mm)",
+            "Number of Terminations": "2",
+            "Failure Rate": "-"
+          }
+        },
+        {
+          "mpn": "CRCW0402100KFKED",
+          "manufacturer": "Vishay Dale",
+          "description": "RES 100K OHM 1% 1/16W 0402",
+          "digikey_pn": "541-100KLCT-ND",
+          "packaging": "Cut Tape (CT)",
+          "unit_price": 0.1,
+          "stock": 4034652,
+          "lifecycle": "Active",
+          "product_url": "https://www.digikey.com/en/products/detail/vishay-dale/CRCW0402100KFKED/1178235",
+          "datasheet_url": "https://www.vishay.com/docs/20035/dcrcwe3.pdf",
+          "min_order": 1,
+          "min_order_cost": null,
+          "bulk_only": false,
+          "photo_url": "https://mm.digikey.com/Volume0/opasdata/d220001/medias/images/596/Vishay-CRCW-0402.jpg",
+          "category": "Resistors",
+          "parameters": {
+            "Resistance": "100 kOhms",
+            "Tolerance": "\u00b11%",
+            "Power (Watts)": "0.063W, 1/16W",
+            "Composition": "Thick Film",
+            "Features": "Automotive AEC-Q200",
+            "Temperature Coefficient": "\u00b1100ppm/\u00b0C",
+            "Operating Temperature": "-55\u00b0C ~ 155\u00b0C",
+            "Package / Case": "0402 (1005 Metric)",
+            "Supplier Device Package": "0402",
+            "Ratings": "-",
+            "Size / Dimension": "0.039\" L x 0.020\" W (1.00mm x 0.50mm)",
+            "Height - Seated (Max)": "0.016\" (0.40mm)",
+            "Number of Terminations": "2",
+            "Failure Rate": "-"
+          }
+        }
+      ],
+      "rationale": "100k\u03a9, \u22641% (feedback divider)",
+      "status": "approved",
+      "created_at": "2026-11-17T02:40:02+00:00"
+    },
+    {
+      "id": "sch:904de2c71506",
+      "refdes": [
+        "U3"
+      ],
+      "qty": 1,
+      "value": "LM7805_TO220",
+      "footprint": "Package_TO_SOT_THT:TO-220-3_Vertical",
+      "current_mpn": "MC7805ABD2TR4G",
+      "current_price": null,
+      "offer": {
+        "mpn": "MC7805ABD2TR4G",
+        "manufacturer": "onsemi",
+        "description": "IC REG LINEAR 5V 1A D2PAK-3",
+        "digikey_pn": "MC7805ABD2TR4GOSCT-ND",
+        "packaging": "Cut Tape (CT)",
+        "unit_price": 0.77,
+        "stock": 10418,
+        "lifecycle": "Active",
+        "product_url": "https://www.digikey.com/en/products/detail/onsemi/MC7805ABD2TR4G/1481207",
+        "datasheet_url": "https://www.onsemi.com/pdf/datasheet/mc7800-d.pdf",
+        "min_order": 1,
+        "min_order_cost": null,
+        "bulk_only": false,
+        "photo_url": "https://mm.digikey.com/Volume0/opasdata/d220001/medias/images/6025/488%7E936-03%7EDS%2CD2T%7E2.jpg",
+        "category": "Integrated Circuits (ICs)",
+        "parameters": {
+          "Output Configuration": "Positive",
+          "Output Type": "Fixed",
+          "Number of Regulators": "1",
+          "Voltage - Input (Max)": "35V",
+          "Voltage - Output (Min/Fixed)": "5V",
+          "Voltage - Output (Max)": "-",
+          "Voltage Dropout (Max)": "2V @ 1A (Typ)",
+          "Current - Output": "1A",
+          "Current - Quiescent (Iq)": "6 mA",
+          "PSRR": "83dB (120Hz)",
+          "Control Features": "-",
+          "Protection Features": "Over Temperature, Short Circuit",
+          "Operating Temperature": "-40\u00b0C ~ 125\u00b0C",
+          "Mounting Type": "Surface Mount",
+          "Package / Case": "TO-263-3, D2PAK (2 Leads + Tab), TO-263AB",
+          "Supplier Device Package": "D2PAK-3"
+        }
+      },
+      "alternatives": [],
+      "rationale": "exact part number MC7805ABD2TR4G",
+      "status": "approved",
+      "created_at": "2026-11-17T02:40:03+00:00"
+    },
+    {
+      "id": "sch:b958fb089b52",
+      "refdes": [
+        "C1",
+        "C32",
+        "C33"
+      ],
+      "qty": 3,
+      "value": "C_Small_US",
+      "footprint": "Capacitor_SMD:C_0805_2012Metric",
+      "current_mpn": null,
+      "current_price": null,
+      "offer": null,
+      "alternatives": [],
+      "rationale": "generic symbol \u2014 set an MPN on the part (or ask the copilot to pick one)",
+      "status": "skipped",
+      "created_at": "2026-11-17T02:51:26+00:00"
+    },
+    {
+      "id": "sch:c2d74ca10a02",
+      "refdes": [
+        "C2"
+      ],
+      "qty": 1,
+      "value": "C_Small_US",
+      "footprint": "Capacitor_THT:CP_Radial_D6.3mm_P2.50mm",
+      "current_mpn": null,
+      "current_price": null,
+      "offer": null,
+      "alternatives": [],
+      "rationale": "generic symbol \u2014 set an MPN on the part (or ask the copilot to pick one)",
+      "status": "skipped",
+      "created_at": "2026-11-17T02:51:26+00:00"
+    },
+    {
+      "id": "sch:66827c172b3b",
+      "refdes": [
+        "C15",
+        "C16"
+      ],
+      "qty": 2,
+      "value": "1\u03bc",
+      "footprint": null,
+      "current_mpn": null,
+      "current_price": null,
+      "offer": null,
+      "alternatives": [],
+      "rationale": "1\u00b5F, \u226516 V (no rail voltage known \u2014 assumed), X7R/X5R \u2014 nothing active and in stock matched.",
+      "status": "skipped",
+      "created_at": "2026-11-17T02:51:26+00:00"
+    },
+    {
+      "id": "sch:e5ad21b94fac",
+      "refdes": [
+        "C21",
+        "C22",
+        "C27",
+        "C28"
+      ],
+      "qty": 4,
+      "value": "1.5p",
+      "footprint": null,
+      "current_mpn": null,
+      "current_price": null,
+      "offer": null,
+      "alternatives": [],
+      "rationale": "1.5pF, \u226516 V (no rail voltage known \u2014 assumed), X7R/X5R \u2014 nothing active and in stock matched.",
+      "status": "skipped",
+      "created_at": "2026-11-17T02:51:26+00:00"
+    },
+    {
+      "id": "sch:89e9bc41c75c",
+      "refdes": [
+        "DS1"
+      ],
+      "qty": 1,
+      "value": "ILI9341",
+      "footprint": null,
+      "current_mpn": null,
+      "current_price": null,
+      "offer": null,
+      "alternatives": [],
+      "rationale": "no exact match for ILI9341; cheapest orderable version \u2014 nothing active and in stock matched.",
+      "status": "skipped",
+      "created_at": "2026-11-17T02:51:26+00:00"
+    },
+    {
+      "id": "sch:479812578b86",
+      "refdes": [
+        "J1"
+      ],
+      "qty": 1,
+      "value": "Conn_Coaxial_CH1",
+      "footprint": null,
+      "current_mpn": null,
+      "current_price": null,
+      "offer": null,
+      "alternatives": [],
+      "rationale": "generic symbol \u2014 set an MPN on the part (or ask the copilot to pick one)",
+      "status": "skipped",
+      "created_at": "2026-11-17T02:51:26+00:00"
+    },
+    {
+      "id": "sch:afe2ce9a8248",
+      "refdes": [
+        "J2"
+      ],
+      "qty": 1,
+      "value": "Conn_Coaxial_CH2",
+      "footprint": null,
+      "current_mpn": null,
+      "current_price": null,
+      "offer": null,
+      "alternatives": [],
+      "rationale": "generic symbol \u2014 set an MPN on the part (or ask the copilot to pick one)",
+      "status": "skipped",
+      "created_at": "2026-11-17T02:51:26+00:00"
+    },
+    {
+      "id": "sch:cdeee9933325",
+      "refdes": [
+        "J3"
+      ],
+      "qty": 1,
+      "value": "PWR_IN",
+      "footprint": "Connector_BarrelJack:BarrelJack_CUI_PJ-102AH_Horizontal",
+      "current_mpn": null,
+      "current_price": null,
+      "offer": null,
+      "alternatives": [],
+      "rationale": "generic symbol \u2014 set an MPN on the part (or ask the copilot to pick one)",
+      "status": "skipped",
+      "created_at": "2026-11-17T02:51:26+00:00"
+    },
+    {
+      "id": "sch:de5cb7b0a3a8",
+      "refdes": [
+        "J4",
+        "J5"
+      ],
+      "qty": 2,
+      "value": "Conn_01x02_Socket_CH1",
+      "footprint": null,
+      "current_mpn": null,
+      "current_price": null,
+      "offer": null,
+      "alternatives": [],
+      "rationale": "generic symbol \u2014 set an MPN on the part (or ask the copilot to pick one)",
+      "status": "skipped",
+      "created_at": "2026-11-17T02:51:26+00:00"
+    },
+    {
+      "id": "sch:1cdc317b3af2",
+      "refdes": [
+        "R31"
+      ],
+      "qty": 1,
+      "value": "0",
+      "footprint": null,
+      "current_mpn": null,
+      "current_price": null,
+      "offer": null,
+      "alternatives": [],
+      "rationale": "generic symbol \u2014 set an MPN on the part (or ask the copilot to pick one)",
+      "status": "skipped",
+      "created_at": "2026-11-17T02:51:26+00:00"
+    },
+    {
+      "id": "sch:446b4cf6fcdb",
+      "refdes": [
+        "SW1"
+      ],
+      "qty": 1,
+      "value": "Rotary_Encoder_Module",
+      "footprint": "Connector_PinSocket_2.54mm:PinSocket_1x05_P2.54mm_Vertical",
+      "current_mpn": null,
+      "current_price": null,
+      "offer": null,
+      "alternatives": [],
+      "rationale": "generic symbol \u2014 set an MPN on the part (or ask the copilot to pick one)",
+      "status": "skipped",
+      "created_at": "2026-11-17T02:51:26+00:00"
+    },
+    {
+      "id": "sch:f54d8b90e995",
+      "refdes": [
+        "SW2"
+      ],
+      "qty": 1,
+      "value": "SW_SPST",
+      "footprint": "Button_Switch_THT:SW_PUSH-12mm_Wuerth-430476085716",
+      "current_mpn": null,
+      "current_price": null,
+      "offer": null,
+      "alternatives": [],
+      "rationale": "generic symbol \u2014 set an MPN on the part (or ask the copilot to pick one)",
+      "status": "skipped",
+      "created_at": "2026-11-17T02:51:26+00:00"
+    },
+    {
+      "id": "sch:efc27355d572",
+      "refdes": [
+        "U1"
+      ],
+      "qty": 1,
+      "value": "ESP32-S3-DevKitC-N16R8",
+      "footprint": "ESP32-S3-DevKitC:ESP32-S3-DevKitC-1_DualUSB",
+      "current_mpn": null,
+      "current_price": null,
+      "offer": null,
+      "alternatives": [],
+      "rationale": "no exact match for ESP32-S3-DevKitC-N16R8; cheapest orderable version \u2014 nothing active and in stock matched.",
+      "status": "skipped",
+      "created_at": "2026-11-17T02:51:26+00:00"
+    },
+    {
+      "id": "sch:94a5a65e398c",
       "refdes": [
         "U2"
       ],
       "qty": 1,
-      "value": "TEC2-1221WI",
+      "value": "TEC2-1222WI",
       "footprint": "Converter_DCDC:Converter_DCDC_TRACO_TEC2-12xxWI_24xxWI_48xxWI_THT",
-      "current_mpn": "TMR 6-1222",
+      "current_mpn": null,
       "current_price": null,
-      "offer": {
-        "mpn": "TMR 6-1222",
-        "manufacturer": "Traco Power",
-        "description": "DC DC CONVERTER +/-12V 6W",
-        "digikey_pn": "1951-3205-ND",
-        "packaging": "Tube",
-        "unit_price": 25.05,
-        "stock": 93,
-        "lifecycle": "Active",
-        "product_url": "https://www.digikey.com/en/products/detail/traco-power/TMR-6-1222/9345154",
-        "datasheet_url": "https://www.tracopower.com/products/tmr6.pdf",
-        "min_order": 1,
-        "min_order_cost": null,
-        "bulk_only": false,
-        "photo_url": "https://mm.digikey.com/Volume0/opasdata/d220001/medias/images/764/TMR-Series.jpg",
-        "category": "Power Supplies - Board Mount",
-        "parameters": {
-          "Type": "Isolated Module",
-          "Number of Outputs": "2",
-          "Voltage - Input (Min)": "9V",
-          "Voltage - Input (Max)": "18V",
-          "Voltage - Output 1": "12V",
-          "Voltage - Output 2": "-12V",
-          "Voltage - Output 3": "-",
-          "Voltage - Output 4": "-",
-          "Current - Output (Max)": "250mA, 250mA",
-          "Power (Watts)": "6 W",
-          "Voltage - Isolation": "1.6 kV",
-          "Applications": "ITE (Commercial)",
-          "Features": "Remote On/Off, SCP",
-          "Operating Temperature": "-40\u00b0C ~ 65\u00b0C",
-          "Efficiency": "83%",
-          "Mounting Type": "Through Hole",
-          "Package / Case": "8-SIP Module, 7 Leads",
-          "Size / Dimension": "0.86\" L x 0.36\" W x 0.44\" H (21.8mm x 9.1mm x 11.2mm)",
-          "Supplier Device Package": "-"
-        }
-      },
+      "offer": null,
       "alternatives": [],
-      "rationale": "exact part number TMR 6-1222",
-      "status": "approved",
-      "created_at": "2026-11-17T00:57:23+00:00"
+      "rationale": "no exact match for TEC2-1222WI; cheapest orderable version \u2014 nothing active and in stock matched.",
+      "status": "skipped",
+      "created_at": "2026-11-17T02:51:26+00:00"
     }
   ]
 }

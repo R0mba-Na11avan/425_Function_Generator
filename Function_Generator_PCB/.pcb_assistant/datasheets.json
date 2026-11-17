@@ -369,12 +369,12 @@
       "refs": [],
       "status": "ok",
       "file": "datasheets/.research/RS6-1212D.pdf",
-      "source": "schematic",
+      "source": "digikey",
       "url": "https://recom-power.com/pdf/Econoline/RS6.pdf",
       "sha256": "1e6516758e2450912c53d8fbc458856096a338e65b92b57b321325aea788b8ef",
       "pages": 7,
       "tried": [],
-      "fetched_at": 1794876192.6818333,
+      "fetched_at": 1794876402.1043594,
       "origin": "research"
     },
     "REC6-1212DRW/R10/A": {
@@ -451,19 +451,6 @@
       "pages": 4,
       "tried": [],
       "fetched_at": 1794876877.5317383,
-      "origin": "research"
-    },
-    "RS6-1212D": {
-      "key": "RS6-1212D",
-      "refs": [],
-      "status": "ok",
-      "file": "datasheets/.research/RS6-1212D.pdf",
-      "source": "digikey",
-      "url": "https://recom-power.com/pdf/Econoline/RS6.pdf",
-      "sha256": "1e6516758e2450912c53d8fbc458856096a338e65b92b57b321325aea788b8ef",
-      "pages": 7,
-      "tried": [],
-      "fetched_at": 1794876402.1043594,
       "origin": "research"
     },
     "TMR6-1222": {
@@ -553,7 +540,7 @@
         }
       ],
       "fetched_at": 0.0,
-      "origin": "research"
+      "origin": "board"
     },
     "OPA2156IDGKR": {
       "key": "OPA2156IDGKR",
@@ -711,6 +698,21 @@
       ],
       "fetched_at": 1794881773.9571414,
       "origin": "research"
+    },
+    "TEC2-1222WI": {
+      "key": "TEC2-1222WI",
+      "refs": [
+        "U2"
+      ],
+      "status": "ok",
+      "file": "datasheets/TEC2-1222WI.pdf",
+      "source": "schematic",
+      "url": "https://www.tracopower.com/products/tec2wi.pdf",
+      "sha256": "d5fd8a0a7cff402a71982dbe49a48f92912533253a7c1ce31fdb674c2929bb2d",
+      "pages": 4,
+      "tried": [],
+      "fetched_at": 1794883352.3856843,
+      "origin": "board"
     }
   }
 }

@@ -1,8 +1,9 @@
-- Refs: U15A CENTER_BIAS 68.1k/10k from 3.3V (0.4225V). U15B +10V = R27 20k/R28 100k from RAW +12C (barrel jack!) - flagged: tracks adapter; recommend dedicated 10V ref off regulated +12V.
-- SW3 TS5A23157 breakout ohmen:TS5A23157_Module. NC=direct (sine/tri), NO=39.2k/10k divider (square).
 - Chain: CH = D_amp*g + 20.1*D_off - 10. gained_func ~ +/-6V. Overall gain ~20.
-- REVIEW (2026-11-16): U2 TEC2-1221WI is +/-5V -> wrong. Power-on: offset DAC zero-scale -> CH outputs -10V DC until fw writes (need output relay/switch). AD9833 invalid regs at power-up -> SW3 mismatch saturates U4. Two AD9833 = separate clocks. No reconstruction LPF. R1/R2 0603 50R: ISC 108mA -> 0.58W on short. U1 EN floating flagged. Review cut off at must-fix #4.
-- DevKit: R31 0R ties DevKit 3V3 to U16 output. EN/IO0 pattern findings = DevKit-onboard noise.
+- REVIEW (2026-11-16): U2 TEC2-1221WI is +/-5V -> wrong. Power-on: offset DAC zero-scale -> CH outputs -10V DC until fw writes (need output relay/switch). AD9833 invalid regs at power-up -> SW3 mismatch saturates U4. Two AD9833 = separate clocks. No reconstruction LPF. U1 EN floating flagged. Review cut off at must-fix #4.
+- DevKit: R31 0R ties DevKit 3V3 to U16 output. EN/IO0 findings = DevKit-onboard noise.
 - Firmware: SPI mode 2 for all. Partial AD5452 frame can flip edge mode.
-- U2 options (all SIP-8, same pinout 1-Vin 2+Vin 3Rem 5NC 6+Vo 7Com 8-Vo, Remote open=on): don't parallel TEC2 (no share). TMR 4-1222: 9-18Vin, 166mA, RCC, 80mVpp max, body 9.3 deep. TMR 6-1222 (non-WI, exists; user found): 9-18Vin, +/-12V 250mA, 84% eff, RCC 100kHz min, 50mVpp typ, 900uF max cap/rail, 55mA no-load in, UVLO 7V typ, fuse 1.6A SB, outline 21.8x9.1x11.2 = TEC2. TMR 6-2422WI: 9-36Vin, PWM 580kHz. No TMR6-1222WI. Worst-case load ~155mA/rail. Leaning TMR 6-1222.
+- U2 options (SIP-8 same pinout): leaning TMR 6-1222 (9-18Vin, +/-12V 250mA, RCC, 900uF max cap/rail, UVLO 7V, outline = TEC2). Don't parallel TEC2. Worst-case load ~155mA/rail.
 - DigiKey not configured.
+- PASSIVES FINAL (2026-11-16): all SMD, hand solder. Default 0805 HandSolder. R1/R2 49.9R -> 2512 (OPA2810 Isc 108mA ds p.9 -> 0.58W shorted). 4.7u on +/-12V (C29-31,C34-36) -> 1206 >=25V. All old 0402/0603 MPNs + CL21A475 must be replaced. BOM rows annotated with spec notes.
+- Regulator caps from datasheets: C1 0.22u 50V (LM7805 in, ds p.1), C2 0.1u ceramic (LM7805 out, replaces THT electrolytic), C32 1u (AP2112 CIN), C33 1u X5R/X7R (AP2112 COUT, ds p.2). All 0805. Engineer must enter values in schematic.
+- R27/R28/C16 = divider +12C -> U15B (~10V).
