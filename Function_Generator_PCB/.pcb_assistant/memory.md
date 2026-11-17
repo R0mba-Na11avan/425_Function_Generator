@@ -1,8 +1,8 @@
-- Suggested firmware residual-DC comp per waveform instead of trimpot (not done).
-- Open schematic bugs: U5.1/U5.6 (U12 same) shorted on 10V_ref net -> add Ra 4.02k. Summer R13=Ra=R12=4.02k, R11=2.00k. +10V and +0.3V nets undriven. No sine RC LPF yet. -12V/3.3V decoupling missing.
-- (2026-11-14) (2026-11-13) User buffered refs on U15 (OPA2810): U15A follower CENTER_BIAS from R25(3.3V)/R26 -> advised 68.1k/10.0k (0.4225 V) + 1uF on IN+; R5/R18 now plain 499. U15B follower +10V from R27(+12V)/R28 -> advised 20.0k/100k (10.0 V) + 1uF. AD5452 ds missing; VREF ±10 V from parts.md only.
-- (2026-11-14) (2026-11-13) AD5452 ds now in library: VREF range ±10 V (p.3), VREF/RFB abs max ±12 V (p.6), VREF Rin 7-11k (p.3) -> +10V ref OK. Decoupling p.24: 0.1uF ceramic || 10uF per device at VDD pin. p.17: 1-2 pF C1 across RFB (pin8 to IOUT pin1) for high-speed I/V amp (OPA2810) - advised.
-- (2026-11-14) Summer Ra FIXED: R29 (U5.1->10V_ref CH1), R30 (U12.1->FG_CH2/10V_ref). Value 4.02k advised; footprints unset.
-- (2026-11-14) Summer final: Ra/R12/R13 & R30/R14/R20 = 4.02k, R11/R15 = 2.00k, all 0603 (R11 50 mW; 1k would be 100 mW).
-- (2026-11-14) (2026-11-14) Sch now has: C17-20 100n + C23-26 10u on +3.3V; C21/C22 1.5p RFB caps on U8/U13 only (U9/U14 offset DACs none); 12x10n op-amp decoupling (matches OPA2810 ds p.36). SW3 TS5A23157 is a breakout module, no decap needed. Missing: bulk 2.2-6.8uF on -12V, C1/C2 values, footprints.
-- (2026-11-16) (2026-11-15) Proposed ohmen:TS5A23157_Module for SW3 (CJMCU breakout, 2x6 THT, rows 15.24 mm apart, 2.54 pitch, 1.0 drill/1.7 pad). L top-down: CM2(6) IN2(5) CM1(10) IN1(1,sq) GND(3) VCC(8); R: NC2(7) NO2(4) NC1(9) NO1(2) GND(3) VCC(8). Dup GND/VCC pads share numbers 3/8.
+- Refs: U15A CENTER_BIAS 68.1k/10k from 3.3V (0.4225V). U15B +10V = R27 20k/R28 100k from RAW +12C (barrel jack!) - flagged: tracks adapter; recommend dedicated 10V ref off regulated +12V.
+- SW3 TS5A23157 breakout ohmen:TS5A23157_Module. NC=direct (sine/tri), NO=39.2k/10k divider (square).
+- Chain: CH = D_amp*g + 20.1*D_off - 10. gained_func ~ +/-6V. Overall gain ~20.
+- REVIEW (2026-11-16): U2 TEC2-1221WI is +/-5V -> wrong. Power-on: offset DAC zero-scale -> CH outputs -10V DC until fw writes (need output relay/switch). AD9833 invalid regs at power-up -> SW3 mismatch saturates U4. Two AD9833 = separate clocks. No reconstruction LPF. R1/R2 0603 50R: ISC 108mA -> 0.58W on short. U1 EN floating flagged. Review cut off at must-fix #4.
+- DevKit: R31 0R ties DevKit 3V3 to U16 output. EN/IO0 pattern findings = DevKit-onboard noise.
+- Firmware: SPI mode 2 for all. Partial AD5452 frame can flip edge mode.
+- U2 options (all SIP-8, same pinout 1-Vin 2+Vin 3Rem 5NC 6+Vo 7Com 8-Vo, Remote open=on): don't parallel TEC2 (no share). TMR 4-1222: 9-18Vin, 166mA, RCC, 80mVpp max, body 9.3 deep. TMR 6-1222 (non-WI, exists; user found): 9-18Vin, +/-12V 250mA, 84% eff, RCC 100kHz min, 50mVpp typ, 900uF max cap/rail, 55mA no-load in, UVLO 7V typ, fuse 1.6A SB, outline 21.8x9.1x11.2 = TEC2. TMR 6-2422WI: 9-36Vin, PWM 580kHz. No TMR6-1222WI. Worst-case load ~155mA/rail. Leaning TMR 6-1222.
+- DigiKey not configured.

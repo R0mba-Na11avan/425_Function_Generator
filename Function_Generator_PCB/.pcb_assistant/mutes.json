@@ -1,0 +1,6 @@
+{
+  "muted": {
+    "esp32s3-wroom:en-not-floating#U1": "",
+    "esp32s3-wroom:io0-timing-cap-100n#U1": ""
+  }
+}

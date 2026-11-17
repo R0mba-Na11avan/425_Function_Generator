@@ -255,13 +255,202 @@
       "key": "AP2112K-3.3",
       "refs": [],
       "status": "ok",
-      "file": "datasheets/.research/AP2112K-3.3.pdf",
+      "file": "datasheets/AP2112K-3.3.pdf",
       "source": "manufacturer",
       "url": "https://www.diodes.com/assets/Datasheets/AP2112.pdf",
       "sha256": "ef8d376f2ec356e29172eb9e053819a0ebdcc576dba7fc9ab0505c568427920f",
       "pages": 18,
       "tried": [],
       "fetched_at": 1794851617.3180106,
+      "origin": "board"
+    },
+    "TMR 6-1222WI": {
+      "key": "TMR 6-1222WI",
+      "refs": [],
+      "status": "ok",
+      "file": "datasheets/.research/TMR_6-1222WI.pdf",
+      "source": "schematic",
+      "url": "https://www.tracopower.com/sites/default/files/products/datasheets/tmr6wi_datasheet.pdf",
+      "sha256": "6912c1df214af237bfcb66a3464eefda8f481a2424e31fce6f286ecae15c124a",
+      "pages": 4,
+      "tried": [],
+      "fetched_at": 1794876087.0724022,
+      "origin": "research"
+    },
+    "TMR 6-1223WI": {
+      "key": "TMR 6-1223WI",
+      "refs": [],
+      "status": "ok",
+      "file": "datasheets/.research/TMR_6-1223WI.pdf",
+      "source": "schematic",
+      "url": "https://www.tracopower.com/sites/default/files/products/datasheets/tmr6wi_datasheet.pdf",
+      "sha256": "6912c1df214af237bfcb66a3464eefda8f481a2424e31fce6f286ecae15c124a",
+      "pages": 4,
+      "tried": [],
+      "fetched_at": 1794876122.5708523,
+      "origin": "research"
+    },
+    "TEN 6-1222": {
+      "key": "TEN 6-1222",
+      "refs": [],
+      "status": "missing",
+      "file": null,
+      "source": null,
+      "url": null,
+      "sha256": null,
+      "pages": 0,
+      "tried": [
+        {
+          "source": "schematic",
+          "url": "https://www.tracopower.com/sites/default/files/products/datasheets/ten6_datasheet.pdf",
+          "error": "https://www.tracopower.com/sites/default/files/products/datasheets/ten6_datasheet.pdf: HTTP 404"
+        },
+        {
+          "source": "schematic+browser",
+          "url": "https://www.tracopower.com/sites/default/files/products/datasheets/ten6_datasheet.pdf",
+          "error": "browser fetch failed: {\"error\":\"the browser got a web page, not a PDF\"}"
+        }
+      ],
+      "fetched_at": 0.0,
+      "origin": "research"
+    },
+    "TEN 8-1222": {
+      "key": "TEN 8-1222",
+      "refs": [],
+      "status": "ok",
+      "file": "datasheets/.research/TEN_8-1222.pdf",
+      "source": "schematic",
+      "url": "https://www.tracopower.com/sites/default/files/products/datasheets/ten8_datasheet.pdf",
+      "sha256": "68477e1410d58b11e852ec1d5755b830ef34016d74ca8ed041f6bc572b051b9d",
+      "pages": 5,
+      "tried": [],
+      "fetched_at": 1794876156.4376884,
+      "origin": "research"
+    },
+    "TEN 6-1222WI": {
+      "key": "TEN 6-1222WI",
+      "refs": [],
+      "status": "missing",
+      "file": null,
+      "source": null,
+      "url": null,
+      "sha256": null,
+      "pages": 0,
+      "tried": [
+        {
+          "source": "schematic",
+          "url": "https://www.tracopower.com/sites/default/files/products/datasheets/ten6wi_datasheet.pdf",
+          "error": "https://www.tracopower.com/sites/default/files/products/datasheets/ten6wi_datasheet.pdf: HTTP 404"
+        },
+        {
+          "source": "schematic+browser",
+          "url": "https://www.tracopower.com/sites/default/files/products/datasheets/ten6wi_datasheet.pdf",
+          "error": "browser fetch failed: {\"error\":\"the browser got a web page, not a PDF\"}"
+        }
+      ],
+      "fetched_at": 0.0,
+      "origin": "research"
+    },
+    "TEN 8-1222WI": {
+      "key": "TEN 8-1222WI",
+      "refs": [],
+      "status": "ok",
+      "file": "datasheets/.research/TEN_8-1222WI.pdf",
+      "source": "schematic",
+      "url": "https://www.tracopower.com/sites/default/files/products/datasheets/ten8wi_datasheet.pdf",
+      "sha256": "65badcff628be4286d698d5694a006d4d4fed32c1f09e409371e17d7946a31c1",
+      "pages": 5,
+      "tried": [],
+      "fetched_at": 1794876166.1441329,
+      "origin": "research"
+    },
+    "RS6-1212D": {
+      "key": "RS6-1212D",
+      "refs": [],
+      "status": "ok",
+      "file": "datasheets/.research/RS6-1212D.pdf",
+      "source": "schematic",
+      "url": "https://recom-power.com/pdf/Econoline/RS6.pdf",
+      "sha256": "1e6516758e2450912c53d8fbc458856096a338e65b92b57b321325aea788b8ef",
+      "pages": 7,
+      "tried": [],
+      "fetched_at": 1794876192.6818333,
+      "origin": "research"
+    },
+    "REC6-1212DRW/R10/A": {
+      "key": "REC6-1212DRW/R10/A",
+      "refs": [],
+      "status": "missing",
+      "file": null,
+      "source": null,
+      "url": null,
+      "sha256": null,
+      "pages": 0,
+      "tried": [
+        {
+          "source": "schematic",
+          "url": "https://recom-power.com/pdf/Econoline/REC6-RW.pdf",
+          "error": "https://recom-power.com/pdf/Econoline/REC6-RW.pdf: HTTP 404"
+        },
+        {
+          "source": "schematic+browser",
+          "url": "https://recom-power.com/pdf/Econoline/REC6-RW.pdf",
+          "error": "browser fetch failed: {\"error\":\"the browser got a web page, not a PDF\"}"
+        }
+      ],
+      "fetched_at": 0.0,
+      "origin": "research"
+    },
+    "TMR 4-1222": {
+      "key": "TMR 4-1222",
+      "refs": [],
+      "status": "ok",
+      "file": "datasheets/.research/TMR_4-1222.pdf",
+      "source": "schematic",
+      "url": "https://www.tracopower.com/sites/default/files/products/datasheets/tmr4_datasheet.pdf",
+      "sha256": "f875cbc3faf92cb9c8f3add9e0ec11b90529b9f9ec301a63f1924b9fb1c79c63",
+      "pages": 4,
+      "tried": [],
+      "fetched_at": 1794876799.0498073,
+      "origin": "research"
+    },
+    "TMR 4-1222WI": {
+      "key": "TMR 4-1222WI",
+      "refs": [],
+      "status": "ok",
+      "file": "datasheets/.research/TMR_4-1222WI.pdf",
+      "source": "schematic",
+      "url": "https://www.tracopower.com/sites/default/files/products/datasheets/tmr4wi_datasheet.pdf",
+      "sha256": "83f470488d8424a0454b2782eb49364013f87aceccc34dd6b889460ce92b00df",
+      "pages": 4,
+      "tried": [],
+      "fetched_at": 1794876825.8984418,
+      "origin": "research"
+    },
+    "TMR 3-1222": {
+      "key": "TMR 3-1222",
+      "refs": [],
+      "status": "ok",
+      "file": "datasheets/.research/TMR_3-1222.pdf",
+      "source": "schematic",
+      "url": "https://www.tracopower.com/sites/default/files/products/datasheets/tmr3_datasheet.pdf",
+      "sha256": "b4e0332261a0de11ad05d8b54fd72ffbdfbcd80591a0df861526ba4df43982dd",
+      "pages": 5,
+      "tried": [],
+      "fetched_at": 1794876853.6835148,
+      "origin": "research"
+    },
+    "TMR 6-1222": {
+      "key": "TMR 6-1222",
+      "refs": [],
+      "status": "ok",
+      "file": "datasheets/.research/TMR_6-1222.pdf",
+      "source": "schematic",
+      "url": "https://www.tracopower.com/sites/default/files/products/datasheets/tmr6_datasheet.pdf",
+      "sha256": "ec8e29339b550a2785e9e9d84bc22547ac0cc3fba8d09da29d2f436e3ba7a73b",
+      "pages": 4,
+      "tried": [],
+      "fetched_at": 1794876877.5317383,
       "origin": "research"
     }
   }

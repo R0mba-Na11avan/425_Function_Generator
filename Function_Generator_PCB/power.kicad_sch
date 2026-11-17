@@ -188,7 +188,7 @@
 			)
 			(embedded_fonts no)
 		)
-		(symbol "Converter_DCDC_Isolated:TEC2-1221WI"
+		(symbol "Converter_DCDC_Isolated:TEC2-1222WI"
 			(exclude_from_sim no)
 			(in_bom yes)
 			(on_board yes)
@@ -204,7 +204,7 @@
 					)
 				)
 			)
-			(property "Value" "TEC2-1221WI"
+			(property "Value" "TEC2-1222WI"
 				(at 1.524 6.35 0)
 				(show_name no)
 				(do_not_autoplace no)
@@ -236,7 +236,7 @@
 					)
 				)
 			)
-			(property "Description" "2W DC/DC industrial converter regulated, 4.5-18V input, ±5V fixed output voltage, 200mA each output, 1.6kVDC isolation, SIP-8"
+			(property "Description" "2W DC/DC industrial converter regulated, 4.5-18V input, ±12V fixed output voltage, 83mA each output, 1.6kVDC isolation, SIP-8"
 				(at 0 0 0)
 				(show_name no)
 				(do_not_autoplace no)
@@ -280,7 +280,7 @@
 					)
 				)
 			)
-			(symbol "TEC2-1221WI_0_0"
+			(symbol "TEC2-1222WI_0_0"
 				(pin power_in line
 					(at -10.16 -2.54 0)
 					(length 2.54)
@@ -355,7 +355,7 @@
 					)
 				)
 			)
-			(symbol "TEC2-1221WI_0_1"
+			(symbol "TEC2-1222WI_0_1"
 				(rectangle
 					(start -7.62 5.08)
 					(end 7.62 -5.08)
@@ -416,7 +416,7 @@
 					)
 				)
 			)
-			(symbol "TEC2-1221WI_1_0"
+			(symbol "TEC2-1222WI_1_0"
 				(pin input line
 					(at -10.16 0 0)
 					(length 2.54)
@@ -3160,7 +3160,7 @@
 	)
 	(text "DC offset opamp shares\nbulk cap with the v-ref\nbuffers"
 		(exclude_from_sim no)
-		(at 271.526 90.17 0)
+		(at 253.238 92.202 0)
 		(effects
 			(font
 				(size 0.762 0.762)
@@ -4719,6 +4719,112 @@
 			(project "Function_Generator_PCB"
 				(path "/36137b94-4d12-4e7a-a065-7ebda7200b05/a31713eb-2df0-4696-94ed-7e7663aff47a"
 					(reference "J3")
+					(unit 1)
+				)
+			)
+		)
+	)
+	(symbol
+		(lib_id "Converter_DCDC_Isolated:TEC2-1222WI")
+		(at 41.91 91.44 0)
+		(unit 1)
+		(body_style 1)
+		(exclude_from_sim no)
+		(in_bom yes)
+		(on_board yes)
+		(in_pos_files yes)
+		(dnp no)
+		(fields_autoplaced yes)
+		(uuid "1b93d9d0-a192-4118-942b-b6859d894bdf")
+		(property "Reference" "U2"
+			(at 41.91 81.28 0)
+			(show_name no)
+			(do_not_autoplace no)
+			(effects
+				(font
+					(size 1.27 1.27)
+				)
+			)
+		)
+		(property "Value" "TEC2-1222WI"
+			(at 41.91 83.82 0)
+			(show_name no)
+			(do_not_autoplace no)
+			(effects
+				(font
+					(size 1.27 1.27)
+				)
+			)
+		)
+		(property "Footprint" "Converter_DCDC:Converter_DCDC_TRACO_TEC2-12xxWI_24xxWI_48xxWI_THT"
+			(at 41.91 98.044 0)
+			(hide yes)
+			(show_name no)
+			(do_not_autoplace no)
+			(effects
+				(font
+					(size 1.27 1.27)
+				)
+			)
+		)
+		(property "Datasheet" "https://www.tracopower.com/products/tec2wi.pdf"
+			(at 41.91 100.33 0)
+			(hide yes)
+			(show_name no)
+			(do_not_autoplace no)
+			(effects
+				(font
+					(size 1.27 1.27)
+				)
+			)
+		)
+		(property "Description" "2W DC/DC industrial converter regulated, 4.5-18V input, ±12V fixed output voltage, 83mA each output, 1.6kVDC isolation, SIP-8"
+			(at 41.91 91.44 0)
+			(hide yes)
+			(show_name no)
+			(do_not_autoplace no)
+			(effects
+				(font
+					(size 1.27 1.27)
+				)
+			)
+		)
+		(property private "KLC_S4.5" "Missing pin 4 does not physically exist on the product"
+			(at 41.91 102.87 0)
+			(hide yes)
+			(show_name yes)
+			(do_not_autoplace no)
+			(effects
+				(font
+					(size 1.27 1.27)
+				)
+			)
+		)
+		(pin "8"
+			(uuid "b834cb24-da65-4291-939b-8447a9854026")
+		)
+		(pin "5"
+			(uuid "9c664cc2-dab8-4c51-b406-aad297bf1f83")
+		)
+		(pin "2"
+			(uuid "f5c0ebb3-9306-4c5b-9a2f-fdcdb316009f")
+		)
+		(pin "3"
+			(uuid "8b93cce6-cd6e-4de3-9389-504e90480d74")
+		)
+		(pin "7"
+			(uuid "5a16955f-6a71-4870-9ba9-3a1c63c4f66a")
+		)
+		(pin "1"
+			(uuid "d891c221-e9fd-4b50-aa1e-3db7da0dac3a")
+		)
+		(pin "6"
+			(uuid "fd99e53b-bc45-4bec-81b6-82b96686791e")
+		)
+		(instances
+			(project "Function_Generator_PCB"
+				(path "/36137b94-4d12-4e7a-a065-7ebda7200b05/a31713eb-2df0-4696-94ed-7e7663aff47a"
+					(reference "U2")
 					(unit 1)
 				)
 			)
@@ -7659,112 +7765,6 @@
 			(project "Function_Generator_PCB"
 				(path "/36137b94-4d12-4e7a-a065-7ebda7200b05/a31713eb-2df0-4696-94ed-7e7663aff47a"
 					(reference "C2")
-					(unit 1)
-				)
-			)
-		)
-	)
-	(symbol
-		(lib_id "Converter_DCDC_Isolated:TEC2-1221WI")
-		(at 41.91 91.44 0)
-		(unit 1)
-		(body_style 1)
-		(exclude_from_sim no)
-		(in_bom yes)
-		(on_board yes)
-		(in_pos_files yes)
-		(dnp no)
-		(fields_autoplaced yes)
-		(uuid "b67967a6-33ff-4475-beae-490e3b103c86")
-		(property "Reference" "U2"
-			(at 41.91 81.28 0)
-			(show_name no)
-			(do_not_autoplace no)
-			(effects
-				(font
-					(size 1.27 1.27)
-				)
-			)
-		)
-		(property "Value" "TEC2-1221WI"
-			(at 41.91 83.82 0)
-			(show_name no)
-			(do_not_autoplace no)
-			(effects
-				(font
-					(size 1.27 1.27)
-				)
-			)
-		)
-		(property "Footprint" "Converter_DCDC:Converter_DCDC_TRACO_TEC2-12xxWI_24xxWI_48xxWI_THT"
-			(at 41.91 98.044 0)
-			(hide yes)
-			(show_name no)
-			(do_not_autoplace no)
-			(effects
-				(font
-					(size 1.27 1.27)
-				)
-			)
-		)
-		(property "Datasheet" "https://www.tracopower.com/products/tec2wi.pdf"
-			(at 41.91 100.33 0)
-			(hide yes)
-			(show_name no)
-			(do_not_autoplace no)
-			(effects
-				(font
-					(size 1.27 1.27)
-				)
-			)
-		)
-		(property "Description" "2W DC/DC industrial converter regulated, 4.5-18V input, ±5V fixed output voltage, 200mA each output, 1.6kVDC isolation, SIP-8"
-			(at 41.91 91.44 0)
-			(hide yes)
-			(show_name no)
-			(do_not_autoplace no)
-			(effects
-				(font
-					(size 1.27 1.27)
-				)
-			)
-		)
-		(property private "KLC_S4.5" "Missing pin 4 does not physically exist on the product"
-			(at 41.91 102.87 0)
-			(hide yes)
-			(show_name yes)
-			(do_not_autoplace no)
-			(effects
-				(font
-					(size 1.27 1.27)
-				)
-			)
-		)
-		(pin "8"
-			(uuid "92741aec-8271-45e9-95ba-5cb4fedfe579")
-		)
-		(pin "6"
-			(uuid "7922345a-f74b-45cb-9828-b21c55f2c0d2")
-		)
-		(pin "7"
-			(uuid "1a165295-7fe4-469b-bfba-33b82aff3f04")
-		)
-		(pin "2"
-			(uuid "5f9c3919-9fec-4ee8-b7f4-c1e5f3720cba")
-		)
-		(pin "5"
-			(uuid "2097c3e6-c5d9-4992-933c-41cc40ce60a7")
-		)
-		(pin "3"
-			(uuid "db0db0ea-e044-4ddd-a116-54eb1a7befcc")
-		)
-		(pin "1"
-			(uuid "0e0e596b-3abd-4c95-917a-78ba065da6cf")
-		)
-		(instances
-			(project "Function_Generator_PCB"
-				(path "/36137b94-4d12-4e7a-a065-7ebda7200b05/a31713eb-2df0-4696-94ed-7e7663aff47a"
-					(reference "U2")
 					(unit 1)
 				)
 			)
