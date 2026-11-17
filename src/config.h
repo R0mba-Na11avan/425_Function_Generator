@@ -120,15 +120,17 @@
 
 //DC offset (V). this is the widest range, the real one also has to respect
 //OUTPUT_PEAK_MAX_V below
-#define DC_OFFSET_MIN_V     -10.0f
-#define DC_OFFSET_MAX_V     10.0f
+#define DC_OFFSET_MIN_V     -5.0f
+#define DC_OFFSET_MAX_V     5.0f
 
 //measure: DC at the output with the offset AD5452 at code 0 and at full code
 //(4095), amplitude AD5452 at 0. if the wiring flips the sign, these just swap.
 //the AD5452 powers up at code 0, so the output sits at OFFSET_V_AT_CODE_0
 //until FunctionGenerator::begin() runs (keep begin() early in setup)
-#define OFFSET_V_AT_CODE_0      -10.0f
-#define OFFSET_V_AT_FULL_CODE   10.0f
+//expected with the ~5.15 V offset reference (R27 133k / R28 100k from +12V):
+//code 0 = -Vref, full code = Vref * (2.01 * 4095/4096 - 1)
+#define OFFSET_V_AT_CODE_0      -5.15f
+#define OFFSET_V_AT_FULL_CODE   5.20f
 
 //the op-amps can't swing past this, so amplitude / 2 + |offset| must stay at
 //or below it. changing one setting never moves the other: the one being

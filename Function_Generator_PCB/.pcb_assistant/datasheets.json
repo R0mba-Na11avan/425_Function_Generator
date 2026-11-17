@@ -452,6 +452,265 @@
       "tried": [],
       "fetched_at": 1794876877.5317383,
       "origin": "research"
+    },
+    "RS6-1212D": {
+      "key": "RS6-1212D",
+      "refs": [],
+      "status": "ok",
+      "file": "datasheets/.research/RS6-1212D.pdf",
+      "source": "digikey",
+      "url": "https://recom-power.com/pdf/Econoline/RS6.pdf",
+      "sha256": "1e6516758e2450912c53d8fbc458856096a338e65b92b57b321325aea788b8ef",
+      "pages": 7,
+      "tried": [],
+      "fetched_at": 1794876402.1043594,
+      "origin": "research"
+    },
+    "TMR6-1222": {
+      "key": "TMR6-1222",
+      "refs": [],
+      "status": "ok",
+      "file": "datasheets/.research/TMR6-1222.pdf",
+      "source": "url",
+      "url": "https://www.tracopower.com/products/tmr6.pdf",
+      "sha256": "a40d29d764adc69c35f18f8450c8b9577dffe4679661989264ba2e0d8f5195dd",
+      "pages": 4,
+      "tried": [],
+      "fetched_at": 1794877033.1056395,
+      "origin": "research"
+    },
+    "MC7805": {
+      "key": "MC7805",
+      "refs": [],
+      "status": "missing",
+      "file": null,
+      "source": null,
+      "url": null,
+      "sha256": null,
+      "pages": 0,
+      "tried": [
+        {
+          "source": "manufacturer",
+          "url": "https://www.onsemi.com/pdf/datasheet/mc7805-d.pdf",
+          "error": "https://www.onsemi.com/pdf/datasheet/mc7805-d.pdf: a web page with no datasheet PDF link"
+        },
+        {
+          "source": "manufacturer+browser",
+          "url": "https://www.onsemi.com/pdf/datasheet/mc7805-d.pdf",
+          "error": "browser fetch failed: {\"error\":\"the browser got a web page, not a PDF\"}"
+        }
+      ],
+      "fetched_at": 0.0,
+      "origin": "research"
+    },
+    "MC7800": {
+      "key": "MC7800",
+      "refs": [],
+      "status": "ok",
+      "file": "datasheets/.research/MC7800.pdf",
+      "source": "url",
+      "url": "https://www.onsemi.com/pdf/datasheet/mc7800-d.pdf",
+      "sha256": "c237a61981b8f0ef47eb035f66873808a5f86802a31f36282cb60af2096f59e2",
+      "pages": 29,
+      "tried": [],
+      "fetched_at": 1794877576.6690612,
+      "origin": "research"
+    },
+    "MC7805ABD2TR4G": {
+      "key": "MC7805ABD2TR4G",
+      "refs": [],
+      "status": "mismatch",
+      "file": null,
+      "source": null,
+      "url": null,
+      "sha256": null,
+      "pages": 0,
+      "tried": [
+        {
+          "source": "manufacturer",
+          "url": "https://www.onsemi.com/pdf/datasheet/mc7805-d.pdf",
+          "error": "https://www.onsemi.com/pdf/datasheet/mc7805-d.pdf: a web page with no datasheet PDF link"
+        },
+        {
+          "source": "manufacturer",
+          "url": "https://www.onsemi.com/pdf/datasheet/mc7805abd2tr4g-d.pdf",
+          "error": "https://www.onsemi.com/pdf/datasheet/mc7805abd2tr4g-d.pdf: a web page with no datasheet PDF link"
+        },
+        {
+          "source": "digikey",
+          "url": "https://www.onsemi.com/pdf/datasheet/mc7800-d.pdf",
+          "error": "wrong document: 'MC7805ABD2TR4G' isn't on page 1"
+        },
+        {
+          "source": "manufacturer+browser",
+          "url": "https://www.onsemi.com/pdf/datasheet/mc7805-d.pdf",
+          "error": "browser fetch failed: {\"error\":\"the browser got a web page, not a PDF\"}"
+        },
+        {
+          "source": "manufacturer+browser",
+          "url": "https://www.onsemi.com/pdf/datasheet/mc7805abd2tr4g-d.pdf",
+          "error": "browser fetch failed: {\"error\":\"the browser got a web page, not a PDF\"}"
+        }
+      ],
+      "fetched_at": 0.0,
+      "origin": "research"
+    },
+    "OPA2156IDGKR": {
+      "key": "OPA2156IDGKR",
+      "refs": [],
+      "status": "ok",
+      "file": "datasheets/.research/OPA2156IDGKR.pdf",
+      "source": "manufacturer",
+      "url": "https://www.ti.com/lit/ds/symlink/opa2156.pdf",
+      "sha256": "ff0cf247579b587f28d95e5579bd0d8efcd71934eba99fb9eee228d17190af48",
+      "pages": 38,
+      "tried": [],
+      "fetched_at": 1794878928.6086369,
+      "origin": "research"
+    },
+    "TLV2172IDGKR": {
+      "key": "TLV2172IDGKR",
+      "refs": [],
+      "status": "ok",
+      "file": "datasheets/.research/TLV2172IDGKR.pdf",
+      "source": "manufacturer",
+      "url": "https://www.ti.com/lit/ds/symlink/tlv2172.pdf",
+      "sha256": "3b6ab59b94f08304b00815635f036dd1ede4f2c4e1b19762cef6e7344b01f44f",
+      "pages": 49,
+      "tried": [],
+      "fetched_at": 1794878929.666118,
+      "origin": "research"
+    },
+    "MCP4822-E/SN": {
+      "key": "MCP4822-E/SN",
+      "refs": [],
+      "status": "ok",
+      "file": "datasheets/.research/MCP4822-E_SN.pdf",
+      "source": "digikey",
+      "url": "https://ww1.microchip.com/downloads/aemDocuments/documents/OTH/ProductDocuments/DataSheets/20002249B.pdf",
+      "sha256": "1f0b231636222ea5bf4147dde3e54a7c1a2f39b0eac14e2e4320ff8d2a4dc765",
+      "pages": 50,
+      "tried": [
+        {
+          "source": "manufacturer",
+          "url": "https://www.onsemi.com/pdf/datasheet/mcp4822-d.pdf",
+          "error": "https://www.onsemi.com/pdf/datasheet/mcp4822-d.pdf: a web page with no datasheet PDF link"
+        },
+        {
+          "source": "manufacturer",
+          "url": "https://ww1.microchip.com/downloads/en/DeviceDoc/MCP4822.pdf",
+          "error": "https://ww1.microchip.com/downloads/en/DeviceDoc/MCP4822.pdf: HTTP 403 (the host blocks scripted downloads)"
+        }
+      ],
+      "fetched_at": 1794881271.6588197,
+      "origin": "research"
+    },
+    "MCP48FVB22-E/UN": {
+      "key": "MCP48FVB22-E/UN",
+      "refs": [],
+      "status": "mismatch",
+      "file": null,
+      "source": null,
+      "url": null,
+      "sha256": null,
+      "pages": 0,
+      "tried": [
+        {
+          "source": "manufacturer",
+          "url": "https://www.onsemi.com/pdf/datasheet/mcp48fvb22-e/un-d.pdf",
+          "error": "https://www.onsemi.com/pdf/datasheet/mcp48fvb22-e/un-d.pdf: a web page with no datasheet PDF link"
+        },
+        {
+          "source": "manufacturer",
+          "url": "https://www.onsemi.com/pdf/datasheet/mcp48fvb22-d.pdf",
+          "error": "https://www.onsemi.com/pdf/datasheet/mcp48fvb22-d.pdf: a web page with no datasheet PDF link"
+        },
+        {
+          "source": "manufacturer",
+          "url": "https://ww1.microchip.com/downloads/en/DeviceDoc/MCP48FVB22-E/UN.pdf",
+          "error": "https://ww1.microchip.com/downloads/en/DeviceDoc/MCP48FVB22-E/UN.pdf: HTTP 403 (the host blocks scripted downloads)"
+        },
+        {
+          "source": "manufacturer",
+          "url": "https://ww1.microchip.com/downloads/en/DeviceDoc/MCP48FVB22.pdf",
+          "error": "https://ww1.microchip.com/downloads/en/DeviceDoc/MCP48FVB22.pdf: HTTP 403 (the host blocks scripted downloads)"
+        },
+        {
+          "source": "digikey",
+          "url": "https://ww1.microchip.com/downloads/aemDocuments/documents/OTH/ProductDocuments/DataSheets/20005466A.pdf",
+          "error": "wrong document: 'MCP48FVB22-E/UN' isn't on page 1"
+        },
+        {
+          "source": "manufacturer+browser",
+          "url": "https://www.onsemi.com/pdf/datasheet/mcp48fvb22-e/un-d.pdf",
+          "error": "browser fetch failed: {\"error\":\"the browser got a web page, not a PDF\"}"
+        },
+        {
+          "source": "manufacturer+browser",
+          "url": "https://www.onsemi.com/pdf/datasheet/mcp48fvb22-d.pdf",
+          "error": "browser fetch failed: {\"error\":\"the browser got a web page, not a PDF\"}"
+        },
+        {
+          "source": "manufacturer+browser",
+          "url": "https://ww1.microchip.com/downloads/en/DeviceDoc/MCP48FVB22-E/UN.pdf",
+          "error": "browser fetch failed: {\"error\":\"the browser got a web page, not a PDF\"}"
+        },
+        {
+          "source": "manufacturer+browser",
+          "url": "https://ww1.microchip.com/downloads/en/DeviceDoc/MCP48FVB22.pdf",
+          "error": "browser fetch failed: {\"error\":\"the browser got a web page, not a PDF\"}"
+        }
+      ],
+      "fetched_at": 0.0,
+      "origin": "research"
+    },
+    "MCP4728-E/UN": {
+      "key": "MCP4728-E/UN",
+      "refs": [],
+      "status": "ok",
+      "file": "datasheets/.research/MCP4728-E_UN.pdf",
+      "source": "digikey",
+      "url": "https://ww1.microchip.com/downloads/en/DeviceDoc/22187E.pdf",
+      "sha256": "7e6515c45a02ffe4ad7506f3347cce7714cdd56659ff2fb22b858fc0472f381e",
+      "pages": 68,
+      "tried": [
+        {
+          "source": "manufacturer",
+          "url": "https://www.onsemi.com/pdf/datasheet/mcp4728-d.pdf",
+          "error": "https://www.onsemi.com/pdf/datasheet/mcp4728-d.pdf: a web page with no datasheet PDF link"
+        },
+        {
+          "source": "manufacturer",
+          "url": "https://ww1.microchip.com/downloads/en/DeviceDoc/MCP4728.pdf",
+          "error": "https://ww1.microchip.com/downloads/en/DeviceDoc/MCP4728.pdf: HTTP 403 (the host blocks scripted downloads)"
+        }
+      ],
+      "fetched_at": 1794881768.8000546,
+      "origin": "research"
+    },
+    "MCP4922-E/SL": {
+      "key": "MCP4922-E/SL",
+      "refs": [],
+      "status": "ok",
+      "file": "datasheets/.research/MCP4922-E_SL.pdf",
+      "source": "digikey",
+      "url": "https://ww1.microchip.com/downloads/en/DeviceDoc/22250A.pdf",
+      "sha256": "8c507a2bce321888b4ff7f76e18824480116b32256e573ab4fdbb377e8b86484",
+      "pages": 48,
+      "tried": [
+        {
+          "source": "manufacturer",
+          "url": "https://www.onsemi.com/pdf/datasheet/mcp4922-d.pdf",
+          "error": "https://www.onsemi.com/pdf/datasheet/mcp4922-d.pdf: a web page with no datasheet PDF link"
+        },
+        {
+          "source": "manufacturer",
+          "url": "https://ww1.microchip.com/downloads/en/DeviceDoc/MCP4922.pdf",
+          "error": "https://ww1.microchip.com/downloads/en/DeviceDoc/MCP4922.pdf: HTTP 403 (the host blocks scripted downloads)"
+        }
+      ],
+      "fetched_at": 1794881773.9571414,
+      "origin": "research"
     }
   }
 }
