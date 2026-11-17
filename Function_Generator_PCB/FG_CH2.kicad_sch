@@ -2235,7 +2235,7 @@
 		)
 		(uuid "0a17bc73-dfac-4cea-92b3-a2b7dbaa7cca")
 	)
-	(text "10v ref for summation"
+	(text "5v ref for summation"
 		(exclude_from_sim no)
 		(at 99.06 139.446 0)
 		(effects

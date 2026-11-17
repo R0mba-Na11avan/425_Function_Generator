@@ -8,4 +8,5 @@
 	(lib (name "TS5A23157_Module") (type "KiCad") (uri "${KIPRJMOD}/symbols/TS5A23157_Module.kicad_sym") (options "") (descr ""))
 	(lib (name "AD5452YRMZ") (type "KiCad") (uri "${KIPRJMOD}/symbols/AD5452YRMZ.kicad_sym") (options "") (descr ""))
 	(lib (name "AD5452YRMZ_custom") (type "KiCad") (uri "${KIPRJMOD}/symbols/AD5452YRMZ_custom.kicad_sym") (options "") (descr ""))
+	(lib (name "TMR6-1222") (type "KiCad") (uri "${KIPRJMOD}/symbols/TMR6-1222.kicad_sym") (options "") (descr ""))
 )

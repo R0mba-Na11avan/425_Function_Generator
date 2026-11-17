@@ -118,25 +118,6 @@
     },
     {
       "severity": "must-fix",
-      "title": "Input Power pin not driven by any Output Power pins",
-      "detail": "Symbol #PWR075 Pin 1 [Power input, Line]",
-      "failure_mode": "",
-      "citation": "KiCad ERC rule power_pin_not_driven",
-      "source": "erc",
-      "pattern_status": null,
-      "connectivity_verified": "verified",
-      "component_ref": null,
-      "net": null,
-      "rule_id": "erc:power_pin_not_driven",
-      "labels": [],
-      "datasheet": null,
-      "page": null,
-      "excerpt": null,
-      "rank": 0,
-      "mute_key": "erc:power_pin_not_driven#"
-    },
-    {
-      "severity": "must-fix",
       "title": "Input pin not driven by any Output pins",
       "detail": "Symbol U1 Pin 3 [RST, Input, Line]",
       "failure_mode": "",
@@ -376,7 +357,7 @@
     {
       "severity": "verify",
       "title": "Both GND and GNDA are attached to the same items; GND will be used in the netlist (\u00d73)",
-      "detail": "Symbol #PWR074 Pin 1 [Power input, Line]\nSymbol #PWR084 Pin 1 [Power input, Line]\nLabel '5V_ref'\nLabel 'scaled_func'",
+      "detail": "Symbol #PWR068 Pin 1 [Power input, Line]\nSymbol #PWR084 Pin 1 [Power input, Line]\nLabel '5V_ref'\nLabel 'dc_offset'\nLabel 'scaled_func'",
       "failure_mode": "",
       "citation": "KiCad ERC rule multiple_net_names",
       "source": "erc",
@@ -394,7 +375,45 @@
     },
     {
       "severity": "verify",
-      "title": "Missing footprint C1 (C_Small_US) (\u00d792)",
+      "title": "Symbol U15 has input pins in units [ B ] that are not placed",
+      "detail": "Symbol U15 [OPA2810IDGKT]",
+      "failure_mode": "",
+      "citation": "KiCad ERC rule missing_input_pin",
+      "source": "erc",
+      "pattern_status": null,
+      "connectivity_verified": "verified",
+      "component_ref": "U15",
+      "net": null,
+      "rule_id": "erc:missing_input_pin",
+      "labels": [],
+      "datasheet": null,
+      "page": null,
+      "excerpt": null,
+      "rank": 1,
+      "mute_key": "erc:missing_input_pin#U15"
+    },
+    {
+      "severity": "verify",
+      "title": "Symbol U15 has unplaced units [ B ]",
+      "detail": "Symbol U15 [OPA2810IDGKT]",
+      "failure_mode": "",
+      "citation": "KiCad ERC rule missing_unit",
+      "source": "erc",
+      "pattern_status": null,
+      "connectivity_verified": "verified",
+      "component_ref": "U15",
+      "net": null,
+      "rule_id": "erc:missing_unit",
+      "labels": [],
+      "datasheet": null,
+      "page": null,
+      "excerpt": null,
+      "rank": 1,
+      "mute_key": "erc:missing_unit#U15"
+    },
+    {
+      "severity": "verify",
+      "title": "Missing footprint C1 (C_Small_US) (\u00d789)",
       "detail": "",
       "failure_mode": "",
       "citation": "KiCad DRC rule missing_footprint",
@@ -414,20 +433,20 @@
   ],
   "runs": {
     "erc": {
-      "ts": 1794882714.3893259,
-      "hash": "655aa0fa29b7bc7e"
+      "ts": 1794884415.9042342,
+      "hash": "3c7aaad38f01b0ee"
     },
     "pattern": {
-      "ts": 1794882714.3893259,
-      "hash": "655aa0fa29b7bc7e"
+      "ts": 1794884415.9042342,
+      "hash": "3c7aaad38f01b0ee"
     },
     "drc": {
-      "ts": 1794882714.3893259,
-      "hash": "655aa0fa29b7bc7e"
+      "ts": 1794884415.9042342,
+      "hash": "3c7aaad38f01b0ee"
     },
     "distributor": {
-      "ts": 1794882714.3893259,
-      "hash": "655aa0fa29b7bc7e"
+      "ts": 1794884415.9042342,
+      "hash": "3c7aaad38f01b0ee"
     },
     "verifier": {
       "ts": 1794875245.8988643,
@@ -450,7 +469,7 @@
       "checks": 2
     }
   ],
-  "components": 92,
+  "components": 89,
   "dropped": [
     {
       "severity": "must-fix",

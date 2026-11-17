@@ -188,292 +188,6 @@
 			)
 			(embedded_fonts no)
 		)
-		(symbol "Converter_DCDC_Isolated:TEC2-1222WI"
-			(exclude_from_sim no)
-			(in_bom yes)
-			(on_board yes)
-			(in_pos_files yes)
-			(duplicate_pin_numbers_are_jumpers no)
-			(property "Reference" "U"
-				(at -6.858 6.35 0)
-				(show_name no)
-				(do_not_autoplace no)
-				(effects
-					(font
-						(size 1.27 1.27)
-					)
-				)
-			)
-			(property "Value" "TEC2-1222WI"
-				(at 1.524 6.35 0)
-				(show_name no)
-				(do_not_autoplace no)
-				(effects
-					(font
-						(size 1.27 1.27)
-					)
-				)
-			)
-			(property "Footprint" "Converter_DCDC:Converter_DCDC_TRACO_TEC2-12xxWI_24xxWI_48xxWI_THT"
-				(at 0 -6.604 0)
-				(show_name no)
-				(do_not_autoplace no)
-				(hide yes)
-				(effects
-					(font
-						(size 1.27 1.27)
-					)
-				)
-			)
-			(property "Datasheet" "https://www.tracopower.com/products/tec2wi.pdf"
-				(at 0 -8.89 0)
-				(show_name no)
-				(do_not_autoplace no)
-				(hide yes)
-				(effects
-					(font
-						(size 1.27 1.27)
-					)
-				)
-			)
-			(property "Description" "2W DC/DC industrial converter regulated, 4.5-18V input, ±12V fixed output voltage, 83mA each output, 1.6kVDC isolation, SIP-8"
-				(at 0 0 0)
-				(show_name no)
-				(do_not_autoplace no)
-				(hide yes)
-				(effects
-					(font
-						(size 1.27 1.27)
-					)
-				)
-			)
-			(property private "KLC_S4.5" "Missing pin 4 does not physically exist on the product"
-				(at 0 -11.43 0)
-				(show_name yes)
-				(do_not_autoplace no)
-				(hide yes)
-				(effects
-					(font
-						(size 1.27 1.27)
-					)
-				)
-			)
-			(property "ki_keywords" "Traco isolated dc-dc 62368-1 dual"
-				(at 0 0 0)
-				(show_name no)
-				(do_not_autoplace no)
-				(hide yes)
-				(effects
-					(font
-						(size 1.27 1.27)
-					)
-				)
-			)
-			(property "ki_fp_filters" "Converter*DCDC*TRACO*TEC2*12xxWI*24xxWI*48xxWI*THT*"
-				(at 0 0 0)
-				(show_name no)
-				(do_not_autoplace no)
-				(hide yes)
-				(effects
-					(font
-						(size 1.27 1.27)
-					)
-				)
-			)
-			(symbol "TEC2-1222WI_0_0"
-				(pin power_in line
-					(at -10.16 -2.54 0)
-					(length 2.54)
-					(name "-Vin"
-						(effects
-							(font
-								(size 1.27 1.27)
-							)
-						)
-					)
-					(number "1"
-						(effects
-							(font
-								(size 1.27 1.27)
-							)
-						)
-					)
-				)
-				(pin power_in line
-					(at -10.16 2.54 0)
-					(length 2.54)
-					(name "+Vin"
-						(effects
-							(font
-								(size 1.27 1.27)
-							)
-						)
-					)
-					(number "2"
-						(effects
-							(font
-								(size 1.27 1.27)
-							)
-						)
-					)
-				)
-				(pin no_connect line
-					(at 0 -5.08 90)
-					(length 2.54)
-					(hide yes)
-					(name "NC"
-						(effects
-							(font
-								(size 1.27 1.27)
-							)
-						)
-					)
-					(number "5"
-						(effects
-							(font
-								(size 1.27 1.27)
-							)
-						)
-					)
-				)
-				(pin power_out line
-					(at 10.16 2.54 180)
-					(length 2.54)
-					(name "+Vout"
-						(effects
-							(font
-								(size 1.27 1.27)
-							)
-						)
-					)
-					(number "6"
-						(effects
-							(font
-								(size 1.27 1.27)
-							)
-						)
-					)
-				)
-			)
-			(symbol "TEC2-1222WI_0_1"
-				(rectangle
-					(start -7.62 5.08)
-					(end 7.62 -5.08)
-					(stroke
-						(width 0.254)
-						(type default)
-					)
-					(fill
-						(type background)
-					)
-				)
-				(polyline
-					(pts
-						(xy 0 5.08) (xy 0 3.81)
-					)
-					(stroke
-						(width 0)
-						(type default)
-					)
-					(fill
-						(type none)
-					)
-				)
-				(polyline
-					(pts
-						(xy 0 2.54) (xy 0 1.27)
-					)
-					(stroke
-						(width 0)
-						(type default)
-					)
-					(fill
-						(type none)
-					)
-				)
-				(polyline
-					(pts
-						(xy 0 0) (xy 0 -1.27)
-					)
-					(stroke
-						(width 0)
-						(type default)
-					)
-					(fill
-						(type none)
-					)
-				)
-				(polyline
-					(pts
-						(xy 0 -2.54) (xy 0 -3.81)
-					)
-					(stroke
-						(width 0)
-						(type default)
-					)
-					(fill
-						(type none)
-					)
-				)
-			)
-			(symbol "TEC2-1222WI_1_0"
-				(pin input line
-					(at -10.16 0 0)
-					(length 2.54)
-					(name "Remote"
-						(effects
-							(font
-								(size 1.27 1.27)
-							)
-						)
-					)
-					(number "3"
-						(effects
-							(font
-								(size 1.27 1.27)
-							)
-						)
-					)
-				)
-				(pin power_out line
-					(at 10.16 0 180)
-					(length 2.54)
-					(name "Com"
-						(effects
-							(font
-								(size 1.27 1.27)
-							)
-						)
-					)
-					(number "7"
-						(effects
-							(font
-								(size 1.27 1.27)
-							)
-						)
-					)
-				)
-				(pin power_out line
-					(at 10.16 -2.54 180)
-					(length 2.54)
-					(name "-Vout"
-						(effects
-							(font
-								(size 1.27 1.27)
-							)
-						)
-					)
-					(number "8"
-						(effects
-							(font
-								(size 1.27 1.27)
-							)
-						)
-					)
-				)
-			)
-			(embedded_fonts no)
-		)
 		(symbol "Device:C"
 			(pin_numbers
 				(hide yes)
@@ -1866,6 +1580,280 @@
 			)
 			(embedded_fonts no)
 		)
+		(symbol "TMR6-1222:TMR_6-1222"
+			(pin_names
+				(offset 0.254)
+			)
+			(exclude_from_sim no)
+			(in_bom yes)
+			(on_board yes)
+			(in_pos_files yes)
+			(duplicate_pin_numbers_are_jumpers no)
+			(property "Reference" "U"
+				(at 40.64 12.7 0)
+				(show_name no)
+				(do_not_autoplace no)
+				(effects
+					(font
+						(size 1.524 1.524)
+					)
+				)
+			)
+			(property "Value" "TMR 6-1222"
+				(at 40.64 10.16 0)
+				(show_name no)
+				(do_not_autoplace no)
+				(effects
+					(font
+						(size 1.524 1.524)
+					)
+				)
+			)
+			(property "Footprint" "TMR 6_TRP"
+				(at 0 0 0)
+				(show_name no)
+				(do_not_autoplace no)
+				(hide yes)
+				(effects
+					(font
+						(size 1.27 1.27)
+						(italic yes)
+					)
+				)
+			)
+			(property "Datasheet" "https://tracopower.com/tmr6-datasheet/"
+				(at 0 0 0)
+				(show_name no)
+				(do_not_autoplace no)
+				(hide yes)
+				(effects
+					(font
+						(size 1.27 1.27)
+						(italic yes)
+					)
+				)
+			)
+			(property "Description" ""
+				(at 0 0 0)
+				(show_name no)
+				(do_not_autoplace no)
+				(hide yes)
+				(effects
+					(font
+						(size 1.27 1.27)
+					)
+				)
+			)
+			(property "ki_locked" ""
+				(at 0 0 0)
+				(show_name no)
+				(do_not_autoplace no)
+				(effects
+					(font
+						(size 1.27 1.27)
+					)
+				)
+			)
+			(property "ki_keywords" "TMR 6-1222"
+				(at 0 0 0)
+				(show_name no)
+				(do_not_autoplace no)
+				(hide yes)
+				(effects
+					(font
+						(size 1.27 1.27)
+					)
+				)
+			)
+			(property "ki_fp_filters" "TMR 6_TRP"
+				(at 0 0 0)
+				(show_name no)
+				(do_not_autoplace no)
+				(hide yes)
+				(effects
+					(font
+						(size 1.27 1.27)
+					)
+				)
+			)
+			(symbol "TMR_6-1222_0_1"
+				(polyline
+					(pts
+						(xy 7.62 7.62) (xy 7.62 -15.24)
+					)
+					(stroke
+						(width 0.127)
+						(type default)
+					)
+					(fill
+						(type none)
+					)
+				)
+				(polyline
+					(pts
+						(xy 7.62 -15.24) (xy 73.66 -15.24)
+					)
+					(stroke
+						(width 0.127)
+						(type default)
+					)
+					(fill
+						(type none)
+					)
+				)
+				(polyline
+					(pts
+						(xy 73.66 7.62) (xy 7.62 7.62)
+					)
+					(stroke
+						(width 0.127)
+						(type default)
+					)
+					(fill
+						(type none)
+					)
+				)
+				(polyline
+					(pts
+						(xy 73.66 -15.24) (xy 73.66 7.62)
+					)
+					(stroke
+						(width 0.127)
+						(type default)
+					)
+					(fill
+						(type none)
+					)
+				)
+				(pin power_in line
+					(at 0 0 0)
+					(length 7.62)
+					(name "-VIN(GND)"
+						(effects
+							(font
+								(size 1.27 1.27)
+							)
+						)
+					)
+					(number "1"
+						(effects
+							(font
+								(size 1.27 1.27)
+							)
+						)
+					)
+				)
+				(pin power_in line
+					(at 0 -2.54 0)
+					(length 7.62)
+					(name "+VIN(VCC)"
+						(effects
+							(font
+								(size 1.27 1.27)
+							)
+						)
+					)
+					(number "2"
+						(effects
+							(font
+								(size 1.27 1.27)
+							)
+						)
+					)
+				)
+				(pin unspecified line
+					(at 0 -5.08 0)
+					(length 7.62)
+					(name "REMOTE"
+						(effects
+							(font
+								(size 1.27 1.27)
+							)
+						)
+					)
+					(number "3"
+						(effects
+							(font
+								(size 1.27 1.27)
+							)
+						)
+					)
+				)
+				(pin no_connect line
+					(at 81.28 -7.62 180)
+					(length 7.62)
+					(name "NC"
+						(effects
+							(font
+								(size 1.27 1.27)
+							)
+						)
+					)
+					(number "5"
+						(effects
+							(font
+								(size 1.27 1.27)
+							)
+						)
+					)
+				)
+				(pin output line
+					(at 81.28 -5.08 180)
+					(length 7.62)
+					(name "+VOUT"
+						(effects
+							(font
+								(size 1.27 1.27)
+							)
+						)
+					)
+					(number "6"
+						(effects
+							(font
+								(size 1.27 1.27)
+							)
+						)
+					)
+				)
+				(pin unspecified line
+					(at 81.28 -2.54 180)
+					(length 7.62)
+					(name "COMMON"
+						(effects
+							(font
+								(size 1.27 1.27)
+							)
+						)
+					)
+					(number "7"
+						(effects
+							(font
+								(size 1.27 1.27)
+							)
+						)
+					)
+				)
+				(pin output line
+					(at 81.28 0 180)
+					(length 7.62)
+					(name "-VOUT"
+						(effects
+							(font
+								(size 1.27 1.27)
+							)
+						)
+					)
+					(number "8"
+						(effects
+							(font
+								(size 1.27 1.27)
+							)
+						)
+					)
+				)
+			)
+			(embedded_fonts no)
+		)
 		(symbol "power:+12C"
 			(power global)
 			(pin_numbers
@@ -2944,8 +2932,8 @@
 		(uuid "bead75de-dd37-4a59-8f6d-72beed206f18")
 	)
 	(rectangle
-		(start 19.05 71.12)
-		(end 72.39 110.49)
+		(start 20.32 147.32)
+		(end 133.35 189.23)
 		(stroke
 			(width 0)
 			(type default)
@@ -3039,7 +3027,7 @@
 	)
 	(text "HIGH AND LOW 12V PWR"
 		(exclude_from_sim no)
-		(at 60.198 109.22 0)
+		(at 119.888 187.706 0)
 		(effects
 			(font
 				(size 1.27 1.27)
@@ -3173,6 +3161,14 @@
 		(color 0 0 0 0)
 		(uuid "e06aa68e-fa03-4714-8bee-a0727627306c")
 	)
+	(no_connect
+		(at 34.29 167.64)
+		(uuid "354c6c85-f76b-4f12-a065-bc46b062f4ff")
+	)
+	(no_connect
+		(at 115.57 172.72)
+		(uuid "a85058c3-2055-4fb7-9f51-cb176f5b8c18")
+	)
 	(wire
 		(pts
 			(xy 231.14 55.88) (xy 222.25 55.88)
@@ -3275,7 +3271,7 @@
 	)
 	(wire
 		(pts
-			(xy 26.67 93.98) (xy 31.75 93.98)
+			(xy 27.94 170.18) (xy 34.29 170.18)
 		)
 		(stroke
 			(width 0)
@@ -3315,7 +3311,7 @@
 	)
 	(wire
 		(pts
-			(xy 52.07 93.98) (xy 63.5 93.98)
+			(xy 115.57 170.18) (xy 127 170.18)
 		)
 		(stroke
 			(width 0)
@@ -3375,7 +3371,7 @@
 	)
 	(wire
 		(pts
-			(xy 26.67 97.79) (xy 26.67 93.98)
+			(xy 27.94 173.99) (xy 27.94 170.18)
 		)
 		(stroke
 			(width 0)
@@ -3485,7 +3481,7 @@
 	)
 	(wire
 		(pts
-			(xy 52.07 91.44) (xy 57.15 91.44)
+			(xy 115.57 167.64) (xy 120.65 167.64)
 		)
 		(stroke
 			(width 0)
@@ -3645,7 +3641,7 @@
 	)
 	(wire
 		(pts
-			(xy 55.88 81.28) (xy 55.88 88.9)
+			(xy 119.38 157.48) (xy 119.38 165.1)
 		)
 		(stroke
 			(width 0)
@@ -3675,7 +3671,7 @@
 	)
 	(wire
 		(pts
-			(xy 52.07 88.9) (xy 55.88 88.9)
+			(xy 115.57 165.1) (xy 119.38 165.1)
 		)
 		(stroke
 			(width 0)
@@ -3815,7 +3811,7 @@
 	)
 	(wire
 		(pts
-			(xy 57.15 91.44) (xy 57.15 97.79)
+			(xy 120.65 167.64) (xy 120.65 173.99)
 		)
 		(stroke
 			(width 0)
@@ -3875,7 +3871,7 @@
 	)
 	(wire
 		(pts
-			(xy 26.67 81.28) (xy 26.67 88.9)
+			(xy 27.94 157.48) (xy 27.94 165.1)
 		)
 		(stroke
 			(width 0)
@@ -3935,7 +3931,7 @@
 	)
 	(wire
 		(pts
-			(xy 63.5 81.28) (xy 63.5 93.98)
+			(xy 127 157.48) (xy 127 170.18)
 		)
 		(stroke
 			(width 0)
@@ -3945,7 +3941,7 @@
 	)
 	(wire
 		(pts
-			(xy 26.67 88.9) (xy 31.75 88.9)
+			(xy 27.94 165.1) (xy 34.29 165.1)
 		)
 		(stroke
 			(width 0)
@@ -4306,112 +4302,6 @@
 			(project "Function_Generator_PCB"
 				(path "/36137b94-4d12-4e7a-a065-7ebda7200b05/a31713eb-2df0-4696-94ed-7e7663aff47a"
 					(reference "J3")
-					(unit 1)
-				)
-			)
-		)
-	)
-	(symbol
-		(lib_id "Converter_DCDC_Isolated:TEC2-1222WI")
-		(at 41.91 91.44 0)
-		(unit 1)
-		(body_style 1)
-		(exclude_from_sim no)
-		(in_bom yes)
-		(on_board yes)
-		(in_pos_files yes)
-		(dnp no)
-		(fields_autoplaced yes)
-		(uuid "1b93d9d0-a192-4118-942b-b6859d894bdf")
-		(property "Reference" "U2"
-			(at 41.91 81.28 0)
-			(show_name no)
-			(do_not_autoplace no)
-			(effects
-				(font
-					(size 1.27 1.27)
-				)
-			)
-		)
-		(property "Value" "TEC2-1222WI"
-			(at 41.91 83.82 0)
-			(show_name no)
-			(do_not_autoplace no)
-			(effects
-				(font
-					(size 1.27 1.27)
-				)
-			)
-		)
-		(property "Footprint" "Converter_DCDC:Converter_DCDC_TRACO_TEC2-12xxWI_24xxWI_48xxWI_THT"
-			(at 41.91 98.044 0)
-			(hide yes)
-			(show_name no)
-			(do_not_autoplace no)
-			(effects
-				(font
-					(size 1.27 1.27)
-				)
-			)
-		)
-		(property "Datasheet" "https://www.tracopower.com/products/tec2wi.pdf"
-			(at 41.91 100.33 0)
-			(hide yes)
-			(show_name no)
-			(do_not_autoplace no)
-			(effects
-				(font
-					(size 1.27 1.27)
-				)
-			)
-		)
-		(property "Description" "2W DC/DC industrial converter regulated, 4.5-18V input, ±12V fixed output voltage, 83mA each output, 1.6kVDC isolation, SIP-8"
-			(at 41.91 91.44 0)
-			(hide yes)
-			(show_name no)
-			(do_not_autoplace no)
-			(effects
-				(font
-					(size 1.27 1.27)
-				)
-			)
-		)
-		(property private "KLC_S4.5" "Missing pin 4 does not physically exist on the product"
-			(at 41.91 102.87 0)
-			(hide yes)
-			(show_name yes)
-			(do_not_autoplace no)
-			(effects
-				(font
-					(size 1.27 1.27)
-				)
-			)
-		)
-		(pin "8"
-			(uuid "b834cb24-da65-4291-939b-8447a9854026")
-		)
-		(pin "5"
-			(uuid "9c664cc2-dab8-4c51-b406-aad297bf1f83")
-		)
-		(pin "2"
-			(uuid "f5c0ebb3-9306-4c5b-9a2f-fdcdb316009f")
-		)
-		(pin "3"
-			(uuid "8b93cce6-cd6e-4de3-9389-504e90480d74")
-		)
-		(pin "7"
-			(uuid "5a16955f-6a71-4870-9ba9-3a1c63c4f66a")
-		)
-		(pin "1"
-			(uuid "d891c221-e9fd-4b50-aa1e-3db7da0dac3a")
-		)
-		(pin "6"
-			(uuid "fd99e53b-bc45-4bec-81b6-82b96686791e")
-		)
-		(instances
-			(project "Function_Generator_PCB"
-				(path "/36137b94-4d12-4e7a-a065-7ebda7200b05/a31713eb-2df0-4696-94ed-7e7663aff47a"
-					(reference "U2")
 					(unit 1)
 				)
 			)
@@ -4831,6 +4721,103 @@
 			(project "Function_Generator_PCB"
 				(path "/36137b94-4d12-4e7a-a065-7ebda7200b05/a31713eb-2df0-4696-94ed-7e7663aff47a"
 					(reference "C33")
+					(unit 1)
+				)
+			)
+		)
+	)
+	(symbol
+		(lib_id "TMR6-1222:TMR_6-1222")
+		(at 34.29 165.1 0)
+		(unit 1)
+		(body_style 1)
+		(exclude_from_sim no)
+		(in_bom yes)
+		(on_board yes)
+		(in_pos_files yes)
+		(dnp no)
+		(fields_autoplaced yes)
+		(uuid "34de3d95-7cae-442f-aad4-c5b823de21c5")
+		(property "Reference" "U2"
+			(at 74.93 152.4 0)
+			(show_name no)
+			(do_not_autoplace no)
+			(effects
+				(font
+					(size 1.524 1.524)
+				)
+			)
+		)
+		(property "Value" "TMR 6-1222"
+			(at 74.93 154.94 0)
+			(show_name no)
+			(do_not_autoplace no)
+			(effects
+				(font
+					(size 1.524 1.524)
+				)
+			)
+		)
+		(property "Footprint" "TMR 6_TRP"
+			(at 34.29 165.1 0)
+			(hide yes)
+			(show_name no)
+			(do_not_autoplace no)
+			(effects
+				(font
+					(size 1.27 1.27)
+					(italic yes)
+				)
+			)
+		)
+		(property "Datasheet" "https://tracopower.com/tmr6-datasheet/"
+			(at 34.29 165.1 0)
+			(hide yes)
+			(show_name no)
+			(do_not_autoplace no)
+			(effects
+				(font
+					(size 1.27 1.27)
+					(italic yes)
+				)
+			)
+		)
+		(property "Description" ""
+			(at 34.29 165.1 0)
+			(hide yes)
+			(show_name no)
+			(do_not_autoplace no)
+			(effects
+				(font
+					(size 1.27 1.27)
+				)
+			)
+		)
+		(pin "8"
+			(uuid "036bdbab-1105-4ba0-b3e6-d0916e3301ec")
+		)
+		(pin "1"
+			(uuid "2ae1e04a-4fc0-4e66-8a1e-1470f54cad44")
+		)
+		(pin "6"
+			(uuid "ab50863d-7233-4df7-95d3-e7838d497491")
+		)
+		(pin "5"
+			(uuid "1e48aba9-4dba-4ff4-bb5a-e25fd99973e2")
+		)
+		(pin "3"
+			(uuid "5caba9ed-4c0e-42ba-b0c8-a9b21c6b0ad9")
+		)
+		(pin "2"
+			(uuid "a639ccd2-ff4c-41ba-8106-9737c33325eb")
+		)
+		(pin "7"
+			(uuid "561fc2d5-7d11-4d30-97c6-1bff455069f6")
+		)
+		(instances
+			(project "Function_Generator_PCB"
+				(path "/36137b94-4d12-4e7a-a065-7ebda7200b05/a31713eb-2df0-4696-94ed-7e7663aff47a"
+					(reference "U2")
 					(unit 1)
 				)
 			)
@@ -6118,7 +6105,7 @@
 	)
 	(symbol
 		(lib_id "power:GND")
-		(at 26.67 97.79 0)
+		(at 27.94 173.99 0)
 		(unit 1)
 		(body_style 1)
 		(exclude_from_sim no)
@@ -6129,7 +6116,7 @@
 		(fields_autoplaced yes)
 		(uuid "7abaa24c-a7bc-4c59-866c-7b34caff2688")
 		(property "Reference" "#PWR014"
-			(at 26.67 104.14 0)
+			(at 27.94 180.34 0)
 			(hide yes)
 			(show_name no)
 			(do_not_autoplace no)
@@ -6140,7 +6127,7 @@
 			)
 		)
 		(property "Value" "GND"
-			(at 26.67 102.87 0)
+			(at 27.94 179.07 0)
 			(show_name no)
 			(do_not_autoplace no)
 			(effects
@@ -6150,7 +6137,7 @@
 			)
 		)
 		(property "Footprint" ""
-			(at 26.67 97.79 0)
+			(at 27.94 173.99 0)
 			(hide yes)
 			(show_name no)
 			(do_not_autoplace no)
@@ -6161,7 +6148,7 @@
 			)
 		)
 		(property "Datasheet" ""
-			(at 26.67 97.79 0)
+			(at 27.94 173.99 0)
 			(hide yes)
 			(show_name no)
 			(do_not_autoplace no)
@@ -6172,7 +6159,7 @@
 			)
 		)
 		(property "Description" "Power symbol creates a global label with name \"GND\" , ground"
-			(at 26.67 97.79 0)
+			(at 27.94 173.99 0)
 			(hide yes)
 			(show_name no)
 			(do_not_autoplace no)
@@ -6435,7 +6422,7 @@
 	)
 	(symbol
 		(lib_id "power:+12V")
-		(at 55.88 81.28 0)
+		(at 119.38 157.48 0)
 		(unit 1)
 		(body_style 1)
 		(exclude_from_sim no)
@@ -6446,7 +6433,7 @@
 		(fields_autoplaced yes)
 		(uuid "914085b4-8508-4424-a9c4-c99cfb8de903")
 		(property "Reference" "#PWR016"
-			(at 55.88 85.09 0)
+			(at 119.38 161.29 0)
 			(hide yes)
 			(show_name no)
 			(do_not_autoplace no)
@@ -6457,7 +6444,7 @@
 			)
 		)
 		(property "Value" "+12V"
-			(at 55.88 76.2 0)
+			(at 119.38 152.4 0)
 			(show_name no)
 			(do_not_autoplace no)
 			(effects
@@ -6467,7 +6454,7 @@
 			)
 		)
 		(property "Footprint" ""
-			(at 55.88 81.28 0)
+			(at 119.38 157.48 0)
 			(hide yes)
 			(show_name no)
 			(do_not_autoplace no)
@@ -6478,7 +6465,7 @@
 			)
 		)
 		(property "Datasheet" ""
-			(at 55.88 81.28 0)
+			(at 119.38 157.48 0)
 			(hide yes)
 			(show_name no)
 			(do_not_autoplace no)
@@ -6489,7 +6476,7 @@
 			)
 		)
 		(property "Description" "Power symbol creates a global label with name \"+12V\""
-			(at 55.88 81.28 0)
+			(at 119.38 157.48 0)
 			(hide yes)
 			(show_name no)
 			(do_not_autoplace no)
@@ -6857,7 +6844,7 @@
 	)
 	(symbol
 		(lib_id "power:-12V")
-		(at 63.5 81.28 0)
+		(at 127 157.48 0)
 		(unit 1)
 		(body_style 1)
 		(exclude_from_sim no)
@@ -6868,7 +6855,7 @@
 		(fields_autoplaced yes)
 		(uuid "a3e1b86e-45bb-42f3-b089-8ba8d696a50e")
 		(property "Reference" "#PWR017"
-			(at 63.5 85.09 0)
+			(at 127 161.29 0)
 			(hide yes)
 			(show_name no)
 			(do_not_autoplace no)
@@ -6879,7 +6866,7 @@
 			)
 		)
 		(property "Value" "-12V"
-			(at 63.5 76.2 0)
+			(at 127 152.4 0)
 			(show_name no)
 			(do_not_autoplace no)
 			(effects
@@ -6889,7 +6876,7 @@
 			)
 		)
 		(property "Footprint" ""
-			(at 63.5 81.28 0)
+			(at 127 157.48 0)
 			(hide yes)
 			(show_name no)
 			(do_not_autoplace no)
@@ -6900,7 +6887,7 @@
 			)
 		)
 		(property "Datasheet" ""
-			(at 63.5 81.28 0)
+			(at 127 157.48 0)
 			(hide yes)
 			(show_name no)
 			(do_not_autoplace no)
@@ -6911,7 +6898,7 @@
 			)
 		)
 		(property "Description" "Power symbol creates a global label with name \"-12V\""
-			(at 63.5 81.28 0)
+			(at 127 157.48 0)
 			(hide yes)
 			(show_name no)
 			(do_not_autoplace no)
@@ -7173,7 +7160,7 @@
 	)
 	(symbol
 		(lib_id "power:GND")
-		(at 57.15 97.79 0)
+		(at 120.65 173.99 0)
 		(unit 1)
 		(body_style 1)
 		(exclude_from_sim no)
@@ -7184,7 +7171,7 @@
 		(fields_autoplaced yes)
 		(uuid "b8316dab-9f56-41a4-86a3-6e5796846a3e")
 		(property "Reference" "#PWR015"
-			(at 57.15 104.14 0)
+			(at 120.65 180.34 0)
 			(hide yes)
 			(show_name no)
 			(do_not_autoplace no)
@@ -7195,7 +7182,7 @@
 			)
 		)
 		(property "Value" "GND"
-			(at 57.15 102.87 0)
+			(at 120.65 179.07 0)
 			(show_name no)
 			(do_not_autoplace no)
 			(effects
@@ -7205,7 +7192,7 @@
 			)
 		)
 		(property "Footprint" ""
-			(at 57.15 97.79 0)
+			(at 120.65 173.99 0)
 			(hide yes)
 			(show_name no)
 			(do_not_autoplace no)
@@ -7216,7 +7203,7 @@
 			)
 		)
 		(property "Datasheet" ""
-			(at 57.15 97.79 0)
+			(at 120.65 173.99 0)
 			(hide yes)
 			(show_name no)
 			(do_not_autoplace no)
@@ -7227,7 +7214,7 @@
 			)
 		)
 		(property "Description" "Power symbol creates a global label with name \"GND\" , ground"
-			(at 57.15 97.79 0)
+			(at 120.65 173.99 0)
 			(hide yes)
 			(show_name no)
 			(do_not_autoplace no)
@@ -7570,7 +7557,7 @@
 	)
 	(symbol
 		(lib_id "power:+12C")
-		(at 26.67 81.28 0)
+		(at 27.94 157.48 0)
 		(unit 1)
 		(body_style 1)
 		(exclude_from_sim no)
@@ -7581,7 +7568,7 @@
 		(fields_autoplaced yes)
 		(uuid "e037fbb2-cbe7-4272-86e5-65cbe07b506f")
 		(property "Reference" "#PWR013"
-			(at 26.67 85.09 0)
+			(at 27.94 161.29 0)
 			(hide yes)
 			(show_name no)
 			(do_not_autoplace no)
@@ -7592,7 +7579,7 @@
 			)
 		)
 		(property "Value" "+12C"
-			(at 26.67 76.2 0)
+			(at 27.94 152.4 0)
 			(show_name no)
 			(do_not_autoplace no)
 			(effects
@@ -7602,7 +7589,7 @@
 			)
 		)
 		(property "Footprint" ""
-			(at 26.67 81.28 0)
+			(at 27.94 157.48 0)
 			(hide yes)
 			(show_name no)
 			(do_not_autoplace no)
@@ -7613,7 +7600,7 @@
 			)
 		)
 		(property "Datasheet" ""
-			(at 26.67 81.28 0)
+			(at 27.94 157.48 0)
 			(hide yes)
 			(show_name no)
 			(do_not_autoplace no)
@@ -7624,7 +7611,7 @@
 			)
 		)
 		(property "Description" "Power symbol creates a global label with name \"+12C\""
-			(at 26.67 81.28 0)
+			(at 27.94 157.48 0)
 			(hide yes)
 			(show_name no)
 			(do_not_autoplace no)
