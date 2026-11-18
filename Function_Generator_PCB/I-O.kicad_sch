@@ -4874,7 +4874,7 @@
 				)
 			)
 		)
-		(property "Value" "50"
+		(property "Value" "49.9"
 			(at 208.28 97.79 90)
 			(show_name no)
 			(do_not_autoplace no)
@@ -4884,7 +4884,7 @@
 				)
 			)
 		)
-		(property "Footprint" "Resistor_SMD:R_0603_1608Metric"
+		(property "Footprint" "Resistor_SMD:R_2512_6332Metric_Pad1.40x3.35mm_HandSolder"
 			(at 208.28 103.378 90)
 			(hide yes)
 			(show_name no)
@@ -5119,7 +5119,7 @@
 				)
 			)
 		)
-		(property "Footprint" ""
+		(property "Footprint" "Resistor_SMD:R_0805_2012Metric_Pad1.20x1.40mm_HandSolder"
 			(at 90.17 93.218 90)
 			(hide yes)
 			(show_name no)
@@ -5596,7 +5596,7 @@
 				)
 			)
 		)
-		(property "Value" "50"
+		(property "Value" "49.9"
 			(at 208.28 125.73 90)
 			(show_name no)
 			(do_not_autoplace no)
@@ -5606,7 +5606,7 @@
 				)
 			)
 		)
-		(property "Footprint" "Resistor_SMD:R_0603_1608Metric"
+		(property "Footprint" "Resistor_SMD:R_2512_6332Metric_Pad1.40x3.35mm_HandSolder"
 			(at 208.28 131.318 90)
 			(hide yes)
 			(show_name no)
