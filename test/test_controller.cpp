@@ -32,7 +32,7 @@ static void noopListener(const FuncGenState&, CHANGE_SOURCE, void*) {}
 struct Rig {
     FunctionGenerator gen;
     FuncGenController ctl;
-    Rig() : gen(PIN_AD9833_CS, PIN_AMP_DAC_CS, PIN_OFFSET_DAC_CS, PIN_WAVE_SWITCH), ctl(gen) { gen.begin(); }
+    Rig() : gen(PIN_AD9833_CS, PIN_AMP_DAC_CS, PIN_OFFSET_DAC_CS, OFFSET_DAC_CHANNEL, PIN_WAVE_SWITCH, PIN_OUTPUT_RELAY), ctl(gen) { gen.begin(); }
 };
 
 TEST(listener_gets_applied_state) {

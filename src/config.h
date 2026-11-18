@@ -24,37 +24,52 @@
     REAL WIRING. Change them here only: every file includes this header, so the
     sketch and all modules pick the new pins up on the next build.
 
-    Bus plan: the generator chips (AD9833 + two AD5452s per channel) share the default
+    Bus plan: the generator chips (AD9833 + amplitude AD5452 per channel, and
+    one MCP4822 holding both channels' DC offsets) share the default
     SPI object (FSPI). The display + touch share a second bus (HSPI object),
     so a slow LCD redraw never delays a frequency change.
 */
 
 //generator bus (default SPI / FSPI)
 #define PIN_GEN_SCK         12
-#define PIN_GEN_MISO        13
+#define PIN_GEN_MISO        -1      //not connected: no generator chip sends data back (GPIO13 is the CH2 relay)
 #define PIN_GEN_MOSI        11
 #define PIN_AD9833_CS       10
-#define PIN_AMP_DAC_CS      9       //AD5452 #1 SYNC: scales the amplified wave (amplitude)
-#define PIN_OFFSET_DAC_CS   14      //AD5452 #2 SYNC: sets the DC offset
+#define PIN_AMP_DAC_CS      9       //AD5452 SYNC: scales the amplified wave (amplitude)
+#define PIN_OFFSET_DAC_CS   14      //MCP4822 CS: DC offset for both channels (LDAC tied to GND)
+
+//MCP4822 channel per generator channel: VA = CH1 offset, VB = CH2 offset
+#define OFFSET_DAC_CHANNEL      0   //MCP4822::CHANNEL_A
+#define OFFSET_DAC_CHANNEL_2    1   //MCP4822::CHANNEL_B
 
 //second channel (CH2) chips, on the same generator bus. reserved: nothing
 //drives these until CH2 is in the firmware, so each needs a 10k pull-up to
 //3.3 V to keep the chip deselected while CH1 talks on the bus
 //(GPIO38 and 48 are skipped: one of them drives the board's RGB LED,
-//depending on the board revision)
+//depending on the board revision). CH2's offset is on the MCP4822 above
+//(PIN_OFFSET_DAC_CS, channel B), so GPIO41 went to the CH1 output relay
 #define PIN_AD9833_CS_2     39
 #define PIN_AMP_DAC_CS_2    40      //CH2 AD5452 (amplitude) SYNC
-#define PIN_OFFSET_DAC_CS_2 41      //CH2 AD5452 (DC offset) SYNC
 
 //TS5A23157 analog switch, channel 1 IN1 pin: LOW = NC1 = filtered
 //sine/triangle path, HIGH = NO1 = divided square path. put a pull-down on it
 //so the sine path is selected while the ESP32 boots
 #define PIN_WAVE_SWITCH     21
 
+//output relay (TQ2-5V coil driven by a 2N3904, 1k base resistor, 47k base
+//pull-down). HIGH = coil on = the normally-open contact connects the channel
+//to its BNC. the pull-down keeps the output disconnected while the ESP32 boots
+#define PIN_OUTPUT_RELAY    41
+
 //TS5A23157 channel 2 IN2 pin, same logic for the second generator channel.
 //reserved: nothing drives it until CH2 is in the firmware, so the pull-down
 //keeps CH2 on its sine path
 #define PIN_WAVE_SWITCH_2   47
+
+//CH2 output relay, same circuit. reserved: nothing drives it until CH2 is in
+//the firmware, so the base pull-down keeps CH2's output disconnected.
+//GPIO13 was the generator bus MISO, which nothing used
+#define PIN_OUTPUT_RELAY_2  13
 
 //display + touch bus (HSPI). wire T_CLK/T_DIN/T_DO to the same SCK/MOSI/MISO.
 //MISO is only for the touch chip's T_DO: leave the LCD's own SDO(MISO) pin
@@ -92,8 +107,8 @@
 
 /*
     Output stage (see docs/parts.md): AD9833 -> TS5A23157 (sine/triangle or
-    divided square) -> x20 gain -> AD5452 #1 (0..100 %) -> summer with
-    AD5452 #2 (DC offset) -> 50 ohm -> output.
+    divided square) -> x20 gain -> AD5452 (0..100 %) -> summer with the
+    MCP4822 (DC offset) -> 50 ohm -> output.
 
     ALL VALUES BELOW ARE PLACEHOLDERS until the stage is built and measured on
     a scope. Calibrating = measuring the numbers marked "measure".
@@ -123,22 +138,34 @@
 #define DC_OFFSET_MIN_V     -5.0f
 #define DC_OFFSET_MAX_V     5.0f
 
-//measure: DC at the output with the offset AD5452 at code 0 and at full code
-//(4095), amplitude AD5452 at 0. if the wiring flips the sign, these just swap.
-//the AD5452 powers up at code 0, so the output sits at OFFSET_V_AT_CODE_0
-//until FunctionGenerator::begin() runs (keep begin() early in setup)
-//expected with the ~5.15 V offset reference (R27 133k / R28 100k from +12V):
-//code 0 = -Vref, full code = Vref * (2.01 * 4095/4096 - 1)
-#define OFFSET_V_AT_CODE_0      -5.15f
-#define OFFSET_V_AT_FULL_CODE   5.20f
+//MCP4822 gain. 1 = 2x: 0..4.095 V, 1 mV per code. the summer needs about
+//2.94 V from the DAC for +5 V, more than the 1x range (2.048 V) gives.
+//at 2x on a 3.3 V supply the output clips near VDD, so the offset never
+//uses a code above OFFSET_DAC_CODE_MAX (checked in func_gen.cpp)
+#define OFFSET_DAC_GAIN_2X      1
+#define OFFSET_DAC_CODE_MAX     3200
+
+//measure: DC at the output (amplitude 0) with the offset DAC at these two
+//codes. both sit in the DAC's linear range (it isn't linear right at code 0
+//or close to VDD), and every other code is a straight line through them.
+//the MCP4822 powers up shut down (about 0 V out = about -5 V offset) until
+//FunctionGenerator::begin() runs (keep begin() early in setup).
+//expected from the schematic: offset = 3.402 * Vdac - 5 V, Vdac = 1 mV per code
+#define OFFSET_CAL_CODE_LOW     100
+#define OFFSET_CAL_CODE_HIGH    2900
+#define OFFSET_V_AT_CAL_LOW     -4.6598f
+#define OFFSET_V_AT_CAL_HIGH    4.8658f
 
 //the op-amps can't swing past this, so amplitude / 2 + |offset| must stay at
 //or below it. changing one setting never moves the other: the one being
 //changed stops at the edge instead
 #define OUTPUT_PEAK_MAX_V   10.0f
 
-//SPI clock for both AD5452s (the chip allows up to 50 MHz)
+//SPI clock for the amplitude AD5452 (the chip allows up to 50 MHz)
 #define MDAC_SPI_HZ         8000000
+
+//SPI clock for the offset MCP4822 (the chip allows up to 20 MHz)
+#define OFFSET_DAC_SPI_HZ   8000000
 
 
 /*

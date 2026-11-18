@@ -97,7 +97,7 @@ void setup() {
         }
     }
 
-    FunctionGenerator* funcGen = new FunctionGenerator(PIN_AD9833_CS, PIN_AMP_DAC_CS, PIN_OFFSET_DAC_CS, PIN_WAVE_SWITCH);
+    FunctionGenerator* funcGen = new FunctionGenerator(PIN_AD9833_CS, PIN_AMP_DAC_CS, PIN_OFFSET_DAC_CS, OFFSET_DAC_CHANNEL, PIN_WAVE_SWITCH, PIN_OUTPUT_RELAY);
     funcGen->begin();
     FuncGenController* controller = new FuncGenController(*funcGen);
 

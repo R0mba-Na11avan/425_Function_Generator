@@ -19,7 +19,7 @@ struct RestRig {
     FuncGenController ctl;
     HttpServer http;
     RestApi api;
-    RestRig() : gen(PIN_AD9833_CS, PIN_AMP_DAC_CS, PIN_OFFSET_DAC_CS, PIN_WAVE_SWITCH), ctl(gen), api(ctl, http) {
+    RestRig() : gen(PIN_AD9833_CS, PIN_AMP_DAC_CS, PIN_OFFSET_DAC_CS, OFFSET_DAC_CHANNEL, PIN_WAVE_SWITCH, PIN_OUTPUT_RELAY), ctl(gen), api(ctl, http) {
         fakeHttpdReset();
         gen.begin();
         api.begin();
@@ -105,7 +105,7 @@ TEST(rest_routes_and_page) {
 TEST(rest_routes_fit_next_to_mcp_and_setup) {
     //setup (AP) mode has the most routes: setup page + MCP + REST
     fakeHttpdReset();
-    FunctionGenerator gen(PIN_AD9833_CS, PIN_AMP_DAC_CS, PIN_OFFSET_DAC_CS, PIN_WAVE_SWITCH);
+    FunctionGenerator gen(PIN_AD9833_CS, PIN_AMP_DAC_CS, PIN_OFFSET_DAC_CS, OFFSET_DAC_CHANNEL, PIN_WAVE_SWITCH, PIN_OUTPUT_RELAY);
     FuncGenController ctl(gen);
     HttpServer http;
     Provisioning prov(http);

@@ -1,7 +1,8 @@
 # Function Generator (ECE 425)
 
-ESP32-S3 (N16R8) firmware: AD9833 waveform generator + two AD5452 MDACs
-(amplitude, DC offset) + a TS5A23157 path switch (parts: `docs/parts.md`),
+ESP32-S3 (N16R8) firmware: AD9833 waveform generator + an AD5452 MDAC
+(amplitude) + an MCP4822 DAC (DC offset, VA = CH1, VB = CH2) + a TS5A23157
+path switch (parts: `docs/parts.md`),
 controlled by an ILI9341 LCD (encoder + touch), an MCP server over Wi-Fi, and
 BLE (last). Read `README.md` for the architecture and status. Each stub header in
 `src/` contains the spec for that module, so read it before implementing a file.
@@ -58,7 +59,7 @@ BLE (last). Read `README.md` for the architecture and status. Each stub header i
   enum/consts), `//comment` style, 4-space indent, header banner with Author and
   Purpose.
 - Third-party libs are vendored under `src/libs/<Name>/`. Don't modify them
-  unless asked. `src/libs/AD5452/` is ours (no library existed), so it can be
+  unless asked. `src/libs/AD5452/` and `src/libs/MCP4822/` are ours, so they can be
   edited like any other project file.
 
 ## Arduino IDE constraints
@@ -90,5 +91,5 @@ versus what has only been reasoned about.
 ## Known gaps
 
 - The output stage isn't built yet: the amplitude/offset limits, the peak limit
-  and the AD5452 calibration values (`AMP_FULL_CODE_VPP_*`, `OFFSET_V_AT_*`) in
+  and the DAC calibration values (`AMP_FULL_CODE_VPP_*`, `OFFSET_V_AT_CAL_*`) in
   `config.h` are placeholders until it is measured.

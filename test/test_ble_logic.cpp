@@ -15,7 +15,7 @@ static FuncGenState sampleState() {
 }
 
 static FuncGenLimits configLimits() {
-    FunctionGenerator gen(PIN_AD9833_CS, PIN_AMP_DAC_CS, PIN_OFFSET_DAC_CS, PIN_WAVE_SWITCH);
+    FunctionGenerator gen(PIN_AD9833_CS, PIN_AMP_DAC_CS, PIN_OFFSET_DAC_CS, OFFSET_DAC_CHANNEL, PIN_WAVE_SWITCH, PIN_OUTPUT_RELAY);
     FuncGenController ctl(gen);
     return ctl.limits();
 }
@@ -281,7 +281,7 @@ static void recordSource(const FuncGenState&, CHANGE_SOURCE source, void*) {
 }
 
 TEST(ble_apply_goes_through_the_controller_as_ble) {
-    FunctionGenerator gen(PIN_AD9833_CS, PIN_AMP_DAC_CS, PIN_OFFSET_DAC_CS, PIN_WAVE_SWITCH);
+    FunctionGenerator gen(PIN_AD9833_CS, PIN_AMP_DAC_CS, PIN_OFFSET_DAC_CS, OFFSET_DAC_CHANNEL, PIN_WAVE_SWITCH, PIN_OUTPUT_RELAY);
     gen.begin();
     FuncGenController ctl(gen);
     ctl.addListener(recordSource);
@@ -325,7 +325,7 @@ TEST(ble_apply_goes_through_the_controller_as_ble) {
 }
 
 TEST(ble_minimum_amplitude_write_lands_on_the_limit) {
-    FunctionGenerator gen(PIN_AD9833_CS, PIN_AMP_DAC_CS, PIN_OFFSET_DAC_CS, PIN_WAVE_SWITCH);
+    FunctionGenerator gen(PIN_AD9833_CS, PIN_AMP_DAC_CS, PIN_OFFSET_DAC_CS, OFFSET_DAC_CHANNEL, PIN_WAVE_SWITCH, PIN_OUTPUT_RELAY);
     gen.begin();
     FuncGenController ctl(gen);
     ValueRange r = ctl.limits().amplitude[(uint8_t)ctl.state().waveform];

@@ -773,6 +773,45 @@
       "tried": [],
       "fetched_at": 1794964522.683806,
       "origin": "research"
+    },
+    "2N3904": {
+      "key": "2N3904",
+      "refs": [],
+      "status": "ok",
+      "file": "datasheets/.research/2N3904.pdf",
+      "source": "url",
+      "url": "https://www.onsemi.com/pdf/datasheet/2n3903-d.pdf",
+      "sha256": "df43e201f0132961f5de633043ac601bbed13edff161574f99ec05a10f57b8cd",
+      "pages": 9,
+      "tried": [],
+      "fetched_at": 1794996073.9511118,
+      "origin": "research"
+    },
+    "TQ2-5V": {
+      "key": "TQ2-5V",
+      "refs": [],
+      "status": "ok",
+      "file": "datasheets/.research/TQ2-5V.pdf",
+      "source": "url",
+      "url": "https://mm.digikey.com/Volume0/opasdata/d220001/medias/docus/7330/mech_eng_tq.pdf",
+      "sha256": "77c8c77c0036759ae750809c39d0520218805949ff0971c2beee80017bfec838",
+      "pages": 22,
+      "tried": [],
+      "fetched_at": 1794996074.2842252,
+      "origin": "research"
+    },
+    "G5V-1 DC5": {
+      "key": "G5V-1 DC5",
+      "refs": [],
+      "status": "ok",
+      "file": "datasheets/.research/G5V-1_DC5.pdf",
+      "source": "url",
+      "url": "https://omronfs.omron.com/en_US/ecb/products/pdf/en-g5v_1.pdf",
+      "sha256": "1d264d1ebbd17bd1dbac42133ffbd27d31ced85ad549a8bd28f0381df848dd0f",
+      "pages": 5,
+      "tried": [],
+      "fetched_at": 1794997744.79032,
+      "origin": "research"
     }
   }
 }

@@ -14,13 +14,23 @@ static_assert(AMP_MAX_VPP_SINE <= 2 * OUTPUT_PEAK_MAX_V, "AMP_MAX_VPP_SINE doesn
 static_assert(AMP_MAX_VPP_SQUARE <= 2 * OUTPUT_PEAK_MAX_V, "AMP_MAX_VPP_SQUARE doesn't fit inside OUTPUT_PEAK_MAX_V");
 static_assert(AMP_MAX_VPP_TRIANGLE <= 2 * OUTPUT_PEAK_MAX_V, "AMP_MAX_VPP_TRIANGLE doesn't fit inside OUTPUT_PEAK_MAX_V");
 
+//straight line through the two offset calibration points. constexpr so the
+//static_asserts below can check the configured range against the DAC
+static constexpr float offsetCodeFor(float dcOffset) {
+    return OFFSET_CAL_CODE_LOW + (dcOffset - OFFSET_V_AT_CAL_LOW) *
+           (float)(OFFSET_CAL_CODE_HIGH - OFFSET_CAL_CODE_LOW) / (OFFSET_V_AT_CAL_HIGH - OFFSET_V_AT_CAL_LOW);
+}
+
 //0 V offset must be allowed (it's the power-on value and the output-off level),
-//and the offset DAC has to reach the whole offset range
+//and the offset DAC has to reach the whole offset range without clipping
+//(half a code of slack, codes are rounded)
 static_assert(DC_OFFSET_MIN_V <= 0 && DC_OFFSET_MAX_V >= 0, "the DC offset range must include 0 V");
-static_assert(OFFSET_V_AT_CODE_0 != OFFSET_V_AT_FULL_CODE, "the offset DAC calibration needs two different voltages");
-static_assert((OFFSET_V_AT_CODE_0 < OFFSET_V_AT_FULL_CODE ? OFFSET_V_AT_CODE_0 : OFFSET_V_AT_FULL_CODE) <= DC_OFFSET_MIN_V,
+static_assert(OFFSET_CAL_CODE_LOW != OFFSET_CAL_CODE_HIGH && OFFSET_V_AT_CAL_LOW != OFFSET_V_AT_CAL_HIGH,
+              "the offset DAC calibration needs two different points");
+static_assert(OFFSET_DAC_CODE_MAX <= MCP4822::MAX_CODE, "OFFSET_DAC_CODE_MAX is above the MCP4822's 12 bits");
+static_assert(offsetCodeFor(DC_OFFSET_MIN_V) >= -0.5f && offsetCodeFor(DC_OFFSET_MIN_V) <= OFFSET_DAC_CODE_MAX + 0.5f,
               "the offset DAC can't reach DC_OFFSET_MIN_V");
-static_assert((OFFSET_V_AT_CODE_0 > OFFSET_V_AT_FULL_CODE ? OFFSET_V_AT_CODE_0 : OFFSET_V_AT_FULL_CODE) >= DC_OFFSET_MAX_V,
+static_assert(offsetCodeFor(DC_OFFSET_MAX_V) >= -0.5f && offsetCodeFor(DC_OFFSET_MAX_V) <= OFFSET_DAC_CODE_MAX + 0.5f,
               "the offset DAC can't reach DC_OFFSET_MAX_V");
 
 static float clampf(float value, ValueRange range) {
@@ -29,10 +39,10 @@ static float clampf(float value, ValueRange range) {
     return value;
 }
 
-//rounds a DAC code and keeps it in 0..MAX_CODE
-static uint16_t toCode(float code) {
+//rounds a DAC code and keeps it in 0..maxCode
+static uint16_t toCode(float code, uint16_t maxCode) {
     if (code <= 0.0f) return 0;
-    if (code >= AD5452::MAX_CODE) return AD5452::MAX_CODE;
+    if (code >= maxCode) return maxCode;
     return (uint16_t)(code + 0.5f);
 }
 
@@ -53,9 +63,11 @@ ValueRange peakLimitedOffset(ValueRange dcOffset, float amplitude, float peakMax
 }
 
 FunctionGenerator::FunctionGenerator(uint8_t funcSelect, uint8_t ampDacSelect, uint8_t offsetDacSelect,
-                                     uint8_t waveSwitchPin, __SPI_CLASS__ * mySPI)
+                                     uint8_t offsetDacChannel, uint8_t waveSwitchPin, uint8_t outputRelayPin,
+                                     __SPI_CLASS__ * mySPI)
     : _funcIC(funcSelect, mySPI), _ampDac(ampDacSelect, mySPI, MDAC_SPI_HZ),
-      _offsetDac(offsetDacSelect, mySPI, MDAC_SPI_HZ), _switchPin(waveSwitchPin) {
+      _offsetDac(offsetDacSelect, mySPI, OFFSET_DAC_SPI_HZ), _offsetChannel(offsetDacChannel),
+      _switchPin(waveSwitchPin), _relayPin(outputRelayPin) {
     _waveform = WAVEFORM::SINE;
     _frequency = 1.0;
     _phase = 0.0;
@@ -66,6 +78,11 @@ FunctionGenerator::FunctionGenerator(uint8_t funcSelect, uint8_t ampDacSelect, u
 }
 
 void FunctionGenerator::begin() {
+    // output disconnected before anything else: the base pull-down holds the
+    // relay open during boot, and the level is set before the pin drives
+    digitalWrite(_relayPin, LOW);
+    pinMode(_relayPin, OUTPUT);
+
     // nothing else starts the generator bus, and AD9833 begin() doesn't either
     _spi->begin(PIN_GEN_SCK, PIN_GEN_MISO, PIN_GEN_MOSI);
 
@@ -76,8 +93,8 @@ void FunctionGenerator::begin() {
     pinMode(_switchPin, OUTPUT);
     _funcIC.begin();
 
-    // the offset DAC powers up at code 0 (one end of the offset range), so
-    // bring the output to 0 V before anything else
+    // the offset DAC powers up shut down (about 0 V out, one end of the
+    // offset range), so bring the output to 0 V before anything else
     applyLevels();
 
     applyWaveform();
@@ -187,17 +204,23 @@ ValueRange FunctionGenerator::dcOffsetRange(float amplitude) {
 }
 
 void FunctionGenerator::applyOutput() {
+    // turning off: disconnect the BNC first, so the wind-down never reaches it
+    if (!_funcOn) digitalWrite(_relayPin, LOW);
+
     _funcIC.setPowerMode(_funcOn ? AD9833_PWR_ON : AD9833_PWR_DISABLE_ALL);
     applyLevels();
+
+    // turning on: connect only once the wave, amplitude and offset are set
+    if (_funcOn) digitalWrite(_relayPin, HIGH);
 }
 
 void FunctionGenerator::applyLevels() {
     if (_funcOn) {
         _ampDac.write(ampToCode(_amplitude));
-        _offsetDac.write(offsetToCode(_dcOffset));
+        _offsetDac.write(_offsetChannel, offsetToCode(_dcOffset), OFFSET_DAC_GAIN_2X);
     } else {
         _ampDac.write(0);
-        _offsetDac.write(offsetToCode(0.0f));
+        _offsetDac.write(_offsetChannel, offsetToCode(0.0f), OFFSET_DAC_GAIN_2X);
     }
 }
 
@@ -230,11 +253,11 @@ uint16_t FunctionGenerator::ampToCode(float amplitude) const {
         default: fullCode = AMP_FULL_CODE_VPP_SINE; break;
     }
     if (fullCode <= 0.0f) return 0;
-    return toCode(amplitude / fullCode * AD5452::MAX_CODE);
+    return toCode(amplitude / fullCode * AD5452::MAX_CODE, AD5452::MAX_CODE);
 }
 
 uint16_t FunctionGenerator::offsetToCode(float dcOffset) {
-    // straight line between the two measured ends of the offset DAC
-    float t = (dcOffset - OFFSET_V_AT_CODE_0) / (OFFSET_V_AT_FULL_CODE - OFFSET_V_AT_CODE_0);
-    return toCode(t * AD5452::MAX_CODE);
+    // straight line through the two measured calibration points. never past
+    // OFFSET_DAC_CODE_MAX, where the MCP4822 output clips at VDD
+    return toCode(offsetCodeFor(dcOffset), OFFSET_DAC_CODE_MAX);
 }

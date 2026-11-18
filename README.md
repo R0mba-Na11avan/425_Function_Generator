@@ -2,7 +2,8 @@
 
 Firmware for a function generator built around an ESP32-S3 (N16R8). An AD9833
 produces the waveform, a TS5A23157 switch picks the sine/triangle or square
-path, and two AD5452 multiplying DACs set the amplitude and DC offset (see
+path, an AD5452 multiplying DAC sets the amplitude and an MCP4822 DAC the DC
+offset (see
 `docs/parts.md` for the output stage, `docs/pinout_table.md` for the wiring).
 The ESP32 provides three ways to control it:
 
@@ -24,7 +25,7 @@ flowchart LR
     BLE["BLE (NimBLE)"]
     CTRL["FuncGenController<br/>(mutex, listeners)"]
     FG["FunctionGenerator"]
-    HW["AD9833 + 2x AD5452<br/>+ path switch"]
+    HW["AD9833 + AD5452 + MCP4822<br/>+ path switch"]
 
     LCD --> CTRL
     MCP --> CTRL
@@ -45,7 +46,7 @@ outside `core/` touches `FunctionGenerator` directly.
 src/
   config.h   pins, limits, task settings, network constants
   libs/      vendored third-party libs (AD9833, Adafruit GFX + ILI9341,
-             XPT2046_Touchscreen, ArduinoJson) + our own AD5452 driver
+             XPT2046_Touchscreen, ArduinoJson) + our own AD5452 and MCP4822 drivers
   core/      FunctionGenerator, FuncGenState, FuncGenController
   core/      ... + net_status.h / ble_status.h (Wi-Fi and BLE state shared by comms and ui)
   ui/        display_ui (UI task, canvases, listener), dashboard_view (drawing),
@@ -69,7 +70,7 @@ headers, so include across folders with relative paths (`"../core/..."`).
 
 | Part | State |
 |---|---|
-| `FunctionGenerator` (AD9833 + 2x AD5452 + path switch) | done (incl. output enable, DC offset, peak limit and limit getters), host-tested, calibration values in `config.h` are placeholders until the output stage is measured |
+| `FunctionGenerator` (AD9833 + AD5452 + MCP4822 + path switch) | done (incl. output enable, DC offset, peak limit and limit getters), host-tested, calibration values in `config.h` are placeholders until the output stage is measured |
 | `FuncGenController` / `FuncGenState` | done |
 | `ui/input` (encoder via PCNT, button, XPT2046 touch) | done, not tried on hardware yet, touch calibration is a placeholder |
 | `ui/display_ui` (dashboard, editing, info panel with Wi-Fi/phone buttons, remote-change flash, pairing popup) | done, not tried on hardware yet |
@@ -120,8 +121,11 @@ AP fallback + provisioning page) -> MCP server -> BLE.
   at the edge (knob stops, MCP/BLE get an out-of-range error); the other one is
   never moved. `FuncGenLimits::amplitudeFor` / `dcOffsetFor` give the range
   allowed right now.
-- **Output off** puts the AD9833 to sleep and sets both DACs to 0 V output. The
-  amplitude and offset are kept and come back when the output is turned on.
+- **Output off** opens the output relay (the BNC is disconnected), puts the
+  AD9833 to sleep and sets both DACs to 0 V. The amplitude and offset are kept
+  and come back when the output is turned on. The relay opens first when
+  turning off and closes last when turning on, and it stays open from power-on
+  until the output is turned on, so the start-up glitch never reaches the BNC.
 
 ## Build (Arduino IDE)
 
@@ -244,7 +248,7 @@ the board from the phone's Bluetooth settings and pair again.
 
 Host tests run the real core, UI logic and vendored libraries on a PC against
 fake Arduino/SPI/FreeRTOS headers (`test/fakes`). They check what would reach
-the AD9833, both AD5452s and the path switch, and render the dashboard with the real Adafruit GFX code
+the AD9833, the AD5452, the MCP4822 and the path switch, and render the dashboard with the real Adafruit GFX code
 to BMP screenshots in `test/build/screens`. The HTTP server, Wi-Fi state machine
 and setup routes run against a fake esp_http_server. The BLE value encoding and
 range checks run against the real controller; the NimBLE stack itself isn't

@@ -1,7 +1,8 @@
 /**************************************************************************
 *   Author: Parikshith Venkataraghavan
 *   Purpose: host tests for FunctionGenerator: what actually reaches the
-             AD9833, the two AD5452s and the path switch, clamping, the peak
+             AD9833, the AD5452, the MCP4822, the path switch and the output
+             relay, clamping, the peak
              rule and the limit getters
 **************************************************************************/
 
@@ -11,7 +12,20 @@
 
 static Ad9833Model dds() { return replayAd9833(SPI, PIN_AD9833_CS); }
 static Ad5452Model ampDac() { return replayAd5452(SPI, PIN_AMP_DAC_CS); }
-static Ad5452Model offsetDac() { return replayAd5452(SPI, PIN_OFFSET_DAC_CS); }
+static Mcp4822Model offsetChip() { return replayMcp4822(SPI, PIN_OFFSET_DAC_CS); }
+
+//the offset channel this generator owns (CH1 = VA)
+struct OffsetDac {
+    int code;
+    int writes;
+    bool active;
+    bool gain2x;
+};
+static OffsetDac offsetDac() {
+    Mcp4822Model m = offsetChip();
+    int ch = OFFSET_DAC_CHANNEL;
+    return OffsetDac{m.code[ch], m.writes[ch], m.active[ch], m.gain2x[ch]};
+}
 
 //codes worked out straight from config.h, independent of func_gen.cpp
 static int ampCode(float vpp, float fullCodeVpp) {
@@ -19,17 +33,20 @@ static int ampCode(float vpp, float fullCodeVpp) {
 }
 
 static int offsetCode(float volts) {
-    double t = (volts - OFFSET_V_AT_CODE_0) / (OFFSET_V_AT_FULL_CODE - OFFSET_V_AT_CODE_0);
-    return (int)lround(t * 4095.0);
+    double c = OFFSET_CAL_CODE_LOW + (volts - (double)OFFSET_V_AT_CAL_LOW) *
+               (OFFSET_CAL_CODE_HIGH - OFFSET_CAL_CODE_LOW) / ((double)OFFSET_V_AT_CAL_HIGH - OFFSET_V_AT_CAL_LOW);
+    if (c < 0) return 0;
+    if (c > OFFSET_DAC_CODE_MAX) return OFFSET_DAC_CODE_MAX;
+    return (int)lround(c);
 }
 
 struct Gen {
     FunctionGenerator gen;
-    Gen() : gen(PIN_AD9833_CS, PIN_AMP_DAC_CS, PIN_OFFSET_DAC_CS, PIN_WAVE_SWITCH) { gen.begin(); }
+    Gen() : gen(PIN_AD9833_CS, PIN_AMP_DAC_CS, PIN_OFFSET_DAC_CS, OFFSET_DAC_CHANNEL, PIN_WAVE_SWITCH, PIN_OUTPUT_RELAY) { gen.begin(); }
 };
 
 TEST(begin_starts_bus_on_config_pins) {
-    FunctionGenerator gen(PIN_AD9833_CS, PIN_AMP_DAC_CS, PIN_OFFSET_DAC_CS, PIN_WAVE_SWITCH);
+    FunctionGenerator gen(PIN_AD9833_CS, PIN_AMP_DAC_CS, PIN_OFFSET_DAC_CS, OFFSET_DAC_CHANNEL, PIN_WAVE_SWITCH, PIN_OUTPUT_RELAY);
     CHECK(!SPI.running); //nothing touches the bus before begin()
     gen.begin();
     CHECK(SPI.running);
@@ -62,8 +79,8 @@ TEST(begin_outputs_sine_at_defaults_with_output_off) {
 }
 
 TEST(begin_sets_the_offset_dac_before_waking_anything) {
-    //the offset DAC powers up at code 0 (one end of the range), so 0 V has to
-    //be written before the AD9833 gets its settings
+    //the offset DAC powers up shut down (about 0 V out = one end of the range),
+    //so 0 V has to be written before the AD9833 gets its settings
     Gen g;
     int offsetFrame = -1, lastDdsFrame = -1;
     for (size_t i = 0; i < SPI.frames.size(); i++) {
@@ -95,12 +112,89 @@ TEST(dac_words_are_well_formed) {
     }
     g.gen.setWaveform(WAVEFORM::SQUARE);
     g.gen.setOutput(false);
-    for (const Ad5452Model& m : {ampDac(), offsetDac()}) {
-        CHECK(m.writes > 10);
-        CHECK_EQ(m.badMode, 0);
-        CHECK_EQ(m.badControl, 0);
-        CHECK_EQ(m.badLength, 0);
-    }
+    Ad5452Model a = ampDac();
+    CHECK(a.writes > 10);
+    CHECK_EQ(a.badMode, 0);
+    CHECK_EQ(a.badControl, 0);
+    CHECK_EQ(a.badLength, 0);
+
+    Mcp4822Model o = offsetChip();
+    CHECK(o.writes[OFFSET_DAC_CHANNEL] > 10);
+    CHECK_EQ(o.badMode, 0);
+    CHECK_EQ(o.badLength, 0);
+    CHECK(o.active[OFFSET_DAC_CHANNEL]);
+    CHECK_EQ(o.gain2x[OFFSET_DAC_CHANNEL], (bool)OFFSET_DAC_GAIN_2X);
+}
+
+TEST(offset_only_touches_its_own_mcp4822_channel) {
+    //the MCP4822 is shared with CH2 (the other channel), which CH1 must never write
+    Gen g;
+    g.gen.setOutput(true);
+    g.gen.setDCOffset(2.0);
+    g.gen.setOutput(false);
+    Mcp4822Model m = offsetChip();
+    CHECK(m.writes[OFFSET_DAC_CHANNEL] > 0);
+    CHECK_EQ(m.writes[1 - OFFSET_DAC_CHANNEL], 0);
+}
+
+TEST(offset_channel_b_generator_writes_channel_b) {
+    FunctionGenerator gen(PIN_AD9833_CS, PIN_AMP_DAC_CS, PIN_OFFSET_DAC_CS, OFFSET_DAC_CHANNEL_2, PIN_WAVE_SWITCH_2, PIN_OUTPUT_RELAY_2);
+    gen.begin();
+    gen.setOutput(true);
+    gen.setDCOffset(-1.5);
+    Mcp4822Model m = offsetChip();
+    CHECK_EQ(m.writes[OFFSET_DAC_CHANNEL], 0);
+    CHECK(m.writes[OFFSET_DAC_CHANNEL_2] > 0);
+    CHECK_EQ(m.code[OFFSET_DAC_CHANNEL_2], offsetCode(-1.5f));
+}
+
+TEST(offset_calibration_points_map_to_their_codes) {
+    //the measured points have to land back on the codes they were measured at
+    CHECK_EQ(offsetCode(OFFSET_V_AT_CAL_LOW), OFFSET_CAL_CODE_LOW);
+    CHECK_EQ(offsetCode(OFFSET_V_AT_CAL_HIGH), OFFSET_CAL_CODE_HIGH);
+    Gen g;
+    g.gen.setOutput(true);
+    g.gen.setAmplitude(0.0);
+    g.gen.setDCOffset(DC_OFFSET_MAX_V);
+    CHECK_EQ(offsetDac().code, offsetCode(DC_OFFSET_MAX_V));
+    CHECK(offsetDac().code <= OFFSET_DAC_CODE_MAX);
+    g.gen.setDCOffset(DC_OFFSET_MIN_V);
+    CHECK_EQ(offsetDac().code, offsetCode(DC_OFFSET_MIN_V));
+}
+
+TEST(begin_keeps_the_output_relay_open_from_the_start) {
+    FunctionGenerator gen(PIN_AD9833_CS, PIN_AMP_DAC_CS, PIN_OFFSET_DAC_CS, OFFSET_DAC_CHANNEL,
+                          PIN_WAVE_SWITCH, PIN_OUTPUT_RELAY);
+    CHECK(fakePinMode(PIN_OUTPUT_RELAY) != OUTPUT); //constructor touches nothing
+    gen.begin();
+    CHECK_EQ(fakePinMode(PIN_OUTPUT_RELAY), OUTPUT);
+    CHECK_EQ(fakePinLevel(PIN_OUTPUT_RELAY), LOW);
+    CHECK_EQ(fakePinFirstWriteFrame(PIN_OUTPUT_RELAY), 0); //set LOW before the first SPI word
+}
+
+TEST(output_relay_follows_the_output) {
+    Gen g;
+    g.gen.setOutput(true);
+    CHECK_EQ(fakePinLevel(PIN_OUTPUT_RELAY), HIGH);
+    //closed only after every chip got its new settings
+    CHECK_EQ(fakePinWriteFrame(PIN_OUTPUT_RELAY), (int)SPI.frames.size());
+
+    //a waveform change while on keeps the output connected
+    g.gen.setWaveform(WAVEFORM::SQUARE);
+    CHECK_EQ(fakePinLevel(PIN_OUTPUT_RELAY), HIGH);
+
+    //opened before any chip is touched
+    int framesBefore = (int)SPI.frames.size();
+    g.gen.setOutput(false);
+    CHECK_EQ(fakePinLevel(PIN_OUTPUT_RELAY), LOW);
+    CHECK_EQ(fakePinWriteFrame(PIN_OUTPUT_RELAY), framesBefore);
+    CHECK((int)SPI.frames.size() > framesBefore);
+
+    //changes while off never close it
+    g.gen.setWaveform(WAVEFORM::TRIANGLE);
+    g.gen.setAmplitude(2.0);
+    g.gen.setDCOffset(1.0);
+    CHECK_EQ(fakePinLevel(PIN_OUTPUT_RELAY), LOW);
 }
 
 TEST(output_enable_toggles_sleep_bits) {
@@ -252,7 +346,7 @@ TEST(dac_codes_never_exceed_12_bits) {
         int a = ampDac().code;
         int o = offsetDac().code;
         CHECK(a >= 0 && a <= 4095);
-        CHECK(o >= 0 && o <= 4095);
+        CHECK(o >= 0 && o <= OFFSET_DAC_CODE_MAX);
     }
 }
 

@@ -1,7 +1,7 @@
 /**************************************************************************
 *   Author: Parikshith Venkataraghavan
-*   Purpose: replays the fake SPI log through simple models of the AD9833
-             and AD5452 so tests can check what the chips would hold,
+*   Purpose: replays the fake SPI log through simple models of the AD9833,
+             AD5452 and MCP4822 so tests can check what the chips would hold,
              instead of the exact order the libraries write things in
 **************************************************************************/
 
@@ -78,6 +78,35 @@ inline Ad5452Model replayAd5452(const SPIClass& spi, int csPin) {
         }
         m.code = (word >> 2) & 0x0FFF;
         m.writes++;
+    }
+    return m;
+}
+
+//MCP4822 DAC registers, from the 16-bit words (A/B - GA SHDN D11..D0, datasheet Register 5-1)
+struct Mcp4822Model {
+    int code[2] = {0, 0};
+    bool active[2] = {false, false}; //power-on state is both channels shut down
+    bool gain2x[2] = {false, false};
+    int writes[2] = {0, 0};
+    int badMode = 0;    //frames not sent in SPI mode 0 or 3 (rising-edge latching)
+    int badLength = 0;  //frames that weren't exactly one 16-bit word
+};
+
+inline Mcp4822Model replayMcp4822(const SPIClass& spi, int csPin) {
+    Mcp4822Model m;
+    for (const SpiFrame& f : spi.frames) {
+        if (f.csPin != csPin) continue;
+        if (f.dataMode != SPI_MODE0 && f.dataMode != SPI_MODE3) m.badMode++;
+        if (f.bytes.size() != 2) {
+            m.badLength++;
+            continue;
+        }
+        uint16_t word = (f.bytes[0] << 8) | f.bytes[1];
+        int ch = (word & 0x8000) ? 1 : 0;
+        m.active[ch] = word & 0x1000;
+        m.gain2x[ch] = !(word & 0x2000);
+        m.code[ch] = m.active[ch] ? (word & 0x0FFF) : 0;
+        m.writes[ch]++;
     }
     return m;
 }

@@ -27,12 +27,10 @@ flowchart TD
     GPIO["ESP32 GPIO"]
     G1["Gain 1<br/>OPA2810 A, x5<br/>subtracts ~0.3 V"]
     G2["Gain 2<br/>OPA2810 B, x4"]
-    AMP["AD5452 #1<br/>amplitude"]
+    AMP["AD5452<br/>amplitude"]
     AIV["OPA2810 I/V"]
-    OREF["Offset reference"]
-    OFS["AD5452 #2<br/>DC offset"]
-    OIV["OPA2810 I/V<br/>(shared offset chip)"]
-    SUM["OPA2810<br/>inverting summer"]
+    OFS["MCP4822<br/>DC offset<br/>(VA = CH1, VB = CH2)"]
+    SUM["OPA2810<br/>summer"]
     R50["50 Ω"]
     OUT(["Output"])
 
@@ -40,7 +38,7 @@ flowchart TD
     DDS -->|square| DIV -->|NO| SW
     GPIO -.->|IN| SW
     SW --> G1 --> G2 -->|"VREF (±6 V max)"| AMP --> AIV --> SUM
-    OREF --> OFS --> OIV --> SUM
+    OFS -->|"0..2.94 V"| SUM
     SUM --> R50 --> OUT
 ```
 
@@ -51,9 +49,10 @@ wide bandwidth (see [Op-amp notes](#op-amp-notes)).
 |---|---|---|---|
 | AD9833 DDS breakout module (25 MHz oscillator on board) | 1 | in use | Makes the sine, triangle and square. Power it from 3.3 V so the square is 3.3 Vpp and the SPI logic matches the ESP32. Sine/triangle come out at about 38 mV to 650 mV. |
 | TS5A23157 dual SPDT analog switch module (VSSOP-10 on a breakout) | 1 | in firmware | Channel 1 picks CH1's filtered sine/triangle path (NC1) or divided square path (NO1), driven by `PIN_WAVE_SWITCH` (`IN1`). Channel 2 does the same for CH2; `PIN_WAVE_SWITCH_2` (`IN2`) is reserved but not driven yet. |
-| AD5452 12-bit multiplying DAC (AD5452YRMZ, MSOP-8) | 2 | in firmware | #1 scales the amplified wave from 0 to 100 %. #2 sets the DC offset. Driver: `src/libs/AD5452/` (see `docs/AD5452.md`). About $9.50 each at DigiKey (≈1,600 in stock, Nov 2026). Needs one 100 nF cap from VDD to GND, right at the chip. |
-| OPA2810 dual FET op-amp (OPA2810IDGKT, VSSOP-8) | 2 per channel + 1 shared (5 for two channels) | chosen | Per channel, two chips for the four fast stages: gain 1, gain 2, the amplitude AD5452's I/V, and the summer that drives the output. The fifth chip holds both channels' offset AD5452 I/V stages (A = CH1, B = CH2). See [Op-amp notes](#op-amp-notes). |
-| Resistors and capacitors | — | values TBD | Square divider, RC low-pass on the sine path, gain-setting resistors, summer resistors, 1–2 pF compensation across each AD5452's RFB, and decoupling (100 nF at every chip, plus 10 µF per rail near the OPA2810s). |
+| AD5452 12-bit multiplying DAC (AD5452YRMZ, MSOP-8) | 1 per channel | in firmware | Scales the amplified wave from 0 to 100 %. Driver: `src/libs/AD5452/` (see `docs/AD5452.md`). About $9.50 each at DigiKey (≈1,600 in stock, Nov 2026). Needs one 100 nF cap from VDD to GND, right at the chip. |
+| MCP4822 dual 12-bit voltage DAC (MCP4822-E/SN, SOIC-8) | 1 (shared) | in firmware | DC offset for both channels: `VOUTA` = CH1, `VOUTB` = CH2. Internal 2.048 V reference, run at 2x gain (1 mV per code) on 3.3 V. The summer turns it into the offset: about 3.402 × Vdac − 5 V, so 0..2.94 V covers −5..+5 V. Driver: `src/libs/MCP4822/` (see `docs/MCP4822.md`). Replaces the two offset AD5452s and their shared I/V op-amp to cut cost. 100 nF from VDD to GND at the chip. |
+| OPA2810 dual FET op-amp (OPA2810IDGKT, VSSOP-8) | 2 per channel (4 for two channels) | chosen | Per channel, two chips for the four fast stages: gain 1, gain 2, the amplitude AD5452's I/V, and the summer that drives the output. The offset needs no op-amp of its own (the MCP4822 is voltage-output). See [Op-amp notes](#op-amp-notes). |
+| Resistors and capacitors | — | values TBD | Square divider, RC low-pass on the sine path, gain-setting resistors, summer resistors, 1–2 pF compensation across the AD5452's RFB, and decoupling (100 nF at every chip, plus 10 µF per rail near the OPA2810s). |
 | 50 Ω output resistor, 0.5 W (or two 100 Ω 1/4 W in parallel) | 1 | chosen | Protects the summer op-amp and keeps it stable into the cable. See "Output current and the 50 Ω resistor" below. |
 | Output connector (BNC) | 1 | TBD | Scope cable. |
 | MSOP-8 and SOIC-8 to DIP adapter boards | 2 + 2 | — | For breadboard or perfboard. The switch comes on its own module, so it needs no adapter. |
@@ -62,6 +61,7 @@ wide bandwidth (see [Op-amp notes](#op-amp-notes)).
 
 | Part | Replaced by | Why |
 |---|---|---|
+| AD5452 + OPA2810 I/V (DC offset, one per channel) | MCP4822 | The offset only needs a slow, steady DC level, so a cheap dual voltage DAC does it. One MCP4822 covers both channels and needs no I/V op-amp or offset reference. It loses the ratiometric match with the summer's +5 V shift, so the offset has to be calibrated. |
 | MCP4131 digital pot (in the op-amp gain loop) | AD5452 | The MCP4131's signal has to stay within 0..VDD, it has only 7 bits (129 steps), and its wiper resistance and capacitance limit bandwidth to about 2 MHz. The AD5452 takes ±10 V straight on VREF and has 4096 steps. |
 | 2N7000 MOSFET (square divider switch) | TS5A3159A | A real SPDT analog switch selects between two paths cleanly. A MOSFET in the divider only switches one leg to ground. |
 | TS5A3159A SPDT analog switch (SOT-23-6) | TS5A23157 | Sold as a ready-made breakout module, so it's easier to buy and wire. It's a dual switch, so one chip covers both channels. Its higher on-resistance doesn't matter here (see below). |
@@ -91,6 +91,21 @@ clocking to the rising edge and stops the DAC until the next frame.
 Output: `Vout = −VREF × code / 4096`. The minus sign is cancelled by the
 inverting summer, so the final output is the right way up.
 
+### Offset DAC: MCP4822
+
+| Spec (from the datasheet) | Value | Why it matters here |
+|---|---|---|
+| Resolution | 12 bits, two channels | One chip covers both channels' offsets. At 2x gain a code is 1 mV, about 3.4 mV of offset. |
+| Reference | Internal 2.048 V, output gain 1x or 2x | 2x gives 0..4.095 V; the offset stage needs up to about 2.94 V for +5 V, which 1x can't reach. |
+| Output swing | Up to about VDD | On 3.3 V the top codes clip at 2x, so the firmware stops at `OFFSET_DAC_CODE_MAX` (3200). |
+| Supply | 2.7–5.5 V | Runs from the ESP32 board's 3.3 V, so its logic levels match the ESP32. |
+| Interface | SPI mode 0 or 3, up to 20 MHz | The driver uses SPI_MODE0. Shares the generator bus; CS on GPIO14, `LDAC` tied to GND. |
+| Power-on state | Both channels shut down (≈0 V out) | About −5 V offset until `FunctionGenerator::begin()` writes the 0 V code. |
+| Package | SOIC-8 (MCP4822-E/SN) | |
+
+Serial word, 16 bits MSB first: `A/B - GA SHDN D11..D0` (A/B: 1 = channel B,
+GA: 0 = 2x, SHDN: 1 = on).
+
 Alternatives considered:
 
 - **AD5453 (14-bit)**: same pinout and family. The extra 2 bits don't help when the op-amps and noise are the limit.
@@ -112,11 +127,10 @@ It works just as well but costs more. Either is far faster than the op-amps.
 ### Op-amp notes
 
 Every op-amp is an **OPA2810** (TI, dual, VSSOP-8, about $4–5 each). Two per
-channel give the four fast op-amps; a fifth chip holds both channels' offset
-I/V stages. The offset path is DC, so it doesn't need the speed, but one part
-type keeps the BOM simple and its low offset voltage suits the MDAC I/V stage.
-The TL071CP was the earlier pick for the offset I/V; it's kept in the table
-below for comparison.
+channel give the four fast op-amps. A fifth chip used to hold both channels'
+offset I/V stages; the MCP4822 is voltage-output, so it's gone. The TL071CP
+was the earlier pick for the offset I/V; it's kept in the table below for
+comparison.
 
 | Spec (TI product page) | OPA2810 | TL071CP |
 |---|---|---|
@@ -147,8 +161,6 @@ about GBW / gain. One ×20 stage gets 70 / 20 = 3.5 MHz; two stages get about
 
 The FET input matters for the AD5452's I/V stage: the datasheet asks for low
 bias current and low offset voltage, and the OPA2810 has both (2 pA, ±1.5 mV max).
-That applies to both AD5452s, so the offset I/V uses it too (the TL071's offset
-voltage is up to about 10 mV).
 
 Alternatives considered:
 
@@ -189,24 +201,26 @@ Done (host-tested, compiled, not tried on hardware). All pins and constants are
 in `src/config.h`; only `core/func_gen.*` drives the chips.
 
 - **TS5A23157:** `PIN_WAVE_SWITCH` (`IN1`), HIGH for square, set in `setWaveform`. `PIN_WAVE_SWITCH_2` (`IN2`) is reserved for CH2 and not driven yet.
-- **AD5452 × 2:** `PIN_AMP_DAC_CS` and `PIN_OFFSET_DAC_CS` on the generator bus, driver in `src/libs/AD5452/`.
+- **AD5452:** `PIN_AMP_DAC_CS` on the generator bus, driver in `src/libs/AD5452/`.
+- **MCP4822:** `PIN_OFFSET_DAC_CS` (GPIO14) on the generator bus, `LDAC` tied to GND. CH1 uses `VOUTA` (`OFFSET_DAC_CHANNEL`), CH2 will use `VOUTB` (`OFFSET_DAC_CHANNEL_2`). Driver in `src/libs/MCP4822/`.
 - **Amplitude:** code = amplitude / `AMP_FULL_CODE_VPP_*` × 4095 (per waveform).
-- **DC offset:** straight line between `OFFSET_V_AT_CODE_0` and `OFFSET_V_AT_FULL_CODE`.
+- **DC offset:** straight line through two measured points (`OFFSET_V_AT_CAL_LOW` at code `OFFSET_CAL_CODE_LOW`, `OFFSET_V_AT_CAL_HIGH` at `OFFSET_CAL_CODE_HIGH`), never above `OFFSET_DAC_CODE_MAX` where the 2x output clips at VDD.
 - **Peak limit:** amplitude / 2 + |offset| ≤ `OUTPUT_PEAK_MAX_V` (10 V for now). The value being changed stops at the edge.
-- **Output off:** amplitude DAC to 0 and offset DAC to its 0 V code.
-- **Calibration:** measure the full-code amplitude per waveform and the offset at both ends, then put the numbers in `config.h`.
+- **Output relay:** `PIN_OUTPUT_RELAY` (GPIO41), HIGH = connected. Opens first when the output turns off, closes last when it turns on, open from power-on. `PIN_OUTPUT_RELAY_2` (GPIO13) is reserved for CH2.
+- **Output off:** relay open, amplitude DAC to 0 and offset DAC to its 0 V code.
+- **Calibration:** measure the full-code amplitude per waveform and the offset at the two calibration codes, then put the numbers in `config.h`.
 - **Not done, optional:** above ~5 MHz the OPA2810's slew rate caps the amplitude at about 2 × 192 V/µs / (2π f). The firmware could clamp amplitude by frequency so the screen never shows a value the hardware can't make.
 
 ## Open items
 
 - **Power:** a wall adapter is planned. The analog side needs about ±12 V; the 3.3 V chips run from the ESP32 board. Not chosen yet. The rails must stay at or below **±13.5 V** (the OPA2810's 27 V max), so ±15 V is out.
-- **Offset reference:** AD5452 #2 needs a steady DC voltage on its VREF, plus a fixed resistor into the summer so that mid-scale code gives 0 V offset. The voltage is not chosen yet.
 - **Max frequency:** full 12 Vpp up to ~5 MHz with the OPA2810. Measure it, then decide whether `FREQ_MAX_HZ` stays at 12.5 MHz with a reduced amplitude up there.
 - **Passive values:** square divider (for example 8.2 kΩ over 1.8 kΩ gives 0.59 V from 3.3 V), the RC low-pass, and the gain-stage resistors.
 
 ## Sources
 
 - AD5450/AD5451/AD5452 datasheet, Rev. 0 (Analog Devices): spec table, serial interface section (Table 10), amplifier selection, ordering guide.
+- MCP4802/4812/4822 datasheet, DS20002249 (Microchip): write command register, SPI modes, shutdown, output swing.
 - TS5A23157 datasheet SCDS165 and product page (TI); TS5A3159A and ADG719 parametric listings (TI, Analog Devices).
 - TL071 and LM318 datasheets (TI).
 - OPA2810 product page (TI): supply, GBW, slew rate, output current, packages.

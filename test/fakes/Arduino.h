@@ -60,6 +60,10 @@ int digitalRead(uint8_t pin);
 //test inspection
 int fakePinMode(uint8_t pin);
 int fakePinLevel(uint8_t pin);
+//how many SPI frames had been sent when the pin was last written (-1 = never written)
+int fakePinWriteFrame(uint8_t pin);
+//same for the first write since the last reset (-1 = never written)
+int fakePinFirstWriteFrame(uint8_t pin);
 void fakeResetPins();
 
 #endif

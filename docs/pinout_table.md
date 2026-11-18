@@ -13,11 +13,12 @@ Everything is 3.3 V logic; never put 5 V on a GPIO.
 ## ESP32-S3 GPIO summary
 
 Sorted by GPIO. Two SPI buses: the **generator bus** (FSPI: each channel's
-AD9833 and two AD5452s) and the **display bus** (HSPI: LCD and touch).
+AD9833 and amplitude AD5452, plus one MCP4822 for both offsets) and the
+**display bus** (HSPI: LCD and touch).
 
 CH2 rows are reserved: the pins are fixed in `config.h`, but the firmware
 doesn't drive them until CH2 is added. Their pull-ups and pull-downs keep the
-CH2 chips deselected and on the sine path until then. CH2's AD9833 and AD5452s
+CH2 chips deselected and on the sine path until then. CH2's AD9833 and AD5452
 wire up exactly like CH1's (same tables below), except for the pins listed
 here.
 
@@ -30,12 +31,12 @@ here.
 | 6 | `PIN_LCD_MISO` | `T_DO` only | LCD `SDO(MISO)` stays unconnected |
 | 7 | `PIN_LCD_CS` | LCD `CS` | |
 | 8 | `PIN_TOUCH_IRQ` | `T_IRQ` | Internal pull-up |
-| 9 | `PIN_AMP_DAC_CS` | AD5452 #1 (amplitude) `SYNC` | 10 kΩ pull-up to 3.3 V |
+| 9 | `PIN_AMP_DAC_CS` | AD5452 (amplitude) `SYNC` | 10 kΩ pull-up to 3.3 V |
 | 10 | `PIN_AD9833_CS` | AD9833 `FSYNC` | |
-| 11 | `PIN_GEN_MOSI` | `SDATA` on both AD9833s, `SDIN` on all four AD5452s | Generator bus data out |
-| 12 | `PIN_GEN_SCK` | `SCLK` on both AD9833s and all four AD5452s | Generator bus clock |
-| 13 | `PIN_GEN_MISO` | Nothing | Reserved by the SPI bus; none of the chips send data back |
-| 14 | `PIN_OFFSET_DAC_CS` | AD5452 #2 (offset) `SYNC` | 10 kΩ pull-up to 3.3 V |
+| 11 | `PIN_GEN_MOSI` | `SDATA` on both AD9833s, `SDIN` on both AD5452s, MCP4822 `SDI` | Generator bus data out |
+| 12 | `PIN_GEN_SCK` | `SCLK` on both AD9833s and both AD5452s, MCP4822 `SCK` | Generator bus clock |
+| 13 | `PIN_OUTPUT_RELAY_2` | CH2 relay driver: 1 kΩ to the 2N3904 base | 47 kΩ base pull-down to GND. Reserved for CH2, not driven yet. (Was the generator bus MISO, which nothing used; the bus now runs without one) |
+| 14 | `PIN_OFFSET_DAC_CS` | MCP4822 (offset, both channels) `CS` | 10 kΩ pull-up to 3.3 V |
 | 15 | `PIN_LCD_DC` | LCD `DC` | |
 | 16 | `PIN_LCD_RST` | LCD `RESET` | |
 | 17 | `PIN_LCD_BL` | LCD `LED` | Backlight, driven HIGH |
@@ -43,7 +44,7 @@ here.
 | 21 | `PIN_WAVE_SWITCH` | TS5A23157 `IN1` | 10 kΩ pull-down to GND (sine path at boot) |
 | 39 | `PIN_AD9833_CS_2` | CH2 AD9833 `FSYNC` | 10 kΩ pull-up to 3.3 V. Reserved for CH2, not driven yet |
 | 40 | `PIN_AMP_DAC_CS_2` | CH2 AD5452 (amplitude) `SYNC` | 10 kΩ pull-up to 3.3 V. Reserved for CH2, not driven yet |
-| 41 | `PIN_OFFSET_DAC_CS_2` | CH2 AD5452 (offset) `SYNC` | 10 kΩ pull-up to 3.3 V. Reserved for CH2, not driven yet |
+| 41 | `PIN_OUTPUT_RELAY` | CH1 relay driver: 1 kΩ to the 2N3904 base | 47 kΩ base pull-down to GND (output disconnected at boot). HIGH = output connected |
 | 42 | `PIN_ENC_SW` | Encoder `SW` | Internal pull-up. Held at power-on = forget Wi-Fi/phones |
 | 47 | `PIN_WAVE_SWITCH_2` | TS5A23157 `IN2` | 10 kΩ pull-down to GND. Reserved for CH2, not driven yet |
 | 3V3 | | Every 3.3 V part's supply pin | See [Power](#power) |
@@ -105,26 +106,41 @@ pull-up to 3.3 V) and `OUT` feeds CH2's own low-pass and divider.
 | `AGND` | GND | |
 | `OUT` | RC low-pass input **and** square divider input | Both paths come off this one pin; see [TS5A23157](#ts5a23157-analog-switch-module) |
 
-## AD5452 MDAC × 2 (MSOP-8, on adapter boards)
+## AD5452 MDAC (amplitude, MSOP-8, on an adapter board)
 
-Same pinout for both chips; only `SYNC` and the analog pins differ. The table
-is CH1's pair; CH2 has its own pair wired the same way, with `SYNC` on GPIO40
-(amplitude) and GPIO41 (offset), each with a 10 kΩ pull-up to 3.3 V.
-Pin numbers are the MSOP-8 package (AD5452YRMZ), which is what the adapter's
-DIP pins follow.
+The table is CH1's chip; CH2's is wired the same way, with `SYNC` on GPIO40
+(10 kΩ pull-up to 3.3 V). Pin numbers are the MSOP-8 package (AD5452YRMZ),
+which is what the adapter's DIP pins follow.
 
-| Pin | Name | #1 amplitude connects to | #2 offset connects to |
-|---|---|---|---|
-| 1 | `IOUT1` | OPA2810 I/V op-amp inverting (−) input | Offset OPA2810 I/V op-amp inverting (−) input (half A for CH1, B for CH2) |
-| 2 | `GND` | GND (also the I/V op-amp's + input) | GND (also the I/V op-amp's + input) |
-| 3 | `SCLK` | GPIO12 | GPIO12 |
-| 4 | `SDIN` | GPIO11 | GPIO11 |
-| 5 | `SYNC` | GPIO9 + 10 kΩ pull-up to 3.3 V | GPIO14 + 10 kΩ pull-up to 3.3 V |
-| 6 | `VDD` | 3.3 V + 100 nF to GND at the chip | 3.3 V + 100 nF to GND at the chip |
-| 7 | `VREF` | Gain 2 output (OPA2810 B, ±6 V max) | Offset reference (voltage not chosen yet) |
-| 8 | `RFB` | OPA2810 I/V op-amp output (1–2 pF to `IOUT1` if it rings) | Offset OPA2810 I/V op-amp output |
+| Pin | Name | Connects to |
+|---|---|---|
+| 1 | `IOUT1` | OPA2810 I/V op-amp inverting (−) input |
+| 2 | `GND` | GND (also the I/V op-amp's + input) |
+| 3 | `SCLK` | GPIO12 |
+| 4 | `SDIN` | GPIO11 |
+| 5 | `SYNC` | GPIO9 + 10 kΩ pull-up to 3.3 V |
+| 6 | `VDD` | 3.3 V + 100 nF to GND at the chip |
+| 7 | `VREF` | Gain 2 output (OPA2810 B, ±6 V max) |
+| 8 | `RFB` | OPA2810 I/V op-amp output (1–2 pF to `IOUT1` if it rings) |
 
 The AD5452 has no data-out pin, so nothing connects to the generator bus MISO.
+
+## MCP4822 DAC (DC offset for both channels, SOIC-8)
+
+One chip for both channels. Pin numbers are the SOIC-8 package (MCP4822-E/SN).
+
+| Pin | Name | Connects to |
+|---|---|---|
+| 1 | `VDD` | 3.3 V + 100 nF to GND at the chip |
+| 2 | `CS` | GPIO14 + 10 kΩ pull-up to 3.3 V |
+| 3 | `SCK` | GPIO12 |
+| 4 | `SDI` | GPIO11 |
+| 5 | `LDAC` | GND (output updates when `CS` goes high) |
+| 6 | `VOUTB` | CH2 offset input to the summer |
+| 7 | `VSS` | GND |
+| 8 | `VOUTA` | CH1 offset input to the summer |
+
+The MCP4822 has no data-out pin either.
 
 ## TS5A23157 analog switch module
 
@@ -156,13 +172,14 @@ Only the 3.3 V side is decided. The ±12 V analog rails are still open (see
 
 | Rail | Source | Feeds |
 |---|---|---|
-| 3.3 V | ESP32 board `3V3` pin | Display `VCC`, encoder `+`, both AD9833 `VCC`, all four AD5452 `VDD`, TS5A23157 `V+`, the SYNC/FSYNC pull-ups |
+| 3.3 V | ESP32 board `3V3` pin | Display `VCC`, encoder `+`, both AD9833 `VCC`, both AD5452 `VDD`, MCP4822 `VDD`, TS5A23157 `V+`, the SYNC/FSYNC/CS pull-ups |
 | GND | ESP32 board `GND` | Every ground above, tied to the analog supply's ground |
-| ±12 V | TBD | OPA2810 × 5: two per channel plus the shared offset chip (must stay at or below ±13.5 V) |
+| ±12 V | TBD | OPA2810 × 4: two per channel (must stay at or below ±13.5 V) |
 
 ## Sources
 
 - `src/config.h` for every GPIO number.
 - AD5450/AD5451/AD5452/AD5453 datasheet (Analog Devices), MSOP-8 pin configuration.
+- MCP4802/4812/4822 datasheet DS20002249 (Microchip), SOIC-8 pin configuration.
 - TS5A23157 datasheet SCDS165 (TI), DGS pin configuration and function table.
 - Module silkscreens for the display, AD9833 and encoder headers.

@@ -18,7 +18,7 @@ struct McpRig {
     FuncGenController ctl;
     HttpServer http;
     McpServer mcp;
-    McpRig() : gen(PIN_AD9833_CS, PIN_AMP_DAC_CS, PIN_OFFSET_DAC_CS, PIN_WAVE_SWITCH), ctl(gen), mcp(ctl, http) {
+    McpRig() : gen(PIN_AD9833_CS, PIN_AMP_DAC_CS, PIN_OFFSET_DAC_CS, OFFSET_DAC_CHANNEL, PIN_WAVE_SWITCH, PIN_OUTPUT_RELAY), ctl(gen), mcp(ctl, http) {
         fakeHttpdReset();
         gen.begin();
         mcp.begin();

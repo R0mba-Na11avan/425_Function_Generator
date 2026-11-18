@@ -326,7 +326,7 @@ function draw(){
   if(!cur.output_enabled){
     g.strokeStyle=dim;
     g.beginPath();g.moveTo(lab,y(0));g.lineTo(W,y(0));g.stroke();
-    $('cap').textContent='Output off: 0 V. The settings come back when it is turned on.';
+    $('cap').textContent='Output off: disconnected. The settings come back when it is turned on.';
     return;
   }
   const a=cur.amplitude_vpp/2,o=cur.dc_offset_v,ph=cur.phase_deg*Math.PI/180;

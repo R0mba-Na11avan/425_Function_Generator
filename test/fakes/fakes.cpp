@@ -14,6 +14,8 @@ static int pinLevels[FAKE_PIN_COUNT];
 //other outputs can sit LOW too (e.g. the waveform path switch), so "the first
 //LOW output" isn't enough
 static int lastLowPin = -1;
+static int pinWriteFrames[FAKE_PIN_COUNT];
+static int pinFirstWriteFrames[FAKE_PIN_COUNT];
 
 void pinMode(uint8_t pin, uint8_t mode) {
     if (pin < FAKE_PIN_COUNT) pinModes[pin] = mode;
@@ -22,6 +24,8 @@ void pinMode(uint8_t pin, uint8_t mode) {
 void digitalWrite(uint8_t pin, uint8_t value) {
     if (pin < FAKE_PIN_COUNT) {
         pinLevels[pin] = value;
+        pinWriteFrames[pin] = (int)SPI.frames.size();
+        if (pinFirstWriteFrames[pin] < 0) pinFirstWriteFrames[pin] = pinWriteFrames[pin];
         if (value == LOW) lastLowPin = pin;
     }
 }
@@ -38,10 +42,20 @@ int fakePinLevel(uint8_t pin) {
     return (pin < FAKE_PIN_COUNT) ? pinLevels[pin] : -1;
 }
 
+int fakePinWriteFrame(uint8_t pin) {
+    return (pin < FAKE_PIN_COUNT) ? pinWriteFrames[pin] : -1;
+}
+
+int fakePinFirstWriteFrame(uint8_t pin) {
+    return (pin < FAKE_PIN_COUNT) ? pinFirstWriteFrames[pin] : -1;
+}
+
 void fakeResetPins() {
     for (int pin = 0; pin < FAKE_PIN_COUNT; pin++) {
         pinModes[pin] = INPUT;
         pinLevels[pin] = LOW;
+        pinWriteFrames[pin] = -1;
+        pinFirstWriteFrames[pin] = -1;
     }
     lastLowPin = -1;
 }

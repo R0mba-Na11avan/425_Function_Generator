@@ -1,5 +1,3 @@
-- Chain: CH = D_amp*g + 10.05*D_off - 5 (R13/R11=2.01, R12 to +5V, offset DACs U9/U14 VREF=+5V). g = +/-6V (U4A x5.01 w/ CENTER_BIAS 0.423V, U4B x4).
-- Power-on: offset DAC zero -> CH=-5V DC until fw writes. AD9833 invalid regs at power-up -> SW3 mismatch saturates U4 -> VREF of U8/U13 near +/-12V (AD5452 abs max +/-12V, ds p.6). Two AD9833 = separate clocks. No reconstruction LPF.
 - DevKit: R31 0R ties DevKit 3V3 to U16 out (paralleled LDOs, backfeed unverified). EN/IO0/RST/15 isolated-label ERC = DevKit noise.
 - Firmware: SPI mode 2 all. Partial AD5452 frame can flip edge mode.
 - U2 TMR 6-1222: engineer said ignore in checks. Load ~155mA/rail.
@@ -11,3 +9,6 @@
 - ON HAND, not ordered (BOM rows pinned "ON HAND - do not order"): DS1 ILI9341, U1 ESP32 DevKit, U6/U7 AD9833 modules, SW1 encoder module, SW3 TS5A23157 module. Their sockets (1x14, 1x07 x2, 1x05) still need buying - asked. SW3 module header/socket unknown.
 - DEFERRED (don't nag): U6/U7 header order.
 - Open offer: DigiKey MPNs for J3 jack, J4/J5 1x02, SW2 Wurth 430476085716.
+- (2026-11-18) (2026-11-17) Plan: MCP4822 U17 replaces offset DACs U9/U14 + U10 to cut cost. Proposed: VDD 3.3V (VIH 0.7VDD), VA->1k/100n->U5 pin5, VB->U12 pin5; R11/R15 -> 10k to GND; R12/R13/R29 unchanged; CH_off=3.402*Vdac-5; CS=GPIO14, LDAC=GND; SPI mode 0/3 for this device. Loses 5V ratiometric cancel -> calibrate.
+- (2026-11-18) (2026-11-18) CH1 offset rewired as built: DAC_A(global)->R11 1k->dc_offset->U5 pin5, C20 to GND; NO 10k to GND on pin6 -> CH_off=3.0*Vdac-5, 0V at code~1667, range -4.97..+7.17V. CH2 (U12/R15/U10B/C28) not yet done. U17 & C20 need footprints, C20 value.
+- (2026-11-18) Output relays SW4(CH1)/SW5(CH2) = G5V-1 DC5: coil 2(+5V)/9, COM 6 (5 tied, not on symbol), NC 1 unused, NO 10->R1/R2. Q1/Q2 2N3904, R8/R28 1k from GPIO41/13, R27/R32 47k pulldown, D1/D2 flyback. R27/R28 now USED (old 'absent' note obsolete).
