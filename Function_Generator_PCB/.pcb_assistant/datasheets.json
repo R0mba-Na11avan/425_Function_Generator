@@ -444,14 +444,14 @@
       "key": "TMR 6-1222",
       "refs": [],
       "status": "ok",
-      "file": "datasheets/.research/TMR_6-1222.pdf",
+      "file": "datasheets/TMR_6-1222.pdf",
       "source": "schematic",
       "url": "https://www.tracopower.com/sites/default/files/products/datasheets/tmr6_datasheet.pdf",
       "sha256": "ec8e29339b550a2785e9e9d84bc22547ac0cc3fba8d09da29d2f436e3ba7a73b",
       "pages": 4,
       "tried": [],
       "fetched_at": 1794876877.5317383,
-      "origin": "research"
+      "origin": "board"
     },
     "TMR6-1222": {
       "key": "TMR6-1222",
@@ -540,7 +540,7 @@
         }
       ],
       "fetched_at": 0.0,
-      "origin": "board"
+      "origin": "research"
     },
     "OPA2156IDGKR": {
       "key": "OPA2156IDGKR",
@@ -572,7 +572,7 @@
       "key": "MCP4822-E/SN",
       "refs": [],
       "status": "ok",
-      "file": "datasheets/.research/MCP4822-E_SN.pdf",
+      "file": "datasheets/MCP4822-E_SN.pdf",
       "source": "digikey",
       "url": "https://ww1.microchip.com/downloads/aemDocuments/documents/OTH/ProductDocuments/DataSheets/20002249B.pdf",
       "sha256": "1f0b231636222ea5bf4147dde3e54a7c1a2f39b0eac14e2e4320ff8d2a4dc765",
@@ -590,7 +590,7 @@
         }
       ],
       "fetched_at": 1794881271.6588197,
-      "origin": "research"
+      "origin": "board"
     },
     "MCP48FVB22-E/UN": {
       "key": "MCP48FVB22-E/UN",
@@ -713,6 +713,66 @@
       "tried": [],
       "fetched_at": 1794883352.3856843,
       "origin": "board"
+    },
+    "430476085716": {
+      "key": "430476085716",
+      "refs": [],
+      "status": "ok",
+      "file": "datasheets/.research/430476085716.pdf",
+      "source": "digikey",
+      "url": "https://www.we-online.com/catalog/datasheet/430476085716.pdf",
+      "sha256": "4e6ad6495b1dbc43456ccdef085988de22dd175660775370eacb69ff6bd2f402",
+      "pages": 8,
+      "tried": [
+        {
+          "source": "digikey",
+          "url": "https://www.we-online.com/catalog/datasheet/430476085716.pdf",
+          "error": "https://www.we-online.com/catalog/datasheet/430476085716.pdf: HTTP 403 (the host blocks scripted downloads)"
+        }
+      ],
+      "fetched_at": 1794962031.967037,
+      "origin": "research"
+    },
+    "PJ-102AH": {
+      "key": "PJ-102AH",
+      "refs": [],
+      "status": "ok",
+      "file": "datasheets/.research/PJ-102AH.pdf",
+      "source": "digikey",
+      "url": "https://www.sameskydevices.com:443/product/resource/pj-102ah.pdf",
+      "sha256": "9bc4a659da61e93b22c5944bde078b28287f43faa18b0ad00985f55c84ba50e4",
+      "pages": 3,
+      "tried": [],
+      "fetched_at": 1794962084.5475883,
+      "origin": "research"
+    },
+    "MCP4822": {
+      "key": "MCP4822",
+      "refs": [
+        "U17"
+      ],
+      "status": "ok",
+      "file": "datasheets/MCP4822.pdf",
+      "source": "schematic",
+      "url": "http://ww1.microchip.com/downloads/en/DeviceDoc/20002249B.pdf",
+      "sha256": "1f0b231636222ea5bf4147dde3e54a7c1a2f39b0eac14e2e4320ff8d2a4dc765",
+      "pages": 50,
+      "tried": [],
+      "fetched_at": 1794964659.5393083,
+      "origin": "board"
+    },
+    "MC7805ABTG": {
+      "key": "MC7805ABTG",
+      "refs": [],
+      "status": "ok",
+      "file": "datasheets/.research/MC7805ABTG.pdf",
+      "source": "url",
+      "url": "https://www.onsemi.com/pdf/datasheet/mc7800-d.pdf",
+      "sha256": "c237a61981b8f0ef47eb035f66873808a5f86802a31f36282cb60af2096f59e2",
+      "pages": 29,
+      "tried": [],
+      "fetched_at": 1794964522.683806,
+      "origin": "research"
     }
   }
 }

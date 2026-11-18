@@ -1,9 +1,13 @@
-- Chain: CH = D_amp*g + 20.1*D_off - 10. gained_func ~ +/-6V. Overall gain ~20.
-- REVIEW (2026-11-16): U2 TEC2-1221WI is +/-5V -> wrong. Power-on: offset DAC zero-scale -> CH outputs -10V DC until fw writes (need output relay/switch). AD9833 invalid regs at power-up -> SW3 mismatch saturates U4. Two AD9833 = separate clocks. No reconstruction LPF. U1 EN floating flagged. Review cut off at must-fix #4.
-- DevKit: R31 0R ties DevKit 3V3 to U16 output. EN/IO0 findings = DevKit-onboard noise.
-- Firmware: SPI mode 2 for all. Partial AD5452 frame can flip edge mode.
-- U2 options (SIP-8 same pinout): leaning TMR 6-1222 (9-18Vin, +/-12V 250mA, RCC, 900uF max cap/rail, UVLO 7V, outline = TEC2). Don't parallel TEC2. Worst-case load ~155mA/rail.
-- DigiKey not configured.
-- PASSIVES FINAL (2026-11-16): all SMD, hand solder. Default 0805 HandSolder. R1/R2 49.9R -> 2512 (OPA2810 Isc 108mA ds p.9 -> 0.58W shorted). 4.7u on +/-12V (C29-31,C34-36) -> 1206 >=25V. All old 0402/0603 MPNs + CL21A475 must be replaced. BOM rows annotated with spec notes.
-- Regulator caps from datasheets: C1 0.22u 50V (LM7805 in, ds p.1), C2 0.1u ceramic (LM7805 out, replaces THT electrolytic), C32 1u (AP2112 CIN), C33 1u X5R/X7R (AP2112 COUT, ds p.2). All 0805. Engineer must enter values in schematic.
-- R27/R28/C16 = divider +12C -> U15B (~10V).
+- Chain: CH = D_amp*g + 10.05*D_off - 5 (R13/R11=2.01, R12 to +5V, offset DACs U9/U14 VREF=+5V). g = +/-6V (U4A x5.01 w/ CENTER_BIAS 0.423V, U4B x4).
+- Power-on: offset DAC zero -> CH=-5V DC until fw writes. AD9833 invalid regs at power-up -> SW3 mismatch saturates U4 -> VREF of U8/U13 near +/-12V (AD5452 abs max +/-12V, ds p.6). Two AD9833 = separate clocks. No reconstruction LPF.
+- DevKit: R31 0R ties DevKit 3V3 to U16 out (paralleled LDOs, backfeed unverified). EN/IO0/RST/15 isolated-label ERC = DevKit noise.
+- Firmware: SPI mode 2 all. Partial AD5452 frame can flip edge mode.
+- U2 TMR 6-1222: engineer said ignore in checks. Load ~155mA/rail.
+- J3 pin1=GND but PJ-102AH pin1=center (ds p.2) -> center-negative. SW2 Wurth tact 50mA/12V as power switch. 7805 TO-220 54C/W free air, no heatsink.
+- C16/R27/R28 + U15B intentionally absent; ignore.
+- U17 MCP4822-E/SN, SOIC-8, unwired.
+- PASSIVES: SMD hand solder 0805 (4.7u 1206 on +/-12V). C1 CL21B224KBFNNNG 50V.
+- (2026-11-17) FOOTPRINTS DONE: all valid; resistor 0805 MPNs approved (BOM 33 rows). J1/J2 BNC: skip, don't raise. U3 MC7805ABTG.
+- ON HAND, not ordered (BOM rows pinned "ON HAND - do not order"): DS1 ILI9341, U1 ESP32 DevKit, U6/U7 AD9833 modules, SW1 encoder module, SW3 TS5A23157 module. Their sockets (1x14, 1x07 x2, 1x05) still need buying - asked. SW3 module header/socket unknown.
+- DEFERRED (don't nag): U6/U7 header order.
+- Open offer: DigiKey MPNs for J3 jack, J4/J5 1x02, SW2 Wurth 430476085716.
