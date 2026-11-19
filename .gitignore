@@ -18,3 +18,4 @@ Function_Generator_PCB/*.kicad_prl
 Function_Generator_PCB/.pcb_assistant/chats.json
 Function_Generator_PCB/.pcb_assistant/usage.jsonl
 Function_Generator_PCB/.pcb_assistant/chat_images/
+*.bak
