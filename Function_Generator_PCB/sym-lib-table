@@ -11,4 +11,5 @@
 	(lib (name "TMR6-1222") (type "KiCad") (uri "${KIPRJMOD}/symbols/TMR6-1222.kicad_sym") (options "") (descr ""))
 	(lib (name "MCP4822_custom") (type "KiCad") (uri "${KIPRJMOD}/symbols/MCP4822_custom.kicad_sym") (options "") (descr ""))
 	(lib (name "SPDT_Relay_custom") (type "KiCad") (uri "${KIPRJMOD}/symbols/SPDT_Relay_custom.kicad_sym") (options "") (descr ""))
+	(lib (name "MCP4822") (type "KiCad") (uri "${KIPRJMOD}/symbols/MCP4822.kicad_sym") (options "") (descr ""))
 )

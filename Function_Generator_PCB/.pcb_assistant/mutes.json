@@ -1,6 +1,10 @@
 {
   "muted": {
     "esp32s3-wroom:en-not-floating#U1": "",
-    "esp32s3-wroom:io0-timing-cap-100n#U1": ""
+    "esp32s3-wroom:io0-timing-cap-100n#U1": "",
+    "erc:pin_not_connected#U2": "",
+    "erc:power_pin_not_driven#": "",
+    "erc:pin_not_driven#U1": "",
+    "erc:power_pin_not_driven#U1": ""
   }
 }

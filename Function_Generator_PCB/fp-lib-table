@@ -5,4 +5,5 @@
 	(lib (name "OPA2810IDGKT") (type "KiCad") (uri "${KIPRJMOD}/footprints/OPA2810IDGKT.pretty") (options "") (descr ""))
 	(lib (name "AD5452YRMZ") (type "KiCad") (uri "${KIPRJMOD}/footprints/AD5452YRMZ.pretty") (options "") (descr ""))
 	(lib (name "TMR6-1222") (type "KiCad") (uri "${KIPRJMOD}/footprints/TMR6-1222.pretty") (options "") (descr ""))
+	(lib (name "MCP4822") (type "KiCad") (uri "${KIPRJMOD}/footprints/MCP4822.pretty") (options "") (descr ""))
 )

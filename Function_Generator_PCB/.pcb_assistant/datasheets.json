@@ -825,6 +825,32 @@
       "tried": [],
       "fetched_at": 1795118183.4226322,
       "origin": "research"
+    },
+    "G5V-1-DC5": {
+      "key": "G5V-1-DC5",
+      "refs": [],
+      "status": "missing",
+      "file": null,
+      "source": null,
+      "url": null,
+      "sha256": null,
+      "pages": 0,
+      "tried": [],
+      "fetched_at": 0.0,
+      "origin": "research"
+    },
+    "G5V-1": {
+      "key": "G5V-1",
+      "refs": [],
+      "status": "ok",
+      "file": "datasheets/.research/G5V-1.pdf",
+      "source": "url",
+      "url": "https://omronfs.omron.com/en_US/ecb/products/pdf/en-g5v_1.pdf",
+      "sha256": "1d264d1ebbd17bd1dbac42133ffbd27d31ced85ad549a8bd28f0381df848dd0f",
+      "pages": 5,
+      "tried": [],
+      "fetched_at": 1795127181.1884098,
+      "origin": "research"
     }
   }
 }

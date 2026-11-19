@@ -11,3 +11,4 @@
 - Relays SW4/SW5 G5V-1 DC5 MPN set, DK proposal pending approval; fp Relay_THT:Relay_SPDT_Omron_G5V-1 assigned. Coil 2(+5V)/9, COM 6 (pin5 2nd COM not on symbol, pad floats), NC 1 unused, NO 10->R1/R2. Q1/Q2 2N3904, R8/R28 1k GPIO41/13, R27/R32 47k pulldown, D1/D2 flyback.
 - U15 unit B unplaced. U8/U13 VREF from RRIO OPA2810 on +/-12 = 0 margin to AD5452 abs max (ds p.6).
 - J3 center-positive. HS1 near 7805. SW2 rocker current rating unverified.
+- (2026-11-19) (11-19) Relay NC pin1 (A) was tied to GND = shorts OPA2810 out (ISC 108mA, ~1.3W, ds p.4/p.9). Advised: remove GND, no-connect flag. Engineer going with NC floating.

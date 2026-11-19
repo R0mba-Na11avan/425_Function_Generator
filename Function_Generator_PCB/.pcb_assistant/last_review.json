@@ -40,27 +40,8 @@
     },
     {
       "severity": "must-fix",
-      "title": "Pin not connected",
-      "detail": "Symbol U2 Pin 3 [REMOTE, Unspecified, Line]",
-      "failure_mode": "",
-      "citation": "KiCad ERC rule pin_not_connected",
-      "source": "erc",
-      "pattern_status": null,
-      "connectivity_verified": "verified",
-      "component_ref": "U2",
-      "net": null,
-      "rule_id": "erc:pin_not_connected",
-      "labels": [],
-      "datasheet": null,
-      "page": null,
-      "excerpt": null,
-      "rank": 0,
-      "mute_key": "erc:pin_not_connected#U2"
-    },
-    {
-      "severity": "must-fix",
-      "title": "Input Power pin not driven by any Output Power pins (\u00d72)",
-      "detail": "Symbol #PWR017 Pin 1 [Power input, Line]\nSymbol #PWR016 Pin 1 [Power input, Line]",
+      "title": "Input Power pin not driven by any Output Power pins (\u00d73)",
+      "detail": "Symbol #PWR017 Pin 1 [Power input, Line]\nSymbol #PWR016 Pin 1 [Power input, Line]\nSymbol #PWR03 Pin 1 [Power input, Line]",
       "failure_mode": "",
       "citation": "KiCad ERC rule power_pin_not_driven",
       "source": "erc",
@@ -113,44 +94,6 @@
       "excerpt": null,
       "rank": 0,
       "mute_key": "erc:power_pin_not_driven#U1"
-    },
-    {
-      "severity": "must-fix",
-      "title": "Pin not connected",
-      "detail": "Symbol SW4 Pin 1 [A, Output, Line]",
-      "failure_mode": "",
-      "citation": "KiCad ERC rule pin_not_connected",
-      "source": "erc",
-      "pattern_status": null,
-      "connectivity_verified": "verified",
-      "component_ref": "SW4",
-      "net": null,
-      "rule_id": "erc:pin_not_connected",
-      "labels": [],
-      "datasheet": null,
-      "page": null,
-      "excerpt": null,
-      "rank": 0,
-      "mute_key": "erc:pin_not_connected#SW4"
-    },
-    {
-      "severity": "must-fix",
-      "title": "Pin not connected",
-      "detail": "Symbol SW5 Pin 1 [A, Output, Line]",
-      "failure_mode": "",
-      "citation": "KiCad ERC rule pin_not_connected",
-      "source": "erc",
-      "pattern_status": null,
-      "connectivity_verified": "verified",
-      "component_ref": "SW5",
-      "net": null,
-      "rule_id": "erc:pin_not_connected",
-      "labels": [],
-      "datasheet": null,
-      "page": null,
-      "excerpt": null,
-      "rank": 0,
-      "mute_key": "erc:pin_not_connected#SW5"
     },
     {
       "severity": "must-fix",
@@ -364,7 +307,7 @@
     {
       "severity": "verify",
       "title": "Both GND and GNDA are attached to the same items; GND will be used in the netlist (\u00d73)",
-      "detail": "Symbol #PWR050 Pin 1 [Power input, Line]\nSymbol #PWR084 Pin 1 [Power input, Line]\nLabel '5V_ref'\nLabel 'scaled_func'",
+      "detail": "Symbol #PWR083 Pin 1 [Power input, Line]\nSymbol #PWR084 Pin 1 [Power input, Line]\nLabel '5V_ref'\nLabel 'scaled_func'",
       "failure_mode": "",
       "citation": "KiCad ERC rule multiple_net_names",
       "source": "erc",
@@ -459,20 +402,20 @@
   ],
   "runs": {
     "erc": {
-      "ts": 1795119491.1090379,
-      "hash": "187bf52f5fe75d0c"
+      "ts": 1795128109.530271,
+      "hash": "87d5bd9ad6cc6557"
     },
     "pattern": {
-      "ts": 1795119491.1090379,
-      "hash": "187bf52f5fe75d0c"
+      "ts": 1795128109.530271,
+      "hash": "87d5bd9ad6cc6557"
     },
     "drc": {
-      "ts": 1795119491.1090379,
-      "hash": "187bf52f5fe75d0c"
+      "ts": 1795128109.530271,
+      "hash": "87d5bd9ad6cc6557"
     },
     "distributor": {
-      "ts": 1795119491.1090379,
-      "hash": "187bf52f5fe75d0c"
+      "ts": 1795128109.530271,
+      "hash": "87d5bd9ad6cc6557"
     },
     "verifier": {
       "ts": 1795117402.5481548,
