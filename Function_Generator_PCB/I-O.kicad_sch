@@ -5492,7 +5492,7 @@
 				(justify left)
 			)
 		)
-		(property "Footprint" ""
+		(property "Footprint" "Relay_THT:Relay_SPDT_Omron_G5V-1"
 			(at 111.76 153.67 0)
 			(hide yes)
 			(show_name no)
@@ -6107,7 +6107,7 @@
 				)
 			)
 		)
-		(property "Footprint" ""
+		(property "Footprint" "Relay_THT:Relay_SPDT_Omron_G5V-1"
 			(at 199.39 129.54 0)
 			(hide yes)
 			(show_name no)
@@ -6412,7 +6412,7 @@
 				(justify right)
 			)
 		)
-		(property "Footprint" ""
+		(property "Footprint" "Resistor_SMD:R_0805_2012Metric_Pad1.20x1.40mm_HandSolder"
 			(at 102.108 179.07 90)
 			(hide yes)
 			(show_name no)
@@ -6652,7 +6652,7 @@
 				)
 			)
 		)
-		(property "Footprint" ""
+		(property "Footprint" "Relay_THT:Relay_SPDT_Omron_G5V-1"
 			(at 199.39 101.6 0)
 			(hide yes)
 			(show_name no)
@@ -6686,19 +6686,19 @@
 			)
 		)
 		(pin "2"
-			(uuid "ea6cd958-e1d9-415f-8dfe-f2a26d3cc3d6")
+			(uuid "ea6cd958-e1d9-415f-8dfe-f2a26d3cc3d7")
 		)
 		(pin "9"
-			(uuid "fccb62d6-4542-4440-8deb-5bb2b97024eb")
+			(uuid "fccb62d6-4542-4440-8deb-5bb2b97024ec")
 		)
 		(pin "10"
-			(uuid "53cc73fa-d26a-4116-96d0-1696ef6da12c")
+			(uuid "53cc73fa-d26a-4116-96d0-1696ef6da12d")
 		)
 		(pin "6"
-			(uuid "a32abdc6-68c3-4d19-ac50-36e7a0fabafb")
+			(uuid "a32abdc6-68c3-4d19-ac50-36e7a0fabafc")
 		)
 		(pin "1"
-			(uuid "e6a18801-8677-424f-8720-65bd47106046")
+			(uuid "e6a18801-8677-424f-8720-65bd47106047")
 		)
 		(instances
 			(project "Function_Generator_PCB"
@@ -7911,7 +7911,7 @@
 				)
 			)
 		)
-		(property "Footprint" ""
+		(property "Footprint" "Resistor_SMD:R_0805_2012Metric_Pad1.20x1.40mm_HandSolder"
 			(at 137.16 175.768 90)
 			(hide yes)
 			(show_name no)
@@ -8073,7 +8073,7 @@
 				(justify right)
 			)
 		)
-		(property "Footprint" ""
+		(property "Footprint" "Resistor_SMD:R_0805_2012Metric_Pad1.20x1.40mm_HandSolder"
 			(at 144.018 180.34 90)
 			(hide yes)
 			(show_name no)
@@ -8155,7 +8155,7 @@
 				(justify left)
 			)
 		)
-		(property "Footprint" ""
+		(property "Footprint" "Relay_THT:Relay_SPDT_Omron_G5V-1"
 			(at 153.67 154.94 0)
 			(hide yes)
 			(show_name no)
@@ -8189,19 +8189,19 @@
 			)
 		)
 		(pin "6"
-			(uuid "662109fa-020a-4452-846b-9efe5df28407")
+			(uuid "662109fa-020a-4452-846b-9efe5df28408")
 		)
 		(pin "2"
-			(uuid "a9260f32-0efe-41ee-ae89-ef13e0ad6aca")
+			(uuid "a9260f32-0efe-41ee-ae89-ef13e0ad6acb")
 		)
 		(pin "10"
-			(uuid "295c825a-4975-47f2-8479-e4154f492f11")
+			(uuid "295c825a-4975-47f2-8479-e4154f492f12")
 		)
 		(pin "9"
-			(uuid "15bd9caf-f3f3-4e0b-bde8-b7be79a395d8")
+			(uuid "15bd9caf-f3f3-4e0b-bde8-b7be79a395d9")
 		)
 		(pin "1"
-			(uuid "aaed8520-9614-416e-acbc-fc48e6abecda")
+			(uuid "aaed8520-9614-416e-acbc-fc48e6abecdb")
 		)
 		(instances
 			(project "Function_Generator_PCB"
@@ -8244,7 +8244,7 @@
 				)
 			)
 		)
-		(property "Footprint" ""
+		(property "Footprint" "Resistor_SMD:R_0805_2012Metric_Pad1.20x1.40mm_HandSolder"
 			(at 95.25 174.498 90)
 			(hide yes)
 			(show_name no)

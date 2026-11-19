@@ -40,25 +40,6 @@
     },
     {
       "severity": "must-fix",
-      "title": "Board has malformed outline (no edges found on Edge.Cuts layer)",
-      "detail": "PCB",
-      "failure_mode": "",
-      "citation": "KiCad DRC rule invalid_outline",
-      "source": "drc",
-      "pattern_status": null,
-      "connectivity_verified": "verified",
-      "component_ref": null,
-      "net": null,
-      "rule_id": "drc:invalid_outline",
-      "labels": [],
-      "datasheet": null,
-      "page": null,
-      "excerpt": null,
-      "rank": 0,
-      "mute_key": "drc:invalid_outline#"
-    },
-    {
-      "severity": "must-fix",
       "title": "Pin not connected",
       "detail": "Symbol U2 Pin 3 [REMOTE, Unspecified, Line]",
       "failure_mode": "",
@@ -134,10 +115,67 @@
       "mute_key": "erc:power_pin_not_driven#U1"
     },
     {
+      "severity": "must-fix",
+      "title": "Pin not connected",
+      "detail": "Symbol SW4 Pin 1 [A, Output, Line]",
+      "failure_mode": "",
+      "citation": "KiCad ERC rule pin_not_connected",
+      "source": "erc",
+      "pattern_status": null,
+      "connectivity_verified": "verified",
+      "component_ref": "SW4",
+      "net": null,
+      "rule_id": "erc:pin_not_connected",
+      "labels": [],
+      "datasheet": null,
+      "page": null,
+      "excerpt": null,
+      "rank": 0,
+      "mute_key": "erc:pin_not_connected#SW4"
+    },
+    {
+      "severity": "must-fix",
+      "title": "Pin not connected",
+      "detail": "Symbol SW5 Pin 1 [A, Output, Line]",
+      "failure_mode": "",
+      "citation": "KiCad ERC rule pin_not_connected",
+      "source": "erc",
+      "pattern_status": null,
+      "connectivity_verified": "verified",
+      "component_ref": "SW5",
+      "net": null,
+      "rule_id": "erc:pin_not_connected",
+      "labels": [],
+      "datasheet": null,
+      "page": null,
+      "excerpt": null,
+      "rank": 0,
+      "mute_key": "erc:pin_not_connected#SW5"
+    },
+    {
+      "severity": "must-fix",
+      "title": "Board has malformed outline (no edges found on Edge.Cuts layer)",
+      "detail": "PCB",
+      "failure_mode": "",
+      "citation": "KiCad DRC rule invalid_outline",
+      "source": "drc",
+      "pattern_status": null,
+      "connectivity_verified": "verified",
+      "component_ref": null,
+      "net": null,
+      "rule_id": "drc:invalid_outline",
+      "labels": [],
+      "datasheet": null,
+      "page": null,
+      "excerpt": null,
+      "rank": 0,
+      "mute_key": "drc:invalid_outline#"
+    },
+    {
       "severity": "verify",
-      "title": "DevKit fed on both 5V and 3V3 pins; its onboard LDO output is paralleled with U16 through R31 (0 \u03a9)",
-      "detail": "U1 pin 21 (5V) sits on +5V (LM7805 U3 output and AP2112 U16 input). U1 pins 1 and 2 (3V3) go through R31 (0 \u03a9) to the board's +3.3V rail, which U16 drives. The DevKit has its own 3.3 V LDO powered from its 5V pin, so its 3V3 pins are a regulator output. That puts the DevKit LDO and U16 directly in parallel. The datasheet says the 5V pin and the 3V3 pin are mutually exclusive ways to power the board. Also, when USB is plugged in, the DevKit's USB 5 V is tied to the 5V pin and drives back into the LM7805 output.",
-      "failure_mode": "Two LDOs on one rail fight each other and share current unpredictably, so one of them may end up carrying the whole load. With USB connected while the board is powered (for example during programming), USB 5 V and the 7805 output are tied together and can backfeed the host or the regulator. Fix: leave R31 unpopulated and let each side regulate its own 3.3 V, or power the DevKit through only one pin.",
+      "title": "DevKit 3V3 pins tied via R31 (0\u03a9) to board +3.3V rail while 5V pin is also powered",
+      "detail": "U1's 5V pin is driven from +5V, so the DevKit's onboard LDO produces 3.3V on its 3V3 header pins. Those pins go through R31 (0\u03a9) onto +3.3V, which U16 (AP2112K-3.3) also drives. The datasheet says the 5V and 3V3 power inputs are mutually exclusive. As built, two LDO outputs are paralleled, and when USB is plugged in, the DevKit's regulator can back-feed the whole +3.3V rail. Choose one approach: leave R31 unpopulated and let the DevKit power itself from 5V, or power the module from 3V3 alone and leave its 5V pin unconnected.",
+      "failure_mode": "The two regulators fight each other, and current can flow backwards into one of them. Load sharing between them is uncontrolled. When USB is plugged in, the DevKit's LDO may end up powering the DAC, display and op-amp loads on +3.3V.",
       "citation": "ESP32-S3-DevKitC-N16R8 datasheet p.106",
       "source": "llm",
       "pattern_status": null,
@@ -150,13 +188,51 @@
       "page": 106,
       "excerpt": "Therearethreemutuallyexclusivewaystoprovidepowertotheboard",
       "rank": 1,
-      "mute_key": "llm:11850679458f"
+      "mute_key": "llm:80040184c641"
     },
     {
       "severity": "verify",
-      "title": "ILI9341 module datasheet not available; DS1 not verified",
-      "detail": "No datasheet could be found for DS1 (an ILI9341 TFT module with a touch controller), so its pin connections could not be checked against the manufacturer's specifications. In the netlist, VCC is on +3.3V. The display and touch controller share SCK and MOSI on GPIO4 and GPIO5, with separate chip selects on GPIO7 and GPIO18. The backlight pin LED is driven directly by GPIO17. SDO(MISO) is left unconnected.",
-      "failure_mode": "Without the module datasheet, nobody can confirm that 3.3 V VCC is correct for this module. Nobody can confirm either that GPIO17 can drive the LED pin directly without a transistor on the module.",
+      "title": "U15 channel B (pins 5,6,7) not present in netlist \u2013 unused amplifier unterminated",
+      "detail": "The netlist contains only pins 1\u20134 and 8 of U15; the second amplifier (VIN2+ pin 5, VIN2- pin 6, VO2 pin 7) is not placed or connected, so on the PCB these pads will be left floating. Unused op-amp channels should be configured as a follower with the + input tied to a defined voltage (e.g. GND).",
+      "failure_mode": "Floating FET inputs on channel B can make it oscillate or rail, which adds supply current, heating and crosstalk into the CENTER_BIAS buffer on channel A.",
+      "citation": "OPA2810IDGKT datasheet p.3",
+      "source": "llm",
+      "pattern_status": null,
+      "connectivity_verified": "verified",
+      "component_ref": "U15",
+      "net": null,
+      "rule_id": null,
+      "labels": [],
+      "datasheet": "OPA2810IDGKT",
+      "page": 3,
+      "excerpt": "VIN2+ 5 I Amplifier 2 noninverting input pin",
+      "rank": 1,
+      "mute_key": "llm:d12417923d41"
+    },
+    {
+      "severity": "verify",
+      "title": "U8 VREF driven by \u00b112V op-amp can reach the \u00b112V absolute-max limit",
+      "detail": "U8's VREF pin (pin 7) is driven directly by U4B's output. U4 is an OPA2810 powered from +12V and -12V, and its rail-to-rail output can swing to roughly \u00b111.8V. The two stages in front of it (U4A with a gain of about 5 set by R6/R5, and U4B with a gain of about 4 set by R10/R9) give a high overall gain. Any DC offset, clipping or large input will push VREF to within a few hundred millivolts of the \u00b112V absolute-max rating, and transients during power sequencing could go past it. Confirm the worst-case VREF swing, or add clamping or reduce the gain so there is margin.",
+      "failure_mode": "If the op-amp rails or overshoot take VREF beyond \u00b112V, the DAC's R-2R ladder input can be damaged.",
+      "citation": "AD5452 datasheet p.6",
+      "source": "llm",
+      "pattern_status": null,
+      "connectivity_verified": "verified",
+      "component_ref": "U8",
+      "net": "/Function_Generation/FG_CH1/gained_func",
+      "rule_id": null,
+      "labels": [],
+      "datasheet": "AD5452",
+      "page": 6,
+      "excerpt": "VREF, RFB to GND \u221212 V to +12 V",
+      "rank": 1,
+      "mute_key": "llm:5107e3f6147c"
+    },
+    {
+      "severity": "verify",
+      "title": "ILI9341 module datasheet unavailable; DS1 not audited against a datasheet",
+      "detail": "No datasheet could be found for DS1 (ILI9341 14-pin SPI TFT module with touch). Its pins couldn't be checked against a datasheet. Two things need a manual check: the LED backlight pin is driven directly by ESP32 GPIO17, so the module's backlight current must be within what the GPIO can supply; and T_DOUT (GPIO6) and SDO (no-connect) share the SPI bus with the display, which is fine only if the touch controller tri-states its output when T_CS is high.",
+      "failure_mode": "Errors that need the datasheet to spot, such as backlight current exceeding the GPIO limit or a missing series resistor, could go unnoticed.",
       "citation": null,
       "source": "llm",
       "pattern_status": null,
@@ -169,13 +245,13 @@
       "page": null,
       "excerpt": null,
       "rank": 1,
-      "mute_key": "llm:7711c1c6bf31"
+      "mute_key": "llm:f055fd582a20"
     },
     {
       "severity": "verify",
       "title": "TS5A23157 datasheet unavailable; SW3 not verified",
-      "detail": "No datasheet for the TS5A23157 (SW3) could be found, so its pinout, logic thresholds and supply rating could not be checked against the netlist. Topology: IN1 and IN2 are driven by GPIO21 and GPIO47, V+ is on +3.3V, and the COM pins take the AD9833 outputs. Note that the footprint is a module (ohmen:TS5A23157_Module), so the pin numbering must match the breakout board, not the bare IC.",
-      "failure_mode": "If the module pin mapping doesn't match the symbol, the signal routing or power connections could be wrong.",
+      "detail": "No datasheet could be found for SW3 (TS5A23157), so I could not check its pinout, supply range or decoupling against the manufacturer's specifications. It uses a module footprint (ohmen:TS5A23157_Module), so the pin mapping also needs to be checked against the module.",
+      "failure_mode": "If the module pinout doesn't match the symbol, the AD9833 outputs could be routed to the wrong channel or the switch could get no power.",
       "citation": null,
       "source": "llm",
       "pattern_status": null,
@@ -249,25 +325,6 @@
     },
     {
       "severity": "verify",
-      "title": "Missing footprint C1 (0.22\u03bc) (\u00d790)",
-      "detail": "",
-      "failure_mode": "",
-      "citation": "KiCad DRC rule missing_footprint",
-      "source": "drc",
-      "pattern_status": null,
-      "connectivity_verified": "verified",
-      "component_ref": null,
-      "net": null,
-      "rule_id": "drc:missing_footprint",
-      "labels": [],
-      "datasheet": null,
-      "page": null,
-      "excerpt": null,
-      "rank": 1,
-      "mute_key": "drc:missing_footprint#"
-    },
-    {
-      "severity": "verify",
       "title": "The current configuration does not include the footprint library ''",
       "detail": "Symbol U2 [TMR_6-1222]",
       "failure_mode": "",
@@ -287,8 +344,8 @@
     },
     {
       "severity": "verify",
-      "title": "Label connected to only one pin (\u00d716)",
-      "detail": "Global Label 'GPIO19'\nGlobal Label 'GPIO20'\nGlobal Label 'GPIO48'\nGlobal Label 'GPIO45'\nGlobal Label 'GPIO0'\nGlobal Label 'GPIO35'\nGlobal Label 'GPIO36'\nGlobal Label 'GPIO37'\nGlobal Label 'GPIO38'\nGlobal Label 'GPIO41'\nGlobal Label 'GPIO44/RX'\nGlobal Label 'GPIO43/TX'\nGlobal Label 'GPIO13'\nGlobal Label 'GPIO46'\nGlobal Label 'GPIO3'\nGlobal Label 'RST'",
+      "title": "Label connected to only one pin (\u00d714)",
+      "detail": "Global Label 'GPIO19'\nGlobal Label 'GPIO20'\nGlobal Label 'GPIO48'\nGlobal Label 'GPIO45'\nGlobal Label 'GPIO0'\nGlobal Label 'GPIO35'\nGlobal Label 'GPIO36'\nGlobal Label 'GPIO37'\nGlobal Label 'GPIO38'\nGlobal Label 'GPIO44/RX'\nGlobal Label 'GPIO43/TX'\nGlobal Label 'GPIO46'\nGlobal Label 'GPIO3'\nGlobal Label 'RST'",
       "failure_mode": "",
       "citation": "KiCad ERC rule isolated_pin_label",
       "source": "erc",
@@ -379,32 +436,51 @@
       "excerpt": null,
       "rank": 1,
       "mute_key": "erc:missing_unit#U15"
+    },
+    {
+      "severity": "verify",
+      "title": "Missing footprint C1 (0.22\u03bc) (\u00d793)",
+      "detail": "",
+      "failure_mode": "",
+      "citation": "KiCad DRC rule missing_footprint",
+      "source": "drc",
+      "pattern_status": null,
+      "connectivity_verified": "verified",
+      "component_ref": null,
+      "net": null,
+      "rule_id": "drc:missing_footprint",
+      "labels": [],
+      "datasheet": null,
+      "page": null,
+      "excerpt": null,
+      "rank": 1,
+      "mute_key": "drc:missing_footprint#"
     }
   ],
   "runs": {
     "erc": {
-      "ts": 1794995117.055837,
-      "hash": "ee2a4d3aaf64cca6"
+      "ts": 1795119491.1090379,
+      "hash": "187bf52f5fe75d0c"
     },
     "pattern": {
-      "ts": 1794963813.918674,
-      "hash": "20367fc82a444259"
+      "ts": 1795119491.1090379,
+      "hash": "187bf52f5fe75d0c"
     },
     "drc": {
-      "ts": 1794963813.918674,
-      "hash": "20367fc82a444259"
+      "ts": 1795119491.1090379,
+      "hash": "187bf52f5fe75d0c"
     },
     "distributor": {
-      "ts": 1794963813.918674,
-      "hash": "20367fc82a444259"
+      "ts": 1795119491.1090379,
+      "hash": "187bf52f5fe75d0c"
     },
     "verifier": {
-      "ts": 1794961918.922529,
-      "hash": "b412ac0d2ae4c042"
+      "ts": 1795117402.5481548,
+      "hash": "f237934f3a38fc2f"
     },
     "llm": {
-      "ts": 1794961918.922529,
-      "hash": "b412ac0d2ae4c042"
+      "ts": 1795117402.5481548,
+      "hash": "f237934f3a38fc2f"
     }
   },
   "coverage": [
@@ -419,97 +495,32 @@
       "checks": 2
     }
   ],
-  "components": 90,
+  "components": 93,
   "dropped": [
     {
-      "severity": "must-fix",
-      "title": "TEC2-1221WI is a \u00b15 V module, but it feeds the \u00b112 V rails",
-      "detail": "U2 is a TEC 2-1221WI. The datasheet lists that order code as a +5 VDC / \u20135 VDC, 200 mA output. Its outputs drive the nets +12V (pin 6) and -12V (pin 8), which supply the OPA2810 op-amps (U10, U11, U12 and others). Those rails are designed for \u00b112 V. The \u00b112 V part in the same family is the TEC 2-1222WI (83 mA per output). Either the part number or the rail names are wrong.",
-      "failure_mode": "With this part fitted, the op-amp stages get only \u00b15 V instead of \u00b112 V. Output swing and headroom fall far short of the design, so the analog signals will clip.",
-      "citation": "TEC2-1221WI datasheet p.1",
-      "source": "llm",
-      "pattern_status": null,
-      "connectivity_verified": "verified",
-      "component_ref": "U2",
-      "net": "+12V",
-      "rule_id": null,
-      "labels": [
-        "reviewer:signals"
-      ],
-      "datasheet": "TEC2-1221WI",
-      "page": 1,
-      "excerpt": "TEC 2-1221WI +5 VDC 200 mA \u20135 VDC 200 mA 80 %",
-      "rank": 0,
-      "mute_key": "llm:0abed29be998"
-    },
-    {
       "severity": "verify",
-      "title": "U16 input capacitors C2/C32 have no value",
-      "detail": "The only capacitors on U16's VIN rail (+5V) are C2 and C32. Both are generic 'C_Small_US' symbols with no capacitance value. The datasheet's typical circuit asks for a 1\u00b5F ceramic CIN (X5R/X7R). The output side is fine because it has several 10\u00b5F and 100nF capacitors.",
-      "failure_mode": "If the input capacitance is missing, too small, or not near U16, the LDO can ring or drop out during load steps from the ESP32 and display, especially since +5V also comes from the LM7805 output.",
-      "citation": "AP2112K-3.3 datasheet p.2",
-      "source": "llm",
-      "pattern_status": null,
-      "connectivity_verified": "verified",
-      "component_ref": "U16",
-      "net": "+5V",
-      "rule_id": null,
-      "labels": [
-        "reviewer:power"
-      ],
-      "datasheet": "AP2112K-3.3",
-      "page": 2,
-      "excerpt": "It is recommended to use X7R or X5R dielectric capacitor if 1.0 \u00b5F ceramic capacitor is selected as input/output capacitors.",
-      "rank": 1,
-      "mute_key": "llm:810b494dc9a6"
-    },
-    {
-      "severity": "verify",
-      "title": "DevKit fed through both the 5V and 3V3 pins at once, which the datasheet says are mutually exclusive",
-      "detail": "U1 pin 21 (5V) is on +5V, which the LM7805 (U3) drives. U1 pins 1 and 2 (3V3) go through the 0 \u03a9 resistor R31 to +3.3V, which the AP2112K (U16) drives. That puts the DevKit's own on-board 3.3 V LDO output in parallel with U16's output. When USB is plugged in, the DevKit's USB 5 V can also feed back onto the +5V rail. The DevKit guide lists 5V and 3V3 as two of three mutually exclusive ways to power the board.",
-      "failure_mode": "Two LDOs with paralleled outputs fight over the rail and share load unpredictably, and one can reverse-bias the other. A USB connection can back-drive the 7805 output and the analog 5 V rail. Pick one supply path: either leave R31 unfitted and use the DevKit's 3V3 as an output, or stop feeding the 5V pin.",
+      "title": "DevKit fed on both 5V and 3V3 pins; its onboard LDO output is paralleled with U16 through R31 (0 \u03a9)",
+      "detail": "U1 pin 21 (5V) sits on +5V (LM7805 U3 output and AP2112 U16 input). U1 pins 1 and 2 (3V3) go through R31 (0 \u03a9) to the board's +3.3V rail, which U16 drives. The DevKit has its own 3.3 V LDO powered from its 5V pin, so its 3V3 pins are a regulator output. That puts the DevKit LDO and U16 directly in parallel. The datasheet says the 5V pin and the 3V3 pin are mutually exclusive ways to power the board. Also, when USB is plugged in, the DevKit's USB 5 V is tied to the 5V pin and drives back into the LM7805 output.",
+      "failure_mode": "Two LDOs on one rail fight each other and share current unpredictably, so one of them may end up carrying the whole load. With USB connected while the board is powered (for example during programming), USB 5 V and the 7805 output are tied together and can backfeed the host or the regulator. Fix: leave R31 unpopulated and let each side regulate its own 3.3 V, or power the DevKit through only one pin.",
       "citation": "ESP32-S3-DevKitC-N16R8 datasheet p.106",
       "source": "llm",
       "pattern_status": null,
       "connectivity_verified": "verified",
       "component_ref": "U1",
-      "net": null,
+      "net": "Net-(R31-Pad1)",
       "rule_id": null,
-      "labels": [
-        "reviewer:signals"
-      ],
+      "labels": [],
       "datasheet": "ESP32-S3-DevKitC-N16R8",
       "page": 106,
       "excerpt": "Therearethreemutuallyexclusivewaystoprovidepowertotheboard",
       "rank": 1,
-      "mute_key": "llm:6a83459cec36"
+      "mute_key": "llm:11850679458f"
     },
     {
       "severity": "verify",
-      "title": "VREF/RFB driven by op-amps on \u00b112V rails, equal to the \u00b112V absolute maximum",
-      "detail": "U8 VREF (pin 7) is driven directly by U4 OUT (gained_func), and RFB (pin 8) by U5 OUT; both OPA2810s are powered from +12V/-12V. The AD5452 absolute maximum for VREF and RFB is \u00b112V, so there is no margin: any rail tolerance above 12V, or a saturated or overdriven gain stage, can put these pins at or past the limit.",
-      "failure_mode": "If the gain stage saturates (from too much input gain or at power-up) while the rails are slightly high, VREF/RFB can go beyond \u00b112V and damage the DAC's R-2R ladder. Limit the signal swing to the \u00b110V operating range or add clamping.",
-      "citation": "AD5452 datasheet p.6",
-      "source": "llm",
-      "pattern_status": null,
-      "connectivity_verified": "verified",
-      "component_ref": "U8",
-      "net": null,
-      "rule_id": null,
-      "labels": [
-        "reviewer:signals"
-      ],
-      "datasheet": "AD5452",
-      "page": 6,
-      "excerpt": "VREF, RFB to GND \u221212 V to +12 V",
-      "rank": 1,
-      "mute_key": "llm:e1b8ae354002"
-    },
-    {
-      "severity": "verify",
-      "title": "ILI9341 module datasheet unavailable; DS1 connections not verified",
-      "detail": "There is no datasheet for DS1 (ILI9341 TFT module), so its pinout could not be checked against a source. Two netlist facts need an engineer to review them. First, SDO(MISO) on pin 9 is not connected, so the MCU can never read from the display. Second, the touch controller's T_DOUT goes to its own GPIO6 instead of sharing a MISO line. Pin 8 (LED) is driven straight from GPIO17. Whether that is safe depends on whether the module has its own backlight transistor or resistor.",
-      "failure_mode": "If the module has no backlight driver, GPIO17 might be overloaded by the backlight current. The pin assignments also cannot be confirmed without the datasheet.",
+      "title": "ILI9341 module datasheet not available; DS1 not verified",
+      "detail": "No datasheet could be found for DS1 (an ILI9341 TFT module with a touch controller), so its pin connections could not be checked against the manufacturer's specifications. In the netlist, VCC is on +3.3V. The display and touch controller share SCK and MOSI on GPIO4 and GPIO5, with separate chip selects on GPIO7 and GPIO18. The backlight pin LED is driven directly by GPIO17. SDO(MISO) is left unconnected.",
+      "failure_mode": "Without the module datasheet, nobody can confirm that 3.3 V VCC is correct for this module. Nobody can confirm either that GPIO17 can drive the LED pin directly without a transistor on the module.",
       "citation": null,
       "source": "llm",
       "pattern_status": null,
@@ -517,14 +528,12 @@
       "component_ref": "DS1",
       "net": null,
       "rule_id": null,
-      "labels": [
-        "reviewer:signals"
-      ],
+      "labels": [],
       "datasheet": null,
       "page": null,
       "excerpt": null,
       "rank": 1,
-      "mute_key": "llm:648df65fdc17"
+      "mute_key": "llm:7711c1c6bf31"
     }
   ],
   "review_model": "claude-sub:opus"

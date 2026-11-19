@@ -804,13 +804,26 @@
       "key": "G5V-1 DC5",
       "refs": [],
       "status": "ok",
-      "file": "datasheets/.research/G5V-1_DC5.pdf",
+      "file": "datasheets/G5V-1_DC5.pdf",
       "source": "url",
       "url": "https://omronfs.omron.com/en_US/ecb/products/pdf/en-g5v_1.pdf",
       "sha256": "1d264d1ebbd17bd1dbac42133ffbd27d31ced85ad549a8bd28f0381df848dd0f",
       "pages": 5,
       "tried": [],
       "fetched_at": 1794997744.79032,
+      "origin": "board"
+    },
+    "DMG3401LSN-7": {
+      "key": "DMG3401LSN-7",
+      "refs": [],
+      "status": "ok",
+      "file": "datasheets/.research/DMG3401LSN-7.pdf",
+      "source": "digikey",
+      "url": "https://www.diodes.com/assets/Datasheets/DMG3401LSN.pdf",
+      "sha256": "c22a1c25ecb3fb52b268f5e282bc0c9aaeea07616443f07c4a8573cd30c0fbbb",
+      "pages": 6,
+      "tried": [],
+      "fetched_at": 1795118183.4226322,
       "origin": "research"
     }
   }

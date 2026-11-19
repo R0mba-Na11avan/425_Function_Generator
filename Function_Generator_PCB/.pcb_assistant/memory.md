@@ -1,14 +1,13 @@
-- DevKit: R31 0R ties DevKit 3V3 to U16 out (paralleled LDOs, backfeed unverified). EN/IO0/RST/15 isolated-label ERC = DevKit noise.
-- Firmware: SPI mode 2 all. Partial AD5452 frame can flip edge mode.
-- U2 TMR 6-1222: engineer said ignore in checks. Load ~155mA/rail.
-- J3 pin1=GND but PJ-102AH pin1=center (ds p.2) -> center-negative. SW2 Wurth tact 50mA/12V as power switch. 7805 TO-220 54C/W free air, no heatsink.
-- C16/R27/R28 + U15B intentionally absent; ignore.
-- U17 MCP4822-E/SN, SOIC-8, unwired.
-- PASSIVES: SMD hand solder 0805 (4.7u 1206 on +/-12V). C1 CL21B224KBFNNNG 50V.
-- (2026-11-17) FOOTPRINTS DONE: all valid; resistor 0805 MPNs approved (BOM 33 rows). J1/J2 BNC: skip, don't raise. U3 MC7805ABTG.
-- ON HAND, not ordered (BOM rows pinned "ON HAND - do not order"): DS1 ILI9341, U1 ESP32 DevKit, U6/U7 AD9833 modules, SW1 encoder module, SW3 TS5A23157 module. Their sockets (1x14, 1x07 x2, 1x05) still need buying - asked. SW3 module header/socket unknown.
-- DEFERRED (don't nag): U6/U7 header order.
-- Open offer: DigiKey MPNs for J3 jack, J4/J5 1x02, SW2 Wurth 430476085716.
-- (2026-11-18) (2026-11-17) Plan: MCP4822 U17 replaces offset DACs U9/U14 + U10 to cut cost. Proposed: VDD 3.3V (VIH 0.7VDD), VA->1k/100n->U5 pin5, VB->U12 pin5; R11/R15 -> 10k to GND; R12/R13/R29 unchanged; CH_off=3.402*Vdac-5; CS=GPIO14, LDAC=GND; SPI mode 0/3 for this device. Loses 5V ratiometric cancel -> calibrate.
-- (2026-11-18) (2026-11-18) CH1 offset rewired as built: DAC_A(global)->R11 1k->dc_offset->U5 pin5, C20 to GND; NO 10k to GND on pin6 -> CH_off=3.0*Vdac-5, 0V at code~1667, range -4.97..+7.17V. CH2 (U12/R15/U10B/C28) not yet done. U17 & C20 need footprints, C20 value.
-- (2026-11-18) Output relays SW4(CH1)/SW5(CH2) = G5V-1 DC5: coil 2(+5V)/9, COM 6 (5 tied, not on symbol), NC 1 unused, NO 10->R1/R2. Q1/Q2 2N3904, R8/R28 1k from GPIO41/13, R27/R32 47k pulldown, D1/D2 flyback. R27/R28 now USED (old 'absent' note obsolete).
+- DevKit: R31 0R ties DevKit 3V3 to U16 out (paralleled LDOs, unverified). EN/IO0/RST/GPIO isolated-label ERC = DevKit noise.
+- Firmware: SPI mode 2 AD5452/AD9833; MCP4822 U17 mode 0/3.
+- U2 TMR 6-1222: ignore in checks. Load ~155mA/rail.
+- PASSIVES: ALL hand solder -> 0805 only (4.7u 1206 on +/-12V). No 0402 MPNs. C1 CL21B224KBFNNNG 50V.
+- FOOTPRINTS: J1/J2 BNC skip, don't raise. U3 MC7805ABTG. Missing fp (11-19): U17, C18, D1, D2, HS1.
+- ON HAND pinned "do not order": DS1, U1, U6/U7, SW1, SW2, SW3. Sockets still need buying. DEFERRED: U6/U7 header order.
+- BOM gotcha: value/footprint change regroups row and drops MPN/pin -> re-set after fill_bom_from_schematic.
+- (11-19) 0805 fix done: C16/C20/C24 merged into 100n row, R8/R28 into 1k row, R27/R32 47k row has schematic MPN RC0805FR-0747KL (engineer's).
+- Open offer: DigiKey MPNs for D1/D2, Q1/Q2, J3, J4/J5, HS1 heatsink.
+- Offset: MCP4822 U17 (VDD 3.3V, CS GPIO14, LDAC GND). DAC_A->R11 1k->U5p5, C20; DAC_B->R15->U12p5, C24. CH_off=3.0*Vdac-5. Calibrate.
+- Relays SW4/SW5 G5V-1 DC5 MPN set, DK proposal pending approval; fp Relay_THT:Relay_SPDT_Omron_G5V-1 assigned. Coil 2(+5V)/9, COM 6 (pin5 2nd COM not on symbol, pad floats), NC 1 unused, NO 10->R1/R2. Q1/Q2 2N3904, R8/R28 1k GPIO41/13, R27/R32 47k pulldown, D1/D2 flyback.
+- U15 unit B unplaced. U8/U13 VREF from RRIO OPA2810 on +/-12 = 0 margin to AD5452 abs max (ds p.6).
+- J3 center-positive. HS1 near 7805. SW2 rocker current rating unverified.
