@@ -1,56 +1,6 @@
 {
   "rows": [
     {
-      "id": "sch:479812578b86",
-      "refdes": [
-        "J1"
-      ],
-      "qty": 1,
-      "value": "Conn_Coaxial_CH1",
-      "footprint": null,
-      "mpn": null,
-      "datasheet_url": null,
-      "product_url": null,
-      "why": "from schematic",
-      "unit_price": null,
-      "manufacturer": null,
-      "distributor_pn": null,
-      "stock": null,
-      "lifecycle": null,
-      "fetched_at": null,
-      "min_order": null,
-      "source": "schematic",
-      "status": "active",
-      "duplicate_of": [],
-      "separate_from": [],
-      "line_total": null
-    },
-    {
-      "id": "sch:afe2ce9a8248",
-      "refdes": [
-        "J2"
-      ],
-      "qty": 1,
-      "value": "Conn_Coaxial_CH2",
-      "footprint": null,
-      "mpn": null,
-      "datasheet_url": null,
-      "product_url": null,
-      "why": "from schematic",
-      "unit_price": null,
-      "manufacturer": null,
-      "distributor_pn": null,
-      "stock": null,
-      "lifecycle": null,
-      "fetched_at": null,
-      "min_order": null,
-      "source": "schematic",
-      "status": "active",
-      "duplicate_of": [],
-      "separate_from": [],
-      "line_total": null
-    },
-    {
       "id": "sch:446b4cf6fcdb",
       "refdes": [
         "SW1"
@@ -280,31 +230,6 @@
       "duplicate_of": [],
       "separate_from": [],
       "line_total": 0.28
-    },
-    {
-      "id": "sch:3cff7f67e453",
-      "refdes": [
-        "U2"
-      ],
-      "qty": 1,
-      "value": "TMR 6-1222",
-      "footprint": "TMR 6_TRP",
-      "mpn": "TMR 6-1222",
-      "datasheet_url": "https://tracopower.com/tmr6-datasheet/",
-      "product_url": "https://www.digikey.com/en/products/detail/traco-power/TMR-6-1222/9345154",
-      "why": "Traco TMR 6-1222, +/-12V 6W isolated DC/DC (MPN taken from schematic value)",
-      "unit_price": 25.05,
-      "manufacturer": "Traco Power",
-      "distributor_pn": "1951-3205-ND",
-      "stock": 93,
-      "lifecycle": "Active",
-      "fetched_at": "2026-11-18T01:13:57+00:00",
-      "min_order": null,
-      "source": "schematic",
-      "status": "active",
-      "duplicate_of": [],
-      "separate_from": [],
-      "line_total": 25.05
     },
     {
       "id": "sch:08d2fdb5a63b",
@@ -562,10 +487,11 @@
     {
       "id": "sch:76b9696be807",
       "refdes": [
+        "C18",
         "C23",
         "C25"
       ],
-      "qty": 2,
+      "qty": 3,
       "value": "10\u03bc",
       "footprint": "Capacitor_SMD:C_0805_2012Metric_Pad1.18x1.45mm_HandSolder",
       "mpn": "LMK212AB7106MG-T",
@@ -583,7 +509,7 @@
       "status": "active",
       "duplicate_of": [],
       "separate_from": [],
-      "line_total": 0.34
+      "line_total": 0.51
     },
     {
       "id": "sch:e4cfc44a1f78",
@@ -826,32 +752,6 @@
       "line_total": null
     },
     {
-      "id": "sch:516156913251",
-      "refdes": [
-        "D1",
-        "D2"
-      ],
-      "qty": 2,
-      "value": "D",
-      "footprint": null,
-      "mpn": null,
-      "datasheet_url": null,
-      "product_url": null,
-      "why": "from schematic",
-      "unit_price": null,
-      "manufacturer": null,
-      "distributor_pn": null,
-      "stock": null,
-      "lifecycle": null,
-      "fetched_at": null,
-      "min_order": null,
-      "source": "schematic",
-      "status": "active",
-      "duplicate_of": [],
-      "separate_from": [],
-      "line_total": null
-    },
-    {
       "id": "sch:a2ccf65c916a",
       "refdes": [
         "Q1",
@@ -862,81 +762,6 @@
       "footprint": "Package_TO_SOT_THT:TO-92_Inline",
       "mpn": null,
       "datasheet_url": "https://www.onsemi.com/pub/Collateral/2N3903-D.PDF",
-      "product_url": null,
-      "why": "from schematic",
-      "unit_price": null,
-      "manufacturer": null,
-      "distributor_pn": null,
-      "stock": null,
-      "lifecycle": null,
-      "fetched_at": null,
-      "min_order": null,
-      "source": "schematic",
-      "status": "active",
-      "duplicate_of": [],
-      "separate_from": [],
-      "line_total": null
-    },
-    {
-      "id": "sch:009cdad23214",
-      "refdes": [
-        "C18"
-      ],
-      "qty": 1,
-      "value": "10\u03bc",
-      "footprint": null,
-      "mpn": "GRM21BR71A106KA73K",
-      "datasheet_url": "https://mm.digikey.com/Volume0/opasdata/d220001/medias/docus/8942/490_Chip_Multilayer_CAT2021_MLCC.pdf",
-      "product_url": "https://www.digikey.com/en/products/detail/murata-electronics/GRM21BR71A106KA73K/6606010",
-      "why": "from schematic",
-      "unit_price": 0.12,
-      "manufacturer": "Murata Electronics",
-      "distributor_pn": "490-14381-1-ND",
-      "stock": 74429,
-      "lifecycle": "Active",
-      "fetched_at": "2026-11-19T19:34:58+00:00",
-      "min_order": null,
-      "source": "schematic",
-      "status": "active",
-      "duplicate_of": [],
-      "separate_from": [],
-      "line_total": 0.12
-    },
-    {
-      "id": "sch:3f8855a3a3a8",
-      "refdes": [
-        "U17"
-      ],
-      "qty": 1,
-      "value": "MCP4822",
-      "footprint": null,
-      "mpn": "MCP4822-E/SN",
-      "datasheet_url": "http://ww1.microchip.com/downloads/en/DeviceDoc/20002249B.pdf",
-      "product_url": "https://www.digikey.com/en/products/detail/microchip-technology/MCP4822-E-SN/951466",
-      "why": "from schematic",
-      "unit_price": 3.97,
-      "manufacturer": "Microchip Technology",
-      "distributor_pn": "MCP4822-E/SN-ND",
-      "stock": 11229,
-      "lifecycle": "Active",
-      "fetched_at": "2026-11-19T19:35:02+00:00",
-      "min_order": null,
-      "source": "schematic",
-      "status": "active",
-      "duplicate_of": [],
-      "separate_from": [],
-      "line_total": 3.97
-    },
-    {
-      "id": "sch:93ea806dc01b",
-      "refdes": [
-        "HS1"
-      ],
-      "qty": 1,
-      "value": "Heatsink",
-      "footprint": null,
-      "mpn": null,
-      "datasheet_url": null,
       "product_url": null,
       "why": "from schematic",
       "unit_price": null,
@@ -1028,6 +853,132 @@
       "duplicate_of": [],
       "separate_from": [],
       "line_total": 0.2
+    },
+    {
+      "id": "sch:822b02010113",
+      "refdes": [
+        "U2"
+      ],
+      "qty": 1,
+      "value": "TMR 6-1222",
+      "footprint": "TMR6-1222:TMR 6_TRP",
+      "mpn": null,
+      "datasheet_url": "https://tracopower.com/tmr6-datasheet/",
+      "product_url": null,
+      "why": "from schematic",
+      "unit_price": null,
+      "manufacturer": null,
+      "distributor_pn": null,
+      "stock": null,
+      "lifecycle": null,
+      "fetched_at": null,
+      "min_order": null,
+      "source": "schematic",
+      "status": "active",
+      "duplicate_of": [],
+      "separate_from": [],
+      "line_total": null
+    },
+    {
+      "id": "sch:5bbf039d246e",
+      "refdes": [
+        "D1",
+        "D2"
+      ],
+      "qty": 2,
+      "value": "1N4148",
+      "footprint": "Diode_THT:D_DO-35_SOD27_P7.62mm_Horizontal",
+      "mpn": null,
+      "datasheet_url": null,
+      "product_url": null,
+      "why": "from schematic",
+      "unit_price": null,
+      "manufacturer": null,
+      "distributor_pn": null,
+      "stock": null,
+      "lifecycle": null,
+      "fetched_at": null,
+      "min_order": null,
+      "source": "schematic",
+      "status": "active",
+      "duplicate_of": [],
+      "separate_from": [],
+      "line_total": null
+    },
+    {
+      "id": "sch:7be6222b5239",
+      "refdes": [
+        "J1"
+      ],
+      "qty": 1,
+      "value": "Conn_Coaxial_CH1",
+      "footprint": "TerminalBlock:TerminalBlock_MaiXu_MX126-5.0-02P_1x02_P5.00mm",
+      "mpn": null,
+      "datasheet_url": null,
+      "product_url": null,
+      "why": "from schematic",
+      "unit_price": null,
+      "manufacturer": null,
+      "distributor_pn": null,
+      "stock": null,
+      "lifecycle": null,
+      "fetched_at": null,
+      "min_order": null,
+      "source": "schematic",
+      "status": "active",
+      "duplicate_of": [],
+      "separate_from": [],
+      "line_total": null
+    },
+    {
+      "id": "sch:2c5734bb5d4d",
+      "refdes": [
+        "J2"
+      ],
+      "qty": 1,
+      "value": "Conn_Coaxial_CH2",
+      "footprint": "TerminalBlock:TerminalBlock_MaiXu_MX126-5.0-02P_1x02_P5.00mm",
+      "mpn": null,
+      "datasheet_url": null,
+      "product_url": null,
+      "why": "from schematic",
+      "unit_price": null,
+      "manufacturer": null,
+      "distributor_pn": null,
+      "stock": null,
+      "lifecycle": null,
+      "fetched_at": null,
+      "min_order": null,
+      "source": "schematic",
+      "status": "active",
+      "duplicate_of": [],
+      "separate_from": [],
+      "line_total": null
+    },
+    {
+      "id": "sch:b3c994afd640",
+      "refdes": [
+        "U17"
+      ],
+      "qty": 1,
+      "value": "MCP4822",
+      "footprint": "MCP4822:SOIC8-N_MC_MCH-M",
+      "mpn": "MCP4822-E/SN",
+      "datasheet_url": "http://ww1.microchip.com/downloads/en/DeviceDoc/20002249B.pdf",
+      "product_url": "https://www.digikey.com/en/products/detail/microchip-technology/MCP4822-E-SN/951466",
+      "why": "from schematic",
+      "unit_price": 3.97,
+      "manufacturer": "Microchip Technology",
+      "distributor_pn": "MCP4822-E/SN-ND",
+      "stock": 11229,
+      "lifecycle": "Active",
+      "fetched_at": "2026-11-20T02:59:43+00:00",
+      "min_order": null,
+      "source": "schematic",
+      "status": "active",
+      "duplicate_of": [],
+      "separate_from": [],
+      "line_total": 3.97
     }
   ]
 }
