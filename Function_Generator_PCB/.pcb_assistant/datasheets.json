@@ -851,6 +851,45 @@
       "tried": [],
       "fetched_at": 1795127181.1884098,
       "origin": "research"
+    },
+    "1N4148": {
+      "key": "1N4148",
+      "refs": [],
+      "status": "missing",
+      "file": null,
+      "source": null,
+      "url": null,
+      "sha256": null,
+      "pages": 0,
+      "tried": [],
+      "fetched_at": 0.0,
+      "origin": "research"
+    },
+    "1N4148TR": {
+      "key": "1N4148TR",
+      "refs": [],
+      "status": "missing",
+      "file": null,
+      "source": null,
+      "url": null,
+      "sha256": null,
+      "pages": 0,
+      "tried": [],
+      "fetched_at": 0.0,
+      "origin": "research"
+    },
+    "1N4148-TAP": {
+      "key": "1N4148-TAP",
+      "refs": [],
+      "status": "ok",
+      "file": "datasheets/.research/1N4148-TAP.pdf",
+      "source": "digikey",
+      "url": "https://www.vishay.com/docs/81857/1n4148.pdf",
+      "sha256": "aefe85400a427ed886a4e1c88205ceabb9f9b38044b29c6acee4bb00146a44b7",
+      "pages": 4,
+      "tried": [],
+      "fetched_at": 1795131793.3412526,
+      "origin": "research"
     }
   }
 }

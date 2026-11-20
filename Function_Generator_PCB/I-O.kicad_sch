@@ -3394,121 +3394,6 @@
 			)
 			(embedded_fonts no)
 		)
-		(symbol "power:PWR_FLAG"
-			(power global)
-			(pin_numbers
-				(hide yes)
-			)
-			(pin_names
-				(offset 0)
-				(hide yes)
-			)
-			(exclude_from_sim no)
-			(in_bom yes)
-			(on_board yes)
-			(in_pos_files yes)
-			(duplicate_pin_numbers_are_jumpers no)
-			(property "Reference" "#FLG"
-				(at 0 1.905 0)
-				(show_name no)
-				(do_not_autoplace no)
-				(hide yes)
-				(effects
-					(font
-						(size 1.27 1.27)
-					)
-				)
-			)
-			(property "Value" "PWR_FLAG"
-				(at 0 3.81 0)
-				(show_name no)
-				(do_not_autoplace no)
-				(effects
-					(font
-						(size 1.27 1.27)
-					)
-				)
-			)
-			(property "Footprint" ""
-				(at 0 0 0)
-				(show_name no)
-				(do_not_autoplace no)
-				(hide yes)
-				(effects
-					(font
-						(size 1.27 1.27)
-					)
-				)
-			)
-			(property "Datasheet" ""
-				(at 0 0 0)
-				(show_name no)
-				(do_not_autoplace no)
-				(hide yes)
-				(effects
-					(font
-						(size 1.27 1.27)
-					)
-				)
-			)
-			(property "Description" "Special symbol for telling ERC where power comes from"
-				(at 0 0 0)
-				(show_name no)
-				(do_not_autoplace no)
-				(hide yes)
-				(effects
-					(font
-						(size 1.27 1.27)
-					)
-				)
-			)
-			(property "ki_keywords" "flag power"
-				(at 0 0 0)
-				(show_name no)
-				(do_not_autoplace no)
-				(hide yes)
-				(effects
-					(font
-						(size 1.27 1.27)
-					)
-				)
-			)
-			(symbol "PWR_FLAG_0_0"
-				(pin power_out line
-					(at 0 0 90)
-					(length 0)
-					(name ""
-						(effects
-							(font
-								(size 1.27 1.27)
-							)
-						)
-					)
-					(number "1"
-						(effects
-							(font
-								(size 1.27 1.27)
-							)
-						)
-					)
-				)
-			)
-			(symbol "PWR_FLAG_0_1"
-				(polyline
-					(pts
-						(xy 0 0) (xy 0 1.27) (xy -1.016 1.905) (xy 0 2.54) (xy 1.016 1.905) (xy 0 1.27)
-					)
-					(stroke
-						(width 0)
-						(type default)
-					)
-					(fill
-						(type none)
-					)
-				)
-			)
-			(embedded_fonts no)
-		)
 	)
 	(rectangle
 		(start 167.64 89.154)
@@ -3665,12 +3550,6 @@
 		(uuid "8bbc815e-598d-4e8b-a647-ea1470c18a66")
 	)
 	(junction
-		(at 87.63 29.21)
-		(diameter 0)
-		(color 0 0 0 0)
-		(uuid "b3b390a5-ac5b-4777-bece-90d8ea365150")
-	)
-	(junction
 		(at 57.15 97.79)
 		(diameter 0)
 		(color 0 0 0 0)
@@ -3778,7 +3657,7 @@
 	)
 	(wire
 		(pts
-			(xy 142.24 167.64) (xy 151.13 167.64)
+			(xy 143.51 167.64) (xy 151.13 167.64)
 		)
 		(stroke
 			(width 0)
@@ -3818,7 +3697,7 @@
 	)
 	(wire
 		(pts
-			(xy 142.24 151.13) (xy 142.24 143.51)
+			(xy 143.51 151.13) (xy 143.51 143.51)
 		)
 		(stroke
 			(width 0)
@@ -3928,7 +3807,7 @@
 	)
 	(wire
 		(pts
-			(xy 142.24 143.51) (xy 151.13 143.51)
+			(xy 143.51 143.51) (xy 151.13 143.51)
 		)
 		(stroke
 			(width 0)
@@ -4015,16 +3894,6 @@
 			(type default)
 		)
 		(uuid "586b499f-4fba-42f0-af64-732b855eefba")
-	)
-	(wire
-		(pts
-			(xy 87.63 29.21) (xy 87.63 87.63)
-		)
-		(stroke
-			(width 0)
-			(type default)
-		)
-		(uuid "59009803-ee04-45a8-af16-01402a9e5c1d")
 	)
 	(wire
 		(pts
@@ -4228,7 +4097,7 @@
 	)
 	(wire
 		(pts
-			(xy 142.24 158.75) (xy 142.24 167.64)
+			(xy 143.51 158.75) (xy 143.51 167.64)
 		)
 		(stroke
 			(width 0)
@@ -4285,16 +4154,6 @@
 			(type default)
 		)
 		(uuid "b0a652e8-cf42-4b76-99cc-0130c2d3c973")
-	)
-	(wire
-		(pts
-			(xy 87.63 29.21) (xy 95.25 29.21)
-		)
-		(stroke
-			(width 0)
-			(type default)
-		)
-		(uuid "b1398cfa-f9c9-4b9f-b3b1-0602b7a2f520")
 	)
 	(wire
 		(pts
@@ -4408,7 +4267,7 @@
 	)
 	(wire
 		(pts
-			(xy 87.63 24.13) (xy 87.63 29.21)
+			(xy 87.63 24.13) (xy 87.63 87.63)
 		)
 		(stroke
 			(width 0)
@@ -5871,7 +5730,7 @@
 				(justify left)
 			)
 		)
-		(property "Footprint" ""
+		(property "Footprint" "TerminalBlock:TerminalBlock_MaiXu_MX126-5.0-02P_1x02_P5.00mm"
 			(at 251.46 140.97 0)
 			(hide yes)
 			(show_name no)
@@ -6148,7 +6007,7 @@
 				)
 			)
 		)
-		(property "Value" "+3.3VP"
+		(property "Value" "+3.3V"
 			(at 87.63 19.05 0)
 			(show_name no)
 			(do_not_autoplace no)
@@ -6572,10 +6431,9 @@
 		(on_board yes)
 		(in_pos_files yes)
 		(dnp no)
-		(fields_autoplaced yes)
 		(uuid "44d0deb7-7e6e-4f90-b4e6-574057522087")
 		(property "Reference" "D1"
-			(at 102.87 152.3999 90)
+			(at 89.916 152.4 90)
 			(show_name no)
 			(do_not_autoplace no)
 			(effects
@@ -6585,8 +6443,8 @@
 				(justify left)
 			)
 		)
-		(property "Value" "D"
-			(at 102.87 154.9399 90)
+		(property "Value" "1N4148"
+			(at 89.916 154.94 90)
 			(show_name no)
 			(do_not_autoplace no)
 			(effects
@@ -6596,7 +6454,7 @@
 				(justify left)
 			)
 		)
-		(property "Footprint" ""
+		(property "Footprint" "Diode_THT:D_DO-35_SOD27_P7.62mm_Horizontal"
 			(at 100.33 153.67 0)
 			(hide yes)
 			(show_name no)
@@ -6782,7 +6640,7 @@
 				(justify left)
 			)
 		)
-		(property "Footprint" ""
+		(property "Footprint" "TerminalBlock:TerminalBlock_MaiXu_MX126-5.0-02P_1x02_P5.00mm"
 			(at 251.46 110.49 0)
 			(hide yes)
 			(show_name no)
@@ -7422,84 +7280,6 @@
 		)
 	)
 	(symbol
-		(lib_id "power:PWR_FLAG")
-		(at 95.25 29.21 0)
-		(unit 1)
-		(body_style 1)
-		(exclude_from_sim no)
-		(in_bom yes)
-		(on_board yes)
-		(in_pos_files yes)
-		(dnp no)
-		(uuid "6415e457-5ebb-4bd4-bfb3-96cefd3031c1")
-		(property "Reference" "#FLG03"
-			(at 95.25 27.305 0)
-			(hide yes)
-			(show_name no)
-			(do_not_autoplace no)
-			(effects
-				(font
-					(size 1.27 1.27)
-				)
-			)
-		)
-		(property "Value" "PWR_FLAG"
-			(at 90.678 25.4 0)
-			(show_name no)
-			(do_not_autoplace no)
-			(effects
-				(font
-					(size 1.27 1.27)
-				)
-				(justify left)
-			)
-		)
-		(property "Footprint" ""
-			(at 95.25 29.21 0)
-			(hide yes)
-			(show_name no)
-			(do_not_autoplace no)
-			(effects
-				(font
-					(size 1.27 1.27)
-				)
-			)
-		)
-		(property "Datasheet" ""
-			(at 95.25 29.21 0)
-			(hide yes)
-			(show_name no)
-			(do_not_autoplace no)
-			(effects
-				(font
-					(size 1.27 1.27)
-				)
-			)
-		)
-		(property "Description" "Special symbol for telling ERC where power comes from"
-			(at 95.25 29.21 0)
-			(hide yes)
-			(show_name no)
-			(do_not_autoplace no)
-			(effects
-				(font
-					(size 1.27 1.27)
-				)
-			)
-		)
-		(pin "1"
-			(uuid "d34ee6d0-6d73-43ac-b12f-1bd57b4bbdd8")
-		)
-		(instances
-			(project "Function_Generator_PCB"
-				(path "/36137b94-4d12-4e7a-a065-7ebda7200b05/3d0a80e5-cf3f-4611-8c8d-1db3166782f3"
-					(reference "#FLG03")
-					(unit 1)
-				)
-			)
-		)
-	)
-	(symbol
 		(lib_id "power:GND")
 		(at 251.46 118.11 0)
 		(unit 1)
@@ -8061,7 +7841,7 @@
 	)
 	(symbol
 		(lib_id "Device:D")
-		(at 142.24 154.94 270)
+		(at 143.51 154.94 270)
 		(unit 1)
 		(body_style 1)
 		(exclude_from_sim no)
@@ -8069,10 +7849,9 @@
 		(on_board yes)
 		(in_pos_files yes)
 		(dnp no)
-		(fields_autoplaced yes)
 		(uuid "c1f40a82-8c95-4f99-88f9-fa33d63c5282")
 		(property "Reference" "D2"
-			(at 144.78 153.6699 90)
+			(at 133.35 153.924 90)
 			(show_name no)
 			(do_not_autoplace no)
 			(effects
@@ -8082,8 +7861,8 @@
 				(justify left)
 			)
 		)
-		(property "Value" "D"
-			(at 144.78 156.2099 90)
+		(property "Value" "1N4148"
+			(at 133.35 156.464 90)
 			(show_name no)
 			(do_not_autoplace no)
 			(effects
@@ -8093,8 +7872,8 @@
 				(justify left)
 			)
 		)
-		(property "Footprint" ""
-			(at 142.24 154.94 0)
+		(property "Footprint" "Diode_THT:D_DO-35_SOD27_P7.62mm_Horizontal"
+			(at 143.51 154.94 0)
 			(hide yes)
 			(show_name no)
 			(do_not_autoplace no)
@@ -8105,7 +7884,7 @@
 			)
 		)
 		(property "Datasheet" ""
-			(at 142.24 154.94 0)
+			(at 143.51 154.94 0)
 			(hide yes)
 			(show_name no)
 			(do_not_autoplace no)
@@ -8116,7 +7895,7 @@
 			)
 		)
 		(property "Description" "Diode"
-			(at 142.24 154.94 0)
+			(at 143.51 154.94 0)
 			(hide yes)
 			(show_name no)
 			(do_not_autoplace no)
@@ -8127,7 +7906,7 @@
 			)
 		)
 		(property "Sim.Device" "D"
-			(at 142.24 154.94 0)
+			(at 143.51 154.94 0)
 			(hide yes)
 			(show_name no)
 			(do_not_autoplace no)
@@ -8138,7 +7917,7 @@
 			)
 		)
 		(property "Sim.Pins" "1=K 2=A"
-			(at 142.24 154.94 0)
+			(at 143.51 154.94 0)
 			(hide yes)
 			(show_name no)
 			(do_not_autoplace no)

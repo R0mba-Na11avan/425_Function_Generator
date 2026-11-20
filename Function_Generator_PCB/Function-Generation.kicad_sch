@@ -5239,7 +5239,7 @@
 				(justify left)
 			)
 		)
-		(property "Footprint" ""
+		(property "Footprint" "MCP4822:SOIC8-N_MC_MCH-M"
 			(at 260.35 119.38 0)
 			(hide yes)
 			(show_name no)
@@ -7633,7 +7633,7 @@
 				(justify left)
 			)
 		)
-		(property "Footprint" ""
+		(property "Footprint" "Capacitor_SMD:C_0805_2012Metric_Pad1.18x1.45mm_HandSolder"
 			(at 272.7452 116.84 0)
 			(hide yes)
 			(show_name no)
