@@ -1,8 +1,3 @@
-- DevKit: R31 0R = DEBUG only, DNP normally; fit only if U16 LDO fails (DevKit 3V3 then feeds +3.3V). EN/IO0/RST/GPIO isolated-label ERC = DevKit noise.
-- Firmware: SPI mode 2 AD5452/AD9833; MCP4822 U17 mode 0/3.
-- U2 TMR 6-1222: ignore in checks. Load ~155mA/rail. Load high-Z only.
-- PASSIVES: ALL hand solder -> 0805 only (4.7u 1206 on +/-12V). No 0402 MPNs. C1 CL21B224KBFNNNG 50V.
-- FOOTPRINTS: J1/J2 BNC skip, don't raise. U3 MC7805ABTG. Missing fp (11-19): U17, C18, D1, D2, HS1.
 - ON HAND pinned "do not order": DS1, U1, U6/U7, SW1, SW2, SW3. Sockets still need buying. DEFERRED: U6/U7 header order.
 - BOM gotcha: value/footprint change regroups row and drops MPN/pin -> re-set after fill_bom_from_schematic.
 - (11-19) 0805 fix done: C16/C20/C24 in 100n row, R8/R28 in 1k row, R27/R32 47k row MPN RC0805FR-0747KL (engineer's).
@@ -12,3 +7,6 @@
 - U15 unit B unplaced. U8/U13 VREF from RRIO OPA2810 on +/-12 = 0 margin to AD5452 abs max (ds p.6).
 - J3 center-positive. HS1 near 7805. SW2 rocker current rating unverified. Power in: J3->SW2->+12C (U2 in, U3 in).
 - (11-21) Track widths advised (1oz): PWR_IN(+12C, J3 net) 1.0, +5V 0.8, +/-12V 0.5, +3.3V 0.3, signals Default 0.2/0.2, GND pour. No netclass patterns existed.
+- (2026-11-21) (11-21) Layout review: 2L 100x100, netclasses exist (PWR_IN 1.2,12V 0.5,5V 0.4,3.3V 0.3 but +3.3V unassigned). Advised: GND pour both layers + antenna keepout, 5V_ref own branch from 7805 (CH2 now fed via relay coil trace), fix U16 EN/GND clearance, display bus along top edge B.Cu.
+- (2026-11-21) (11-21) GNDA wired to GND on power sheet (30.48,123.19) -> single GND net on board (65 pads), no split. ERC multiple_net_names. Advised single solid GND, partition by placement.
+- (2026-11-22) (11-21 15:47) Pour done right: GND zone F+B, 11 rule areas (antenna + 10 op-amp windows), CH1 rerouted top no vias. DRC 25 unconn/22 starved. Advised: 9 vias + 2 stubs (->14), THT-only thermals (starved 22->5). Remaining 14 islands from B.Cu runs (CENTER_BIAS, SW3B-COM2, GPIO4/9/11/12).
