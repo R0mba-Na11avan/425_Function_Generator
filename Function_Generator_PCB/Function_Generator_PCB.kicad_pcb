@@ -121,9 +121,9 @@
 			(subtractmaskfromsilk no)
 			(outputformat 1)
 			(mirror no)
-			(drillshape 1)
+			(drillshape 0)
 			(scaleselection 1)
-			(outputdirectory "")
+			(outputdirectory "pcb/v2/")
 		)
 	)
 	(footprint "Resistor_SMD:R_2512_6332Metric_Pad1.40x3.35mm_HandSolder"
@@ -27142,6 +27142,19 @@
 		(fill no)
 		(layer "Edge.Cuts")
 		(uuid "3c370d0d-74cd-4a5a-aca2-9fda16531005")
+	)
+	(gr_text "PARIKSHITH VENKATARAGHAVAN\nOWEN PRONOVOST"
+		(at 190 55 0)
+		(layer "B.SilkS")
+		(uuid "6eed5da0-b070-47d9-90dd-c040cfcdde42")
+		(effects
+			(font
+				(size 3 3)
+				(thickness 0.3)
+				(bold yes)
+			)
+			(justify left mirror)
+		)
 	)
 	(segment
 		(start 170.3275 125.9575)
