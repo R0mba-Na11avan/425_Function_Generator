@@ -1,4 +1,5 @@
 #include "func_gen.h"
+#include "safe_pins.h"
 
 static_assert(FREQ_MAX_HZ <= AD9833_MAX_FREQ, "FREQ_MAX_HZ is above what the AD9833 can output");
 static_assert(PHASE_MAX_DEG <= AD9833_MAX_PHASE, "PHASE_MAX_DEG is above the AD9833 phase range");
@@ -78,10 +79,15 @@ FunctionGenerator::FunctionGenerator(uint8_t funcSelect, uint8_t ampDacSelect, u
 }
 
 void FunctionGenerator::begin() {
-    // output disconnected before anything else: the base pull-down holds the
-    // relay open during boot, and the level is set before the pin drives
-    digitalWrite(_relayPin, LOW);
-    pinMode(_relayPin, OUTPUT);
+    // output disconnected before anything else. holdSafePinStates() already
+    // did this at the top of setup(), this keeps begin() safe on its own
+    driveOutputPin(_relayPin, LOW);
+
+    // divided path until the AD9833 is reset: its registers are undefined at
+    // power-up (it could be making a square), and the divided path is safe
+    // for any waveform. applyWaveform() below moves to the direct path once
+    // the sine is set
+    driveOutputPin(_switchPin, HIGH);
 
     // nothing else starts the generator bus, and AD9833 begin() doesn't either
     _spi->begin(PIN_GEN_SCK, PIN_GEN_MISO, PIN_GEN_MOSI);
@@ -90,7 +96,6 @@ void FunctionGenerator::begin() {
     // reads a word meant for another one
     _ampDac.begin();
     _offsetDac.begin();
-    pinMode(_switchPin, OUTPUT);
     _funcIC.begin();
 
     // the offset DAC powers up shut down (about 0 V out, one end of the
@@ -225,6 +230,14 @@ void FunctionGenerator::applyLevels() {
 }
 
 void FunctionGenerator::applyWaveform() {
+    // HIGH = NO1 = the divided square path, LOW = NC1 = the direct
+    // sine/triangle path. the direct path only takes the ~0.65 V sine/triangle:
+    // a 3.3 V square on it saturates the x20 gain stages. so the switch moves
+    // to the divided path before the AD9833 starts the square, and back only
+    // after the AD9833 has stopped it. sine <-> triangle stays on the direct path
+    bool square = (_waveform == WAVEFORM::SQUARE);
+    if (square) digitalWrite(_switchPin, HIGH);
+
     switch (_waveform){
         case WAVEFORM::SINE:
             _funcIC.setWave(AD9833_SINE);
@@ -238,8 +251,8 @@ void FunctionGenerator::applyWaveform() {
         default:
             break;
     }
-    // HIGH = the divided square path, LOW = the filtered sine/triangle path
-    digitalWrite(_switchPin, _waveform == WAVEFORM::SQUARE ? HIGH : LOW);
+
+    if (!square) digitalWrite(_switchPin, LOW);
 }
 
 uint16_t FunctionGenerator::ampToCode(float amplitude) const {

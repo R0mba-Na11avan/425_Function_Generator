@@ -20,8 +20,8 @@
 #define CONFIG_H
 
 /*
-    ALL PIN VALUES BELOW ARE TEMPORARY PLACEHOLDERS, NOT VERIFIED AGAINST THE
-    REAL WIRING. Change them here only: every file includes this header, so the
+    The pins below match the ordered PCB (checked against its netlist). If one
+    ever moves, change it here only: every file includes this header, so the
     sketch and all modules pick the new pins up on the next build.
 
     Bus plan: the generator chips (AD9833 + amplitude AD5452 per channel, and
@@ -42,39 +42,48 @@
 #define OFFSET_DAC_CHANNEL      0   //MCP4822::CHANNEL_A
 #define OFFSET_DAC_CHANNEL_2    1   //MCP4822::CHANNEL_B
 
-//second channel (CH2) chips, on the same generator bus. reserved: nothing
-//drives these until CH2 is in the firmware, so each needs a 10k pull-up to
-//3.3 V to keep the chip deselected while CH1 talks on the bus
+//every chip select above and below, the relays and the path switches are
+//held at safe levels by holdSafePinStates() (core/safe_pins.h), the first
+//thing setup() does. before that: the AD9833 modules' own FSYNC pull-ups,
+//10k pull-ups on the AD5452 SYNCs and the MCP4822 CS, the relays' 47k base
+//pull-downs and the TS5A23157 module's own pull resistors
+
+//second channel (CH2) chips, on the same generator bus. CH2 isn't in the
+//firmware yet: setup() runs begin() on a CH2 FunctionGenerator only to park
+//its chips (AD9833 reset to sine and asleep, amplitude 0, offset 0 V)
 //(GPIO38 and 48 are skipped: one of them drives the board's RGB LED,
 //depending on the board revision). CH2's offset is on the MCP4822 above
 //(PIN_OFFSET_DAC_CS, channel B), so GPIO41 went to the CH1 output relay
 #define PIN_AD9833_CS_2     39
 #define PIN_AMP_DAC_CS_2    40      //CH2 AD5452 (amplitude) SYNC
 
-//TS5A23157 analog switch, channel 1 IN1 pin: LOW = NC1 = filtered
-//sine/triangle path, HIGH = NO1 = divided square path. put a pull-down on it
-//so the sine path is selected while the ESP32 boots
+//TS5A23157 analog switch, channel 1 IN1 pin: LOW = NC1 = direct
+//sine/triangle path, HIGH = NO1 = divided square path. the firmware drives it
+//HIGH from the start of setup() until the AD9833 has been reset to sine (its
+//registers are undefined at power-up, and the divided path is safe for any
+//waveform). the module's own pull resistor holds it before setup()
 #define PIN_WAVE_SWITCH     21
 
-//output relay (TQ2-5V coil driven by a 2N3904, 1k base resistor, 47k base
-//pull-down). HIGH = coil on = the normally-open contact connects the channel
-//to its BNC. the pull-down keeps the output disconnected while the ESP32 boots
+//output relay (Omron G5V-1 DC5 coil driven by a 2N3904, 1k base resistor,
+//47k base pull-down). HIGH = coil on = the channel is connected to its BNC.
+//the pull-down keeps the output disconnected until setup(), which drives it
+//LOW first thing. it only closes on setOutput(true)
 #define PIN_OUTPUT_RELAY    41
 
-//TS5A23157 channel 2 IN2 pin, same logic for the second generator channel.
-//reserved: nothing drives it until CH2 is in the firmware, so the pull-down
-//keeps CH2 on its sine path
+//TS5A23157 channel 2 IN2 pin, same logic for the second generator channel:
+//HIGH from the start of setup() until CH2's parking begin() has reset its
+//AD9833 to sine
 #define PIN_WAVE_SWITCH_2   47
 
-//CH2 output relay, same circuit. reserved: nothing drives it until CH2 is in
-//the firmware, so the base pull-down keeps CH2's output disconnected.
+//CH2 output relay, same circuit. held LOW (output disconnected): CH2's
+//output is never turned on until CH2 is in the firmware.
 //GPIO13 was the generator bus MISO, which nothing used
 #define PIN_OUTPUT_RELAY_2  13
 
-//display + touch bus (HSPI). wire T_CLK/T_DIN/T_DO to the same SCK/MOSI/MISO.
-//MISO is only for the touch chip's T_DO: leave the LCD's own SDO(MISO) pin
-//unconnected, on some of these modules it doesn't release the line and
-//corrupts touch reads (the display is never read from)
+//display + touch bus (HSPI). T_CLK/T_DIN/T_DO share SCK/MOSI/MISO.
+//MISO is only for the touch chip's T_DO: the LCD's own SDO(MISO) pin is
+//unconnected on the board (on some of these modules it doesn't release the
+//line and corrupts touch reads), so the firmware must never read the display
 #define PIN_LCD_SCK     4
 #define PIN_LCD_MOSI    5
 #define PIN_LCD_MISO    6
@@ -134,12 +143,15 @@
 #define AMP_DEFAULT_VPP         1.0f
 
 //DC offset (V). this is the widest range, the real one also has to respect
-//OUTPUT_PEAK_MAX_V below
+//OUTPUT_PEAK_MAX_V below. not symmetric: the summer gives
+//offset = 3.0 * Vdac - 5 V, so +5 V would need about 3.33 V from the DAC,
+//past OFFSET_DAC_CODE_MAX (3.2 V). 3.0 * 3.2 V - 5 V = +4.6 V is the most it
+//can reach. -5 V is code 0
 #define DC_OFFSET_MIN_V     -5.0f
-#define DC_OFFSET_MAX_V     5.0f
+#define DC_OFFSET_MAX_V     4.6f
 
-//MCP4822 gain. 1 = 2x: 0..4.095 V, 1 mV per code. the summer needs about
-//2.94 V from the DAC for +5 V, more than the 1x range (2.048 V) gives.
+//MCP4822 gain. 1 = 2x: 0..4.095 V, 1 mV per code. the summer needs up to
+//3.2 V from the DAC, more than the 1x range (2.048 V) gives.
 //at 2x on a 3.3 V supply the output clips near VDD, so the offset never
 //uses a code above OFFSET_DAC_CODE_MAX (checked in func_gen.cpp)
 #define OFFSET_DAC_GAIN_2X      1
@@ -149,12 +161,16 @@
 //codes. both sit in the DAC's linear range (it isn't linear right at code 0
 //or close to VDD), and every other code is a straight line through them.
 //the MCP4822 powers up shut down (about 0 V out = about -5 V offset) until
-//FunctionGenerator::begin() runs (keep begin() early in setup).
-//expected from the schematic: offset = 3.402 * Vdac - 5 V, Vdac = 1 mV per code
+//FunctionGenerator::begin() runs (both channels, right after the safe pin states).
+//expected from the schematic (summer resistors R12 = R29 = R13 = 4.02k, same
+//for CH2): offset = 3.0 * Vdac - 5 V, Vdac = 1 mV per code. the -5 V comes
+//from the +5 V rail through R12, so any +5 V drift moves the offset 1:1 (the
+//MCP4822's own reference doesn't track it): one more reason to calibrate on
+//the real board
 #define OFFSET_CAL_CODE_LOW     100
 #define OFFSET_CAL_CODE_HIGH    2900
-#define OFFSET_V_AT_CAL_LOW     -4.6598f
-#define OFFSET_V_AT_CAL_HIGH    4.8658f
+#define OFFSET_V_AT_CAL_LOW     -4.7f
+#define OFFSET_V_AT_CAL_HIGH    3.7f
 
 //the op-amps can't swing past this, so amplitude / 2 + |offset| must stay at
 //or below it. changing one setting never moves the other: the one being

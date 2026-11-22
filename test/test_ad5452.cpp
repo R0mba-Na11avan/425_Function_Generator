@@ -19,6 +19,18 @@ TEST(ad5452_begin_deselects_the_chip) {
     CHECK(SPI.frames.empty());
 }
 
+TEST(ad5452_begin_on_an_idle_high_pin_never_blips_low) {
+    //the pin is already an idle-high output (set early in setup()): begin()
+    //must not drive it LOW for a moment, or the chip would see a select
+    pinMode(DAC_PIN, INPUT);
+    digitalWrite(DAC_PIN, HIGH);
+    pinMode(DAC_PIN, OUTPUT);
+    AD5452 dac(DAC_PIN);
+    dac.begin();
+    CHECK_EQ(fakePinDriveCount(DAC_PIN), 1);
+    CHECK_EQ(fakePinDrive(DAC_PIN, 0).level, HIGH);
+}
+
 TEST(ad5452_write_sends_one_load_word) {
     AD5452 dac(DAC_PIN);
     dac.begin();

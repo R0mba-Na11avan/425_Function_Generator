@@ -1,8 +1,8 @@
 # Pinout
 
 What every pin on every part connects to. GPIO numbers come from
-`src/config.h`. They are still placeholders until the wiring is confirmed, so
-if a pin moves, change it in `config.h` first, then update this file.
+`src/config.h` and match the ordered PCB (checked against its netlist). If a
+pin ever moves, change it in `config.h` first, then update this file.
 
 Rules for the ESP32-S3 N16R8: don't use GPIO26-37 (octal flash/PSRAM) or the
 strapping pins 0/3/45/46. The board breaks out 35/36/37, but they're PSRAM
@@ -16,9 +16,12 @@ Sorted by GPIO. Two SPI buses: the **generator bus** (FSPI: each channel's
 AD9833 and amplitude AD5452, plus one MCP4822 for both offsets) and the
 **display bus** (HSPI: LCD and touch).
 
-CH2 rows are reserved: the pins are fixed in `config.h`, but the firmware
-doesn't drive them until CH2 is added. Their pull-ups and pull-downs keep the
-CH2 chips deselected and on the sine path until then. CH2's AD9833 and AD5452
+CH2 isn't in the firmware yet, but its chips are put into a known state at
+boot: `holdSafePinStates()` (the first thing `setup()` does) deselects every
+generator chip, opens both relays and puts both path switches on the divided
+path, then a CH2 `FunctionGenerator::begin()` parks CH2 (AD9833 reset to sine
+and asleep, amplitude 0, offset `VOUTB` at the 0 V code, relay open). Nothing
+touches CH2 after that. CH2's AD9833 and AD5452
 wire up exactly like CH1's (same tables below), except for the pins listed
 here.
 
@@ -31,22 +34,22 @@ here.
 | 6 | `PIN_LCD_MISO` | `T_DO` only | LCD `SDO(MISO)` stays unconnected |
 | 7 | `PIN_LCD_CS` | LCD `CS` | |
 | 8 | `PIN_TOUCH_IRQ` | `T_IRQ` | Internal pull-up |
-| 9 | `PIN_AMP_DAC_CS` | AD5452 (amplitude) `SYNC` | 10 kΩ pull-up to 3.3 V |
-| 10 | `PIN_AD9833_CS` | AD9833 `FSYNC` | |
+| 9 | `PIN_AMP_DAC_CS` | AD5452 (amplitude) `SYNC` | 10 kΩ pull-up to 3.3 V, then held HIGH from the top of `setup()` |
+| 10 | `PIN_AD9833_CS` | AD9833 `FSYNC` | The module's own pull-up (none on the board), then held HIGH from the top of `setup()` |
 | 11 | `PIN_GEN_MOSI` | `SDATA` on both AD9833s, `SDIN` on both AD5452s, MCP4822 `SDI` | Generator bus data out |
 | 12 | `PIN_GEN_SCK` | `SCLK` on both AD9833s and both AD5452s, MCP4822 `SCK` | Generator bus clock |
-| 13 | `PIN_OUTPUT_RELAY_2` | CH2 relay driver: 1 kΩ to the 2N3904 base | 47 kΩ base pull-down to GND. Reserved for CH2, not driven yet. (Was the generator bus MISO, which nothing used; the bus now runs without one) |
-| 14 | `PIN_OFFSET_DAC_CS` | MCP4822 (offset, both channels) `CS` | 10 kΩ pull-up to 3.3 V |
+| 13 | `PIN_OUTPUT_RELAY_2` | CH2 relay driver: 1 kΩ to the 2N3904 base | 47 kΩ base pull-down to GND, then held LOW (open) from the top of `setup()`. CH2's output is never turned on yet. (Was the generator bus MISO, which nothing used; the bus now runs without one) |
+| 14 | `PIN_OFFSET_DAC_CS` | MCP4822 (offset, both channels) `CS` | 10 kΩ pull-up to 3.3 V, then held HIGH from the top of `setup()` |
 | 15 | `PIN_LCD_DC` | LCD `DC` | |
 | 16 | `PIN_LCD_RST` | LCD `RESET` | |
 | 17 | `PIN_LCD_BL` | LCD `LED` | Backlight, driven HIGH |
 | 18 | `PIN_TOUCH_CS` | `T_CS` | |
-| 21 | `PIN_WAVE_SWITCH` | TS5A23157 `IN1` | 10 kΩ pull-down to GND (sine path at boot) |
-| 39 | `PIN_AD9833_CS_2` | CH2 AD9833 `FSYNC` | 10 kΩ pull-up to 3.3 V. Reserved for CH2, not driven yet |
-| 40 | `PIN_AMP_DAC_CS_2` | CH2 AD5452 (amplitude) `SYNC` | 10 kΩ pull-up to 3.3 V. Reserved for CH2, not driven yet |
-| 41 | `PIN_OUTPUT_RELAY` | CH1 relay driver: 1 kΩ to the 2N3904 base | 47 kΩ base pull-down to GND (output disconnected at boot). HIGH = output connected |
+| 21 | `PIN_WAVE_SWITCH` | TS5A23157 `IN1` | The module's own pull resistor (none on the board). Driven HIGH (divided path) from the top of `setup()` until the AD9833 is reset to sine |
+| 39 | `PIN_AD9833_CS_2` | CH2 AD9833 `FSYNC` | The module's own pull-up (none on the board), then held HIGH from the top of `setup()`. CH2 is parked at boot |
+| 40 | `PIN_AMP_DAC_CS_2` | CH2 AD5452 (amplitude) `SYNC` | 10 kΩ pull-up to 3.3 V, then held HIGH from the top of `setup()`. CH2 is parked at boot |
+| 41 | `PIN_OUTPUT_RELAY` | CH1 relay driver: 1 kΩ to the 2N3904 base | 47 kΩ base pull-down to GND (output disconnected at boot), then held LOW from the top of `setup()`. HIGH = output connected (Omron G5V-1 DC5 coil) |
 | 42 | `PIN_ENC_SW` | Encoder `SW` | Internal pull-up. Held at power-on = forget Wi-Fi/phones |
-| 47 | `PIN_WAVE_SWITCH_2` | TS5A23157 `IN2` | 10 kΩ pull-down to GND. Reserved for CH2, not driven yet |
+| 47 | `PIN_WAVE_SWITCH_2` | TS5A23157 `IN2` | The module's own pull resistor (none on the board). HIGH (divided path) from the top of `setup()` until CH2's AD9833 is reset to sine, then LOW |
 | 3V3 | | Every 3.3 V part's supply pin | See [Power](#power) |
 | GND | | Every part's ground | One common ground with the analog supply |
 
@@ -93,8 +96,8 @@ If turning the knob clockwise lowers the value, swap the `CLK` and `DT` wires
 ## AD9833 DDS module
 
 7-pin header, top to bottom as printed on the board. The table is CH1's
-module; CH2's is wired the same except `FSYNC` goes to GPIO39 (with a 10 kΩ
-pull-up to 3.3 V) and `OUT` feeds CH2's own low-pass and divider.
+module; CH2's is wired the same except `FSYNC` goes to GPIO39 and `OUT` goes
+to `COM2` of the switch.
 
 | Module pin | Connects to | Notes |
 |---|---|---|
@@ -104,7 +107,7 @@ pull-up to 3.3 V) and `OUT` feeds CH2's own low-pass and divider.
 | `SCLK` | GPIO12 | Generator bus clock |
 | `FSYNC` | GPIO10 | Chip select |
 | `AGND` | GND | |
-| `OUT` | RC low-pass input **and** square divider input | Both paths come off this one pin; see [TS5A23157](#ts5a23157-analog-switch-module) |
+| `OUT` | TS5A23157 `COM1` | The switch sends it down the direct or the divided path; see [TS5A23157](#ts5a23157-analog-switch-module) |
 
 ## AD5452 MDAC (amplitude, MSOP-8, on an adapter board)
 
@@ -154,27 +157,32 @@ decoupling cap, add the 100 nF yourself.
 
 | Pin | Name | Connects to | Notes |
 |---|---|---|---|
-| 1 | `IN1` | GPIO21 + 10 kΩ pull-down to GND | Pull-down keeps the sine path during boot |
-| 2 | `NO1` | CH1 square divider output (~0.6 V) | Selected when `IN1` is HIGH (square) |
+| 1 | `IN1` | GPIO21 | The module's own pull resistor until `setup()`, then driven by the firmware |
+| 2 | `NO1` | CH1 square divider top (39.2 kΩ to gain 1's + input, 10 kΩ from there to GND: 0.67 V) | Selected when `IN1` is HIGH (square) |
 | 3 | `GND` | GND | |
-| 4 | `NO2` | CH2 square divider output | Reserved for CH2 |
-| 5 | `IN2` | GPIO47 + 10 kΩ pull-down to GND | Reserved for CH2, not driven yet |
-| 6 | `COM2` | CH2 gain 1 input | Reserved for CH2 |
-| 7 | `NC2` | CH2 RC low-pass output | Reserved for CH2 |
+| 4 | `NO2` | CH2 square divider top | Reserved for CH2 |
+| 5 | `IN2` | GPIO47 | Same as `IN1`, for CH2 (parked on sine at boot) |
+| 6 | `COM2` | CH2 AD9833 `OUT` | Reserved for CH2 |
+| 7 | `NC2` | CH2 gain 1 + input (direct path) | Reserved for CH2 |
 | 8 | `V+` | 3.3 V + 100 nF to GND at the chip | |
-| 9 | `NC1` | CH1 RC low-pass output (sine/triangle) | Selected when `IN1` is LOW (default) |
-| 10 | `COM1` | CH1 gain 1 input (OPA2810 A) | |
+| 9 | `NC1` | CH1 gain 1 + input (OPA2810 A), direct sine/triangle path | Selected when `IN1` is LOW (sine/triangle) |
+| 10 | `COM1` | CH1 AD9833 `OUT` | |
 
 ## Power
 
-Only the 3.3 V side is decided. The ±12 V analog rails are still open (see
-`docs/parts.md`, Open items), so the op-amps aren't listed here yet.
+From the ordered PCB. A 12 V adapter comes in on the barrel jack (`J3`,
+CUI PJ-102AH) through the on/off switch (`SW2`) onto the `+12C` net.
 
 | Rail | Source | Feeds |
 |---|---|---|
-| 3.3 V | ESP32 board `3V3` pin | Display `VCC`, encoder `+`, both AD9833 `VCC`, both AD5452 `VDD`, MCP4822 `VDD`, TS5A23157 `V+`, the SYNC/FSYNC/CS pull-ups |
-| GND | ESP32 board `GND` | Every ground above, tied to the analog supply's ground |
-| ±12 V | TBD | OPA2810 × 4: two per channel (must stay at or below ±13.5 V) |
+| +12 V in (`+12C`) | `J3` through `SW2` | TMR 6-1222 input, LM7805 input |
+| ±12 V | TMR 6-1222 isolated DC-DC (`U2`) | OPA2810 × 4: two per channel (must stay at or below ±13.5 V) |
+| +5 V | LM7805 (`U3`) | ESP32 board `5V` pin, both relay coils, the summers' −5 V shift (R12 / R14), AP2112K input |
+| 3.3 V | AP2112K-3.3 (`U16`), tied to the ESP32 board's `3V3` pins through `R31` (0 Ω) | Display `VCC`, encoder `+`, both AD9833 `VCC`, both AD5452 `VDD`, MCP4822 `VDD`, TS5A23157 `V+`, the SYNC/CS pull-ups |
+| GND | common | Every ground, analog and digital |
+
+The −5 V term in each summer comes straight from the +5 V rail, so +5 V drift
+moves the DC offset 1:1. Calibrate the offset on the real board.
 
 ## Sources
 

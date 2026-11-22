@@ -7,15 +7,23 @@
 
 /*
     Startup order
-        1. Serial banner
-        2. encoder button held at power-on: countdown on the LCD, after
+        0. safe pin states (core/safe_pins.h): both output relays open, every
+           generator chip deselected, both path switches on the divided path
+        1. both channels' generators, before anything that can take time (the
+           boot screen hold), so no chip sits in its unknown power-up state.
+           CH1: output OFF, sine, 1 Hz, 1 Vpp, 0 V offset. CH2 isn't in the
+           firmware yet, its begin() only parks the chips (AD9833 reset to sine
+           and asleep, amplitude 0, offset at 0 V, relay open). the relays only
+           close when someone turns the output on
+        2. Serial banner
+        3. encoder button held at power-on: countdown on the LCD, after
            BOOT_HOLD_MS the saved Wi-Fi and the paired phones are forgotten
            and the board restarts into setup mode. let go early and it boots
            normally
-        3. generator + controller (output starts OFF, sine, 1 Hz, 1 Vpp, 0 V offset)
-        4. MCP and web control routes on the shared HTTP server (it starts
-           once Wi-Fi is up). the control page is also the home page (/)
-           except in setup mode, where / is the Wi-Fi setup page
+        4. CH1's controller, then the MCP and web control routes on the
+           shared HTTP server (it starts once Wi-Fi is up). the control page
+           is also the home page (/) except in setup mode, where / is the
+           Wi-Fi setup page
         5. input + display. the network line and the BLE status/pairing popup
            read WifiManager and BleService through functions given to
            DisplayUI (ui and comms never include each other)
@@ -30,6 +38,7 @@
 */
 
 #include "src/config.h"
+#include "src/core/safe_pins.h"
 #include "src/core/func_gen.h"
 #include "src/core/funcgen_controller.h"
 #include "src/comms/http_server.h"
@@ -75,6 +84,18 @@ static void check(bool ok, const char* what) {
 }
 
 void setup() {
+    //before everything else, see core/safe_pins.h
+    holdSafePinStates();
+
+    //both channels' chips out of their unknown power-up state right away
+    FunctionGenerator* funcGen = new FunctionGenerator(PIN_AD9833_CS, PIN_AMP_DAC_CS, PIN_OFFSET_DAC_CS, OFFSET_DAC_CHANNEL, PIN_WAVE_SWITCH, PIN_OUTPUT_RELAY);
+    funcGen->begin();
+    //CH2 isn't in the firmware yet: begin() only parks its chips (AD9833 reset
+    //to sine and asleep, amplitude 0, offset VB at 0 V instead of the -5 V it
+    //powers up at, relay open). nothing touches it after this
+    FunctionGenerator* funcGen2 = new FunctionGenerator(PIN_AD9833_CS_2, PIN_AMP_DAC_CS_2, PIN_OFFSET_DAC_CS, OFFSET_DAC_CHANNEL_2, PIN_WAVE_SWITCH_2, PIN_OUTPUT_RELAY_2);
+    funcGen2->begin();
+
     Serial.begin(115200);
     Serial.printf("\nfuncgen: firmware %s\n", FIRMWARE_VERSION);
 
@@ -97,8 +118,6 @@ void setup() {
         }
     }
 
-    FunctionGenerator* funcGen = new FunctionGenerator(PIN_AD9833_CS, PIN_AMP_DAC_CS, PIN_OFFSET_DAC_CS, OFFSET_DAC_CHANNEL, PIN_WAVE_SWITCH, PIN_OUTPUT_RELAY);
-    funcGen->begin();
     FuncGenController* controller = new FuncGenController(*funcGen);
 
     McpServer* mcp = new McpServer(*controller, *http);

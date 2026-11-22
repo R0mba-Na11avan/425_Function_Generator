@@ -19,6 +19,18 @@ TEST(mcp4822_begin_deselects_the_chip) {
     CHECK(SPI.frames.empty());
 }
 
+TEST(mcp4822_begin_on_an_idle_high_pin_never_blips_low) {
+    //the pin is already an idle-high output (set early in setup()): begin()
+    //must not drive it LOW for a moment, or the chip would see a select
+    pinMode(DAC_PIN, INPUT);
+    digitalWrite(DAC_PIN, HIGH);
+    pinMode(DAC_PIN, OUTPUT);
+    MCP4822 dac(DAC_PIN);
+    dac.begin();
+    CHECK_EQ(fakePinDriveCount(DAC_PIN), 1);
+    CHECK_EQ(fakePinDrive(DAC_PIN, 0).level, HIGH);
+}
+
 TEST(mcp4822_write_channel_a_1x) {
     MCP4822 dac(DAC_PIN);
     dac.begin();

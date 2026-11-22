@@ -41,8 +41,15 @@ BLE (last). Read `README.md` for the architecture and status. Each stub header i
 - Input events carry an `INPUT_SOURCE` (which encoder/button/touch), so new
   controls are added as new sources in `InputManager`.
 - All pins, limits, task settings and network constants live in `src/config.h`.
-  The pins there are temporary placeholders until the wiring is confirmed. Never
-  hardcode a pin elsewhere.
+  The pins there match the ordered PCB (checked against its netlist; the PCB is
+  final, so fix things in firmware, not hardware). Never hardcode a pin elsewhere.
+- Boot: `holdSafePinStates()` (`core/safe_pins.*`) is the first thing in
+  `setup()`, then both channels' `FunctionGenerator::begin()` (CH2's only parks
+  its chips until CH2 is in the firmware). A new control pin that needs a boot
+  level goes there. On ESP32 core 3.x `digitalWrite()` before `pinMode()` is
+  dropped, so use `driveOutputPin()` / the safe-pin pattern, not write-then-pinMode.
+- The path switch must lead into square and trail out of it: a square on the
+  direct path saturates the x20 gain.
 - Valid ranges are defined in one place so the LCD, MCP schemas and `get_limits`
   can't disagree. Amplitude and offset also share `OUTPUT_PEAK_MAX_V`: check new
   values with `FuncGenLimits::amplitudeFor` / `dcOffsetFor`, never only the
@@ -90,6 +97,7 @@ versus what has only been reasoned about.
 
 ## Known gaps
 
-- The output stage isn't built yet: the amplitude/offset limits, the peak limit
-  and the DAC calibration values (`AMP_FULL_CODE_VPP_*`, `OFFSET_V_AT_CAL_*`) in
-  `config.h` are placeholders until it is measured.
+- The PCB is ordered but not measured yet: the amplitude/offset limits, the peak
+  limit and the DAC calibration values (`AMP_FULL_CODE_VPP_*`, `OFFSET_V_AT_CAL_*`)
+  in `config.h` are placeholders until it is. The offset ones come from the
+  schematic (offset = 3.0 × Vdac − 5 V, so the range is −5..+4.6 V).

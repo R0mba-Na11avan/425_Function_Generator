@@ -2,7 +2,9 @@
 *   Author: Parikshith Venkataraghavan
 *   Purpose: host-test stand-in for the Arduino core. only what the vendored
              AD9833/AD5452 libs and src/core need. pin writes are recorded
-             so the fake SPI can tell which chip select is active
+             so the fake SPI can tell which chip select is active. like
+             ESP32 core 3.x, digitalWrite() on a pin pinMode() hasn't
+             claimed yet is dropped
 **************************************************************************/
 
 #ifndef FAKE_ARDUINO_H
@@ -64,6 +66,15 @@ int fakePinLevel(uint8_t pin);
 int fakePinWriteFrame(uint8_t pin);
 //same for the first write since the last reset (-1 = never written)
 int fakePinFirstWriteFrame(uint8_t pin);
+//what a pin actually put on the wire, in order: one entry each time it starts
+//driving, changes level or stops driving. frame = SPI frames sent before it,
+//level = HIGH / LOW, or -1 for "stopped driving" (back to an input)
+struct FakePinDrive {
+    int frame;
+    int level;
+};
+int fakePinDriveCount(uint8_t pin);
+FakePinDrive fakePinDrive(uint8_t pin, int i);   //{-1, -2} past the end
 void fakeResetPins();
 
 #endif

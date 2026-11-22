@@ -5,8 +5,9 @@ Status: **in use** means the firmware drives it and it is on the board;
 **in firmware** means the firmware drives it but the hardware isn't built yet;
 **chosen** means picked, no firmware involved; **replaced** means no longer used.
 
-Power (wall adapter, rails, regulators) is not decided yet and is left out on
-purpose. See [Open items](#open-items).
+Power is on the ordered board: a 12 V adapter, a TMR 6-1222 for ±12 V, an
+LM7805 for +5 V and an AP2112K-3.3 for 3.3 V. See the Power section of
+`docs/pinout_table.md`.
 
 ## Controller and user interface
 
@@ -21,8 +22,7 @@ purpose. See [Open items](#open-items).
 ```mermaid
 flowchart TD
     DDS["AD9833 VOUT"]
-    LPF["RC low-pass"]
-    DIV["Divider<br/>3.3 V to 0.6 V"]
+    DIV["Divider 39.2k / 10k<br/>3.3 V to 0.67 V"]
     SW["TS5A23157 ch 1<br/>COM1"]
     GPIO["ESP32 GPIO"]
     G1["Gain 1<br/>OPA2810 A, x5<br/>subtracts ~0.3 V"]
@@ -34,11 +34,12 @@ flowchart TD
     R50["50 Ω"]
     OUT(["Output"])
 
-    DDS -->|sine / triangle| LPF -->|NC| SW
-    DDS -->|square| DIV -->|NO| SW
+    DDS --> SW
+    SW -->|"NC1: sine / triangle (direct)"| G1
+    SW -->|"NO1: square"| DIV --> G1
     GPIO -.->|IN| SW
-    SW --> G1 --> G2 -->|"VREF (±6 V max)"| AMP --> AIV --> SUM
-    OFS -->|"0..2.94 V"| SUM
+    G1 --> G2 -->|"VREF (±6 V max)"| AMP --> AIV --> SUM
+    OFS -->|"0..3.2 V"| SUM
     SUM --> R50 --> OUT
 ```
 
@@ -48,11 +49,11 @@ wide bandwidth (see [Op-amp notes](#op-amp-notes)).
 | Part | Qty | Status | Role |
 |---|---|---|---|
 | AD9833 DDS breakout module (25 MHz oscillator on board) | 1 | in use | Makes the sine, triangle and square. Power it from 3.3 V so the square is 3.3 Vpp and the SPI logic matches the ESP32. Sine/triangle come out at about 38 mV to 650 mV. |
-| TS5A23157 dual SPDT analog switch module (VSSOP-10 on a breakout) | 1 | in firmware | Channel 1 picks CH1's filtered sine/triangle path (NC1) or divided square path (NO1), driven by `PIN_WAVE_SWITCH` (`IN1`). Channel 2 does the same for CH2; `PIN_WAVE_SWITCH_2` (`IN2`) is reserved but not driven yet. |
+| TS5A23157 dual SPDT analog switch module (VSSOP-10 on a breakout) | 1 | in firmware | Channel 1 sends CH1's AD9833 output down the direct sine/triangle path (NC1) or the divided square path (NO1), driven by `PIN_WAVE_SWITCH` (`IN1`). The switch moves to the divided path before a square starts and back only after it stops. Channel 2 does the same for CH2; `PIN_WAVE_SWITCH_2` (`IN2`) is HIGH (divided path) from the top of `setup()` until CH2's parking `begin()` has reset its AD9833 to sine. |
 | AD5452 12-bit multiplying DAC (AD5452YRMZ, MSOP-8) | 1 per channel | in firmware | Scales the amplified wave from 0 to 100 %. Driver: `src/libs/AD5452/` (see `docs/AD5452.md`). About $9.50 each at DigiKey (≈1,600 in stock, Nov 2026). Needs one 100 nF cap from VDD to GND, right at the chip. |
-| MCP4822 dual 12-bit voltage DAC (MCP4822-E/SN, SOIC-8) | 1 (shared) | in firmware | DC offset for both channels: `VOUTA` = CH1, `VOUTB` = CH2. Internal 2.048 V reference, run at 2x gain (1 mV per code) on 3.3 V. The summer turns it into the offset: about 3.402 × Vdac − 5 V, so 0..2.94 V covers −5..+5 V. Driver: `src/libs/MCP4822/` (see `docs/MCP4822.md`). Replaces the two offset AD5452s and their shared I/V op-amp to cut cost. 100 nF from VDD to GND at the chip. |
+| MCP4822 dual 12-bit voltage DAC (MCP4822-E/SN, SOIC-8) | 1 (shared) | in firmware | DC offset for both channels: `VOUTA` = CH1, `VOUTB` = CH2. Internal 2.048 V reference, run at 2x gain (1 mV per code) on 3.3 V. The summer (R12 = R29 = R13 = 4.02 kΩ) turns it into the offset: 3.0 × Vdac − 5 V, so 0..3.2 V (`OFFSET_DAC_CODE_MAX`) covers −5..+4.6 V. +5 V would need about 3.33 V, past where the 2x output clips near VDD. The −5 V comes from the +5 V rail, so rail drift moves the offset 1:1. Driver: `src/libs/MCP4822/` (see `docs/MCP4822.md`). Replaces the two offset AD5452s and their shared I/V op-amp to cut cost. 100 nF from VDD to GND at the chip. |
 | OPA2810 dual FET op-amp (OPA2810IDGKT, VSSOP-8) | 2 per channel (4 for two channels) | chosen | Per channel, two chips for the four fast stages: gain 1, gain 2, the amplitude AD5452's I/V, and the summer that drives the output. The offset needs no op-amp of its own (the MCP4822 is voltage-output). See [Op-amp notes](#op-amp-notes). |
-| Resistors and capacitors | — | values TBD | Square divider, RC low-pass on the sine path, gain-setting resistors, summer resistors, 1–2 pF compensation across the AD5452's RFB, and decoupling (100 nF at every chip, plus 10 µF per rail near the OPA2810s). |
+| Resistors and capacitors | — | on the board | Square divider (39.2 kΩ / 10 kΩ), gain-setting resistors, summer resistors, 1–2 pF compensation across the AD5452's RFB, and decoupling (100 nF at every chip, plus 10 µF per rail near the OPA2810s). |
 | 50 Ω output resistor, 0.5 W (or two 100 Ω 1/4 W in parallel) | 1 | chosen | Protects the summer op-amp and keeps it stable into the cable. See "Output current and the 50 Ω resistor" below. |
 | Output connector (BNC) | 1 | TBD | Scope cable. |
 | MSOP-8 and SOIC-8 to DIP adapter boards | 2 + 2 | — | For breadboard or perfboard. The switch comes on its own module, so it needs no adapter. |
@@ -95,12 +96,12 @@ inverting summer, so the final output is the right way up.
 
 | Spec (from the datasheet) | Value | Why it matters here |
 |---|---|---|
-| Resolution | 12 bits, two channels | One chip covers both channels' offsets. At 2x gain a code is 1 mV, about 3.4 mV of offset. |
-| Reference | Internal 2.048 V, output gain 1x or 2x | 2x gives 0..4.095 V; the offset stage needs up to about 2.94 V for +5 V, which 1x can't reach. |
+| Resolution | 12 bits, two channels | One chip covers both channels' offsets. At 2x gain a code is 1 mV, 3 mV of offset. |
+| Reference | Internal 2.048 V, output gain 1x or 2x | 2x gives 0..4.095 V; the offset stage needs up to 3.2 V (+4.6 V), which 1x can't reach. |
 | Output swing | Up to about VDD | On 3.3 V the top codes clip at 2x, so the firmware stops at `OFFSET_DAC_CODE_MAX` (3200). |
 | Supply | 2.7–5.5 V | Runs from the ESP32 board's 3.3 V, so its logic levels match the ESP32. |
 | Interface | SPI mode 0 or 3, up to 20 MHz | The driver uses SPI_MODE0. Shares the generator bus; CS on GPIO14, `LDAC` tied to GND. |
-| Power-on state | Both channels shut down (≈0 V out) | About −5 V offset until `FunctionGenerator::begin()` writes the 0 V code. |
+| Power-on state | Both channels shut down (≈0 V out) | About −5 V offset until `FunctionGenerator::begin()` writes the 0 V code. Both channels' `begin()` run right after the safe pin states, so `VOUTB` is set too. |
 | Package | SOIC-8 (MCP4822-E/SN) | |
 
 Serial word, 16 bits MSB first: `A/B - GA SHDN D11..D0` (A/B: 1 = channel B,
@@ -115,11 +116,11 @@ Alternatives considered:
 
 ### Analog switch: TS5A23157
 
-- Dual SPDT, one control pin per channel: COMx connects to NCx when INx is low, to NOx when INx is high. Each channel is wired as a 2:1 mux: COM goes to the gain stage, NC to the sine path, NO to the square divider. Channel 1 is CH1, channel 2 is CH2.
-- 1.65–5.5 V supply, powered from 3.3 V. Both inputs are 0–0.65 V after the divider, well inside the supply. Control inputs are 5 V tolerant.
-- On-resistance about 10 Ω, 220 MHz bandwidth, break-before-make. COM drives an op-amp's high-impedance + input, so the 10 Ω adds no error worth measuring.
-- VSSOP-10, bought as a breakout module.
-- Put a pull-down on each IN so both channels sit on the sine path while the ESP32 boots.
+- Dual SPDT, one control pin per channel: COMx connects to NCx when INx is low, to NOx when INx is high. Each channel is wired as a 1:2 demux: COM takes the AD9833 output, NC goes straight to the gain stage input (sine/triangle), NO goes through the 39.2 kΩ / 10 kΩ divider to the same input (square). Channel 1 is CH1, channel 2 is CH2.
+- 1.65–5.5 V supply, powered from 3.3 V. COM sees the AD9833's 0–3.3 V, inside the supply. Control inputs are 5 V tolerant.
+- On-resistance about 10 Ω, 220 MHz bandwidth, break-before-make. The direct path drives an op-amp's high-impedance + input (and the divider's 10 kΩ to GND), so the 10 Ω adds no error worth measuring.
+- VSSOP-10, bought as a breakout module. The module has its own pull resistors on the IN pins; there are none on the board.
+- The direct path only takes the ~0.65 V sine/triangle: a 3.3 V square on it saturates the x20 gain. The firmware drives both IN pins HIGH (divided path, safe for any waveform) from the top of `setup()`, keeps each channel there until its AD9833 is reset to sine, and orders every waveform change so a square never reaches the direct path.
 
 Alternative considered: **ADG719** (Analog Devices, SOT-23-6, 4 Ω max, >200 MHz).
 It works just as well but costs more. Either is far faster than the op-amps.
@@ -200,22 +201,24 @@ the screen means "into high-Z".
 Done (host-tested, compiled, not tried on hardware). All pins and constants are
 in `src/config.h`; only `core/func_gen.*` drives the chips.
 
-- **TS5A23157:** `PIN_WAVE_SWITCH` (`IN1`), HIGH for square, set in `setWaveform`. `PIN_WAVE_SWITCH_2` (`IN2`) is reserved for CH2 and not driven yet.
+- **Safe pin states:** `holdSafePinStates()` (`core/safe_pins.*`) is the first thing `setup()` does: both relays LOW (open), every generator `FSYNC`/`SYNC`/`CS` HIGH (deselected, so no driver's `begin()` blips one LOW), both path switches HIGH (divided). Each pin is claimed as an input before its level is set, because ESP32 core 3.x drops `digitalWrite()` on a pin `pinMode()` hasn't claimed.
+- **Boot order:** right after the safe pin states, both channels' `FunctionGenerator::begin()` run, before the boot screen hold. CH2 isn't in the firmware yet; its `begin()` only parks the chips (AD9833 reset to sine and asleep, amplitude 0, `VOUTB` at the 0 V code, relay open). Before `setup()` (ROM bootloader, PSRAM init) the firmware can't drive anything, so only the module and board resistors hold the pins then.
+- **TS5A23157:** `PIN_WAVE_SWITCH` (`IN1`), HIGH for square, set in `setWaveform`: HIGH before the AD9833 starts a square, LOW only after it stops. `PIN_WAVE_SWITCH_2` (`IN2`) belongs to CH2, parked on sine (LOW) after its `begin()`.
 - **AD5452:** `PIN_AMP_DAC_CS` on the generator bus, driver in `src/libs/AD5452/`.
 - **MCP4822:** `PIN_OFFSET_DAC_CS` (GPIO14) on the generator bus, `LDAC` tied to GND. CH1 uses `VOUTA` (`OFFSET_DAC_CHANNEL`), CH2 will use `VOUTB` (`OFFSET_DAC_CHANNEL_2`). Driver in `src/libs/MCP4822/`.
 - **Amplitude:** code = amplitude / `AMP_FULL_CODE_VPP_*` × 4095 (per waveform).
 - **DC offset:** straight line through two measured points (`OFFSET_V_AT_CAL_LOW` at code `OFFSET_CAL_CODE_LOW`, `OFFSET_V_AT_CAL_HIGH` at `OFFSET_CAL_CODE_HIGH`), never above `OFFSET_DAC_CODE_MAX` where the 2x output clips at VDD.
 - **Peak limit:** amplitude / 2 + |offset| ≤ `OUTPUT_PEAK_MAX_V` (10 V for now). The value being changed stops at the edge.
-- **Output relay:** `PIN_OUTPUT_RELAY` (GPIO41), HIGH = connected. Opens first when the output turns off, closes last when it turns on, open from power-on. `PIN_OUTPUT_RELAY_2` (GPIO13) is reserved for CH2.
+- **Output relay:** Omron G5V-1 DC5. `PIN_OUTPUT_RELAY` (GPIO41), HIGH = connected. Opens first when the output turns off, closes last when it turns on, open from power-on until a user turns the output on. `PIN_OUTPUT_RELAY_2` (GPIO13) belongs to CH2 and stays LOW (open).
 - **Output off:** relay open, amplitude DAC to 0 and offset DAC to its 0 V code.
 - **Calibration:** measure the full-code amplitude per waveform and the offset at the two calibration codes, then put the numbers in `config.h`.
 - **Not done, optional:** above ~5 MHz the OPA2810's slew rate caps the amplitude at about 2 × 192 V/µs / (2π f). The firmware could clamp amplitude by frequency so the screen never shows a value the hardware can't make.
 
 ## Open items
 
-- **Power:** a wall adapter is planned. The analog side needs about ±12 V; the 3.3 V chips run from the ESP32 board. Not chosen yet. The rails must stay at or below **±13.5 V** (the OPA2810's 27 V max), so ±15 V is out.
+- **Power:** on the board (12 V adapter, TMR 6-1222 for ±12 V, LM7805, AP2112K-3.3). Check the ±12 V rails on the bench: they must stay at or below **±13.5 V** (the OPA2810's 27 V max).
 - **Max frequency:** full 12 Vpp up to ~5 MHz with the OPA2810. Measure it, then decide whether `FREQ_MAX_HZ` stays at 12.5 MHz with a reduced amplitude up there.
-- **Passive values:** square divider (for example 8.2 kΩ over 1.8 kΩ gives 0.59 V from 3.3 V), the RC low-pass, and the gain-stage resistors.
+- **Passive values:** on the ordered board (square divider 39.2 kΩ / 10 kΩ = 0.67 V from 3.3 V, no low-pass on the sine path). What's left is measuring the stage and filling in the calibration values in `config.h`.
 
 ## Sources
 

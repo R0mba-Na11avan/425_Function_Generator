@@ -49,6 +49,7 @@ src/
              XPT2046_Touchscreen, ArduinoJson) + our own AD5452 and MCP4822 drivers
   core/      FunctionGenerator, FuncGenState, FuncGenController
   core/      ... + net_status.h / ble_status.h (Wi-Fi and BLE state shared by comms and ui)
+  core/      ... + safe_pins (control pins to their safe levels, first thing in setup())
   ui/        display_ui (UI task, canvases, listener), dashboard_view (drawing),
              dashboard_logic (layout, formatting, editor), input (encoder + touch),
              input_logic (debounce/accel/tap/hold), boot_screen (Wi-Fi + phones reset countdown).
@@ -72,6 +73,7 @@ headers, so include across folders with relative paths (`"../core/..."`).
 |---|---|
 | `FunctionGenerator` (AD9833 + AD5452 + MCP4822 + path switch) | done (incl. output enable, DC offset, peak limit and limit getters), host-tested, calibration values in `config.h` are placeholders until the output stage is measured |
 | `FuncGenController` / `FuncGenState` | done |
+| `core/safe_pins` (relays open, every generator chip deselected, path switches on the divided path from the top of `setup()`) + CH2 parked at boot | done, host-tested against a fake that drops writes to unclaimed pins like ESP32 core 3.x, not tried on hardware yet |
 | `ui/input` (encoder via PCNT, button, XPT2046 touch) | done, not tried on hardware yet, touch calibration is a placeholder |
 | `ui/display_ui` (dashboard, editing, info panel with Wi-Fi/phone buttons, remote-change flash, pairing popup) | done, not tried on hardware yet |
 | `425_Function_Generator.ino` (wiring, boot-time Wi-Fi + phones reset) | done, compiled, not tried on hardware yet |
@@ -121,6 +123,14 @@ AP fallback + provisioning page) -> MCP server -> BLE.
   at the edge (knob stops, MCP/BLE get an out-of-range error); the other one is
   never moved. `FuncGenLimits::amplitudeFor` / `dcOffsetFor` give the range
   allowed right now.
+- **Safe pins at boot:** `holdSafePinStates()` (`core/safe_pins.*`) is the
+  first thing `setup()` does: both output relays open, every generator chip
+  deselected, both path switches on the divided square path (safe whatever the
+  AD9833s powered up making). Both channels' `begin()` follow straight away;
+  CH2 isn't in the firmware yet, so its `begin()` only parks the chips (AD9833
+  reset to sine and asleep, amplitude 0, offset 0 V, relay open). The path switch always moves to the divided path before
+  a square starts and back only after it stops, so a 3.3 V square never
+  reaches the direct sine/triangle path.
 - **Output off** opens the output relay (the BNC is disconnected), puts the
   AD9833 to sleep and sets both DACs to 0 V. The amplitude and offset are kept
   and come back when the output is turned on. The relay opens first when

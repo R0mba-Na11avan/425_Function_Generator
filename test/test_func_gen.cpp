@@ -1,14 +1,15 @@
 /**************************************************************************
 *   Author: Parikshith Venkataraghavan
 *   Purpose: host tests for FunctionGenerator: what actually reaches the
-             AD9833, the AD5452, the MCP4822, the path switch and the output
-             relay, clamping, the peak
-             rule and the limit getters
+             AD9833, the AD5452, the MCP4822, the path switch (and in which
+             order) and the output relay, clamping, the peak rule and the
+             limit getters
 **************************************************************************/
 
 #include "test.h"
 #include "chip_models.h"
 #include "../src/core/func_gen.h"
+#include "../src/core/safe_pins.h"
 
 static Ad9833Model dds() { return replayAd9833(SPI, PIN_AD9833_CS); }
 static Ad5452Model ampDac() { return replayAd5452(SPI, PIN_AMP_DAC_CS); }
@@ -170,6 +171,121 @@ TEST(begin_keeps_the_output_relay_open_from_the_start) {
     CHECK_EQ(fakePinMode(PIN_OUTPUT_RELAY), OUTPUT);
     CHECK_EQ(fakePinLevel(PIN_OUTPUT_RELAY), LOW);
     CHECK_EQ(fakePinFirstWriteFrame(PIN_OUTPUT_RELAY), 0); //set LOW before the first SPI word
+    //the relay pin never drove HIGH, not even for a moment
+    CHECK_EQ(fakePinDriveCount(PIN_OUTPUT_RELAY), 1);
+    CHECK_EQ(fakePinDrive(PIN_OUTPUT_RELAY, 0).level, LOW);
+}
+
+//control register bits (datasheet Table 6)
+static const uint16_t DDS_OPBITEN = 1 << 5; //VOUT = the MSB / comparator: a 3.3 V square
+static const uint16_t DDS_RESET = 1 << 8;
+
+//replays the AD9833 words and the path switch together, in the order they
+//happened, and counts every moment the AD9833 was set to a square output
+//(even asleep it holds a 3.3 V level) while the switch sat on the direct path
+struct PathReplay {
+    int squareOnDirect = 0;
+    int squareStarts = 0;   //times OPBITEN went 0 -> 1 (so the test exercised something)
+    int squareStops = 0;
+};
+
+static PathReplay replayPath() {
+    PathReplay r;
+    uint16_t control = 0;
+    int switchLevel = -1; //not driven yet
+    int drive = 0, drives = fakePinDriveCount(PIN_WAVE_SWITCH);
+    auto check = [&]() {
+        if ((control & DDS_OPBITEN) && switchLevel != HIGH) r.squareOnDirect++;
+    };
+    for (size_t i = 0; i <= SPI.frames.size(); i++) {
+        //pin changes logged with frame == i happened before frame i went out
+        while (drive < drives && fakePinDrive(PIN_WAVE_SWITCH, drive).frame == (int)i) {
+            switchLevel = fakePinDrive(PIN_WAVE_SWITCH, drive++).level;
+            check();
+        }
+        if (i == SPI.frames.size()) break;
+        const SpiFrame& f = SPI.frames[i];
+        if (f.csPin != PIN_AD9833_CS) continue;
+        for (size_t b = 0; b + 1 < f.bytes.size(); b += 2) {
+            uint16_t word = (f.bytes[b] << 8) | f.bytes[b + 1];
+            if (word >> 14) continue; //frequency / phase register
+            bool was = control & DDS_OPBITEN;
+            control = word & 0x3FFF;
+            bool now = control & DDS_OPBITEN;
+            if (!was && now) r.squareStarts++;
+            if (was && !now) r.squareStops++;
+            check();
+        }
+    }
+    return r;
+}
+
+TEST(square_never_reaches_the_direct_path) {
+    //into square: the switch leads. out of square: the switch trails.
+    //with the output on and off, and from both sine and triangle
+    Gen g;
+    const WAVEFORM steps[] = {WAVEFORM::SQUARE, WAVEFORM::SINE, WAVEFORM::TRIANGLE, WAVEFORM::SQUARE,
+                              WAVEFORM::TRIANGLE, WAVEFORM::SINE, WAVEFORM::SQUARE, WAVEFORM::SQUARE};
+    for (bool on : {false, true}) {
+        g.gen.setOutput(on);
+        for (WAVEFORM w : steps) {
+            g.gen.setWaveform(w);
+            //the output toggles while on square must not disturb the switch either
+            if (w == WAVEFORM::SQUARE) {
+                g.gen.setOutput(!on);
+                g.gen.setOutput(on);
+            }
+        }
+        g.gen.setWaveform(WAVEFORM::SINE);
+    }
+    PathReplay r = replayPath();
+    CHECK(r.squareStarts >= 6);
+    CHECK(r.squareStops >= 6);
+    CHECK_EQ(r.squareOnDirect, 0);
+    CHECK_EQ(fakePinLevel(PIN_WAVE_SWITCH), LOW); //ended on sine: direct path
+}
+
+TEST(square_switch_order_into_and_out_of_square) {
+    Gen g;
+    g.gen.setOutput(true);
+
+    //into square: the switch goes HIGH before the AD9833 word that starts it
+    int framesBefore = (int)SPI.frames.size();
+    g.gen.setWaveform(WAVEFORM::SQUARE);
+    CHECK_EQ(fakePinLevel(PIN_WAVE_SWITCH), HIGH);
+    CHECK_EQ(fakePinWriteFrame(PIN_WAVE_SWITCH), framesBefore);
+
+    //out of square: the switch goes LOW only after the AD9833 left square
+    framesBefore = (int)SPI.frames.size();
+    g.gen.setWaveform(WAVEFORM::TRIANGLE);
+    CHECK_EQ(fakePinLevel(PIN_WAVE_SWITCH), LOW);
+    CHECK(fakePinWriteFrame(PIN_WAVE_SWITCH) > framesBefore);
+    CHECK_EQ(replayPath().squareOnDirect, 0);
+}
+
+TEST(begin_holds_the_divided_path_until_the_dds_is_reset) {
+    //the AD9833 powers up in an unknown state, so the switch stays on the
+    //divided path until the reset + sine words have gone out. same order as
+    //setup(): the safe pin states first, then begin()
+    holdSafePinStates();
+    Gen g;
+    CHECK_EQ(fakePinDriveCount(PIN_WAVE_SWITCH), 2); //HIGH, then LOW once: no glitch
+    CHECK_EQ(fakePinDrive(PIN_WAVE_SWITCH, 0).level, HIGH);
+    CHECK_EQ(fakePinDrive(PIN_WAVE_SWITCH, 0).frame, 0);
+    CHECK_EQ(fakePinDrive(PIN_WAVE_SWITCH, 1).level, LOW);
+    int lowAt = fakePinDrive(PIN_WAVE_SWITCH, 1).frame;
+    CHECK(lowAt > 0);
+    bool resetSeen = false;
+    for (int i = 0; i < lowAt; i++) {
+        const SpiFrame& f = SPI.frames[i];
+        if (f.csPin != PIN_AD9833_CS) continue;
+        for (size_t b = 0; b + 1 < f.bytes.size(); b += 2) {
+            uint16_t word = (f.bytes[b] << 8) | f.bytes[b + 1];
+            if (!(word >> 14) && (word & DDS_RESET)) resetSeen = true;
+        }
+    }
+    CHECK(resetSeen);
+    CHECK_EQ(fakePinLevel(PIN_WAVE_SWITCH), LOW); //sine at power-on: direct path
 }
 
 TEST(output_relay_follows_the_output) {
@@ -387,20 +503,19 @@ TEST(dc_offset_clamps_to_limits) {
 }
 
 TEST(amplitude_stops_at_the_peak_limit_and_offset_stays) {
-    Gen g;
-    g.gen.setAmplitude(1.0);
-    g.gen.setDCOffset(6.0);
-    g.gen.setAmplitude(100.0);
-    CHECK_NEAR(g.gen.DCOffset(), 6.0, 1e-6);
-    CHECK_NEAR(g.gen.amplitude(), fminf(AMP_MAX_VPP_SINE, 2.0f * (OUTPUT_PEAK_MAX_V - 6.0f)), 1e-5);
-    CHECK(g.gen.amplitude() / 2 + fabsf(g.gen.DCOffset()) <= OUTPUT_PEAK_MAX_V + 1e-5f);
-
-    //same for a negative offset
-    g.gen.setAmplitude(1.0);
-    g.gen.setDCOffset(-7.0);
-    CHECK_NEAR(g.gen.DCOffset(), -7.0, 1e-6);
-    g.gen.setAmplitude(100.0);
-    CHECK_NEAR(g.gen.amplitude(), fminf(AMP_MAX_VPP_SINE, 2.0f * (OUTPUT_PEAK_MAX_V - 7.0f)), 1e-5);
+    //at either end of the offset range (not symmetric: -5 .. +4.6 V with the
+    //placeholder values) the peak rule leaves less than the full amplitude
+    const float ends[] = {DC_OFFSET_MAX_V, DC_OFFSET_MIN_V};
+    for (float off : ends) {
+        Gen g;
+        g.gen.setAmplitude(1.0);
+        g.gen.setDCOffset(off);
+        CHECK_NEAR(g.gen.DCOffset(), off, 1e-6);
+        g.gen.setAmplitude(100.0);
+        CHECK_NEAR(g.gen.DCOffset(), off, 1e-6);
+        CHECK_NEAR(g.gen.amplitude(), fminf(AMP_MAX_VPP_SINE, 2.0f * (OUTPUT_PEAK_MAX_V - fabsf(off))), 1e-5);
+        CHECK(g.gen.amplitude() / 2 + fabsf(g.gen.DCOffset()) <= OUTPUT_PEAK_MAX_V + 1e-5f);
+    }
 }
 
 TEST(offset_stops_at_the_peak_limit_and_amplitude_stays) {

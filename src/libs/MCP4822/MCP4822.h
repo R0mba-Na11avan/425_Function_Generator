@@ -44,7 +44,8 @@ class MCP4822 {
         //hardware until begin()
         MCP4822(uint8_t csPin, SPIClass* spi = &SPI, uint32_t spiHz = DEFAULT_SPI_HZ);
 
-        //sets CS as an output, idle high. does not start the SPI bus
+        //sets CS as an output, idle high. a pin that is already an output
+        //(set HIGH early in setup()) never blips LOW. does not start the SPI bus
         void begin();
 
         //sets one channel and turns its output on. any channel other than

@@ -9,25 +9,59 @@
 
 //pins
 static int pinModes[FAKE_PIN_COUNT];
+//the output latch: what the pin drives once it is an OUTPUT (LOW after reset,
+//like the ESP32's GPIO_OUT register)
 static int pinLevels[FAKE_PIN_COUNT];
+//pinMode() has been called since the last reset. like ESP32 core 3.x,
+//digitalWrite() on a pin that isn't claimed yet is dropped
+static bool pinClaimed[FAKE_PIN_COUNT];
 //the pin most recently driven LOW: the chip select of the transfer that follows.
 //other outputs can sit LOW too (e.g. the waveform path switch), so "the first
 //LOW output" isn't enough
 static int lastLowPin = -1;
 static int pinWriteFrames[FAKE_PIN_COUNT];
 static int pinFirstWriteFrames[FAKE_PIN_COUNT];
+static std::vector<FakePinDrive> pinDrives[FAKE_PIN_COUNT];
+
+//what the pin puts on the wire right now (-1 = not driving)
+static int drivenLevel(int pin) {
+    return pinModes[pin] == OUTPUT ? pinLevels[pin] : -1;
+}
+
+//logs a change of what the pin drives
+static void recordDrive(int pin, int before) {
+    int now = drivenLevel(pin);
+    if (now != before) pinDrives[pin].push_back(FakePinDrive{(int)SPI.frames.size(), now});
+}
 
 void pinMode(uint8_t pin, uint8_t mode) {
-    if (pin < FAKE_PIN_COUNT) pinModes[pin] = mode;
+    if (pin < FAKE_PIN_COUNT) {
+        int before = drivenLevel(pin);
+        pinModes[pin] = mode;
+        pinClaimed[pin] = true;
+        recordDrive(pin, before);
+    }
 }
 
 void digitalWrite(uint8_t pin, uint8_t value) {
     if (pin < FAKE_PIN_COUNT) {
+        if (!pinClaimed[pin]) return; //"IO n is not set as GPIO", nothing happens
+        int before = drivenLevel(pin);
         pinLevels[pin] = value;
         pinWriteFrames[pin] = (int)SPI.frames.size();
         if (pinFirstWriteFrames[pin] < 0) pinFirstWriteFrames[pin] = pinWriteFrames[pin];
         if (value == LOW) lastLowPin = pin;
+        recordDrive(pin, before);
     }
+}
+
+int fakePinDriveCount(uint8_t pin) {
+    return (pin < FAKE_PIN_COUNT) ? (int)pinDrives[pin].size() : 0;
+}
+
+FakePinDrive fakePinDrive(uint8_t pin, int i) {
+    if (pin >= FAKE_PIN_COUNT || i < 0 || i >= (int)pinDrives[pin].size()) return FakePinDrive{-1, -2}; //no such entry
+    return pinDrives[pin][i];
 }
 
 int digitalRead(uint8_t pin) {
@@ -54,6 +88,8 @@ void fakeResetPins() {
     for (int pin = 0; pin < FAKE_PIN_COUNT; pin++) {
         pinModes[pin] = INPUT;
         pinLevels[pin] = LOW;
+        pinClaimed[pin] = false;
+        pinDrives[pin].clear();
         pinWriteFrames[pin] = -1;
         pinFirstWriteFrames[pin] = -1;
     }

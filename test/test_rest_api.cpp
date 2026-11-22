@@ -201,13 +201,15 @@ TEST(rest_out_of_range_is_clamped) {
     CHECK_NEAR(rig.ctl.state().frequency, FREQ_MIN_HZ, 0.1f);
 
     //amplitude stops at the peak limit, the offset stays where it is
-    rig.ctl.setDCOffset(7.0f);
+    float offMax = l.dcOffset.max;
+    rig.ctl.setDCOffset(offMax);
+    CHECK_NEAR(rig.ctl.state().dcOffset, offMax, 1e-4);
     float ampMax = l.amplitudeFor(rig.ctl.state()).max;
     r = update("{\"amplitude_vpp\": 50}");
     CHECK_EQ(r.status, 200);
     CHECK(r.doc["clamped"].as<bool>());
     CHECK_NEAR(rig.ctl.state().amplitude, ampMax, 1e-4);
-    CHECK_NEAR(rig.ctl.state().dcOffset, 7.0f, 1e-4);
+    CHECK_NEAR(rig.ctl.state().dcOffset, offMax, 1e-4);
     CHECK(contains(noteText(r), "amplitude_vpp clamped to"));
     CHECK(contains(noteText(r), "less with this offset"));
     //and the reply's range shows the new edge

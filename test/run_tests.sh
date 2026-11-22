@@ -13,6 +13,7 @@ mkdir -p "$OUT/screens"
 #firmware sources under test, compiled against the fakes in test/fakes
 SOURCES=(
     "$ROOT/src/core/func_gen.cpp"
+    "$ROOT/src/core/safe_pins.cpp"
     "$ROOT/src/core/funcgen_controller.cpp"
     "$ROOT/src/ui/input_logic.cpp"
     "$ROOT/src/ui/dashboard_logic.cpp"

@@ -359,14 +359,21 @@ TEST(mcp_amplitude_and_offset_share_the_peak_limit) {
     CHECK(!isToolError(call("set_dc_offset", args)));
     CHECK_NEAR(rig.ctl.state().dcOffset, peak - 6.0f, 1e-5);
 
-    //and back: with a big offset the amplitude can't grow, even below its own max
+    //and back: with a big offset the amplitude can't grow, even below its own max.
+    //the most negative offset is the biggest one (the range isn't symmetric)
+    float off = rig.ctl.limits().dcOffset.min;
+    float left = 2.0f * (peak - fabsf(off));
+    CHECK(left < 12.0f); //the peak rule has to bite here, or this tests nothing
     CHECK(!isToolError(call("set_amplitude", "{\"vpp\":1}")));
-    snprintf(args, sizeof(args), "{\"volts\":%.3f}", peak - 2.0f);
+    snprintf(args, sizeof(args), "{\"volts\":%.3f}", off);
     CHECK(!isToolError(call("set_dc_offset", args)));
-    CHECK(isToolError(r = call("set_amplitude", "{\"vpp\":5}"))); //only 4 Vpp left
+    snprintf(args, sizeof(args), "{\"vpp\":%.3f}", left + 0.5f);
+    CHECK(isToolError(r = call("set_amplitude", args))); //only `left` Vpp left
     CHECK(contains(toolText(r), "V offset"));
     CHECK_NEAR(rig.ctl.state().amplitude, 1.0, 1e-6);
-    CHECK(!isToolError(call("set_amplitude", "{\"vpp\":4}")));
+    snprintf(args, sizeof(args), "{\"vpp\":%.3f}", left);
+    CHECK(!isToolError(call("set_amplitude", args)));
+    CHECK_NEAR(rig.ctl.state().amplitude, left, 1e-5);
 }
 
 //HTTP-level checks

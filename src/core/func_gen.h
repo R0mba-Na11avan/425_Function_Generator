@@ -9,11 +9,17 @@
 
 /*
     Signal path (docs/parts.md): the AD9833 makes the wave, the switch picks
-    the sine/triangle path or the divided square path, a fixed x20 gain stage
-    boosts it, the AD5452 scales it down to the amplitude, and a summer adds the
-    DC offset from the MCP4822. One MCP4822 holds both channels' offsets
-    (VA = CH1, VB = CH2), so each FunctionGenerator gets its CS pin and the
-    channel it owns, and only ever writes that channel.
+    the direct sine/triangle path or the divided square path, a fixed x20 gain
+    stage boosts it, the AD5452 scales it down to the amplitude, and a summer
+    adds the DC offset from the MCP4822. One MCP4822 holds both channels'
+    offsets (VA = CH1, VB = CH2), so each FunctionGenerator gets its CS pin and
+    the channel it owns, and only ever writes that channel.
+
+    Path switch: a square must never reach the direct path (3.3 V into the
+    x20 gain saturates it). The switch goes to the divided path before the
+    AD9833 starts a square and comes back only after it has stopped. It also
+    sits on the divided path from begin() until the AD9833 has been reset to
+    sine, because the chip's registers are undefined at power-up.
 
     Peak rule: the output can't swing past OUTPUT_PEAK_MAX_V, so
     amplitude / 2 + |offset| <= OUTPUT_PEAK_MAX_V. The range of each setting

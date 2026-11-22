@@ -42,7 +42,8 @@ class AD5452 {
         //hardware until begin()
         AD5452(uint8_t syncPin, SPIClass* spi = &SPI, uint32_t spiHz = DEFAULT_SPI_HZ);
 
-        //sets SYNC as an output, idle high. does not start the SPI bus
+        //sets SYNC as an output, idle high. a pin that is already an output
+        //(set HIGH early in setup()) never blips LOW. does not start the SPI bus
         void begin();
 
         //loads and updates the DAC. codes above MAX_CODE are clamped
