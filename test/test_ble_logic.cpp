@@ -16,7 +16,8 @@ static FuncGenState sampleState() {
 
 static FuncGenLimits configLimits() {
     FunctionGenerator gen(PIN_AD9833_CS, PIN_AMP_DAC_CS, PIN_OFFSET_DAC_CS, OFFSET_DAC_CHANNEL, PIN_WAVE_SWITCH, PIN_OUTPUT_RELAY);
-    FuncGenController ctl(gen);
+    FunctionGenerator gen2(PIN_AD9833_CS_2, PIN_AMP_DAC_CS_2, PIN_OFFSET_DAC_CS, OFFSET_DAC_CHANNEL_2, PIN_WAVE_SWITCH_2, PIN_OUTPUT_RELAY_2);
+    FuncGenController ctl(gen, gen2);
     return ctl.limits();
 }
 
@@ -275,7 +276,8 @@ TEST(ble_changed_fields) {
 static CHANGE_SOURCE s_lastSource;
 static int s_changes;
 
-static void recordSource(const FuncGenState&, CHANGE_SOURCE source, void*) {
+static void recordSource(uint8_t channel, const FuncGenState&, CHANGE_SOURCE source, void*) {
+    CHECK_EQ(channel, CHANNEL_1); //BLE only drives CH1 for now
     s_lastSource = source;
     s_changes++;
 }
@@ -283,7 +285,9 @@ static void recordSource(const FuncGenState&, CHANGE_SOURCE source, void*) {
 TEST(ble_apply_goes_through_the_controller_as_ble) {
     FunctionGenerator gen(PIN_AD9833_CS, PIN_AMP_DAC_CS, PIN_OFFSET_DAC_CS, OFFSET_DAC_CHANNEL, PIN_WAVE_SWITCH, PIN_OUTPUT_RELAY);
     gen.begin();
-    FuncGenController ctl(gen);
+    FunctionGenerator gen2(PIN_AD9833_CS_2, PIN_AMP_DAC_CS_2, PIN_OFFSET_DAC_CS, OFFSET_DAC_CHANNEL_2, PIN_WAVE_SWITCH_2, PIN_OUTPUT_RELAY_2);
+    gen2.begin();
+    FuncGenController ctl(gen, gen2);
     ctl.addListener(recordSource);
     FuncGenLimits limits = ctl.limits();
 
@@ -303,19 +307,19 @@ TEST(ble_apply_goes_through_the_controller_as_ble) {
         s_changes = 0;
         s_lastSource = CHANGE_SOURCE::LOCAL;
         BleCommand c;
-        CHECK(write(w.field, w.value, ctl.state(), c, limits) == BLE_WRITE::OK);
+        CHECK(write(w.field, w.value, ctl.state(CHANNEL_1), c, limits) == BLE_WRITE::OK);
         bleApply(ctl, c);
         CHECK_EQ(s_changes, 1);
         CHECK(s_lastSource == CHANGE_SOURCE::BLE);
 
         //what a read returns now is what was written
         uint8_t v[BLE_VALUE_MAX_LEN], expect[BLE_VALUE_MAX_LEN];
-        uint8_t n = bleEncode(w.field, ctl.state(), v);
+        uint8_t n = bleEncode(w.field, ctl.state(CHANNEL_1), v);
         bytes(expect, w.value, n);
         CHECK(memcmp(v, expect, n) == 0);
     }
 
-    FuncGenState s = ctl.state();
+    FuncGenState s = ctl.state(CHANNEL_1);
     CHECK(s.waveform == WAVEFORM::SQUARE);
     CHECK_NEAR(s.frequency, 123456.78, 0.01);
     CHECK_NEAR(s.amplitude, 1.8, 1e-6);
@@ -327,10 +331,12 @@ TEST(ble_apply_goes_through_the_controller_as_ble) {
 TEST(ble_minimum_amplitude_write_lands_on_the_limit) {
     FunctionGenerator gen(PIN_AD9833_CS, PIN_AMP_DAC_CS, PIN_OFFSET_DAC_CS, OFFSET_DAC_CHANNEL, PIN_WAVE_SWITCH, PIN_OUTPUT_RELAY);
     gen.begin();
-    FuncGenController ctl(gen);
-    ValueRange r = ctl.limits().amplitude[(uint8_t)ctl.state().waveform];
+    FunctionGenerator gen2(PIN_AD9833_CS_2, PIN_AMP_DAC_CS_2, PIN_OFFSET_DAC_CS, OFFSET_DAC_CHANNEL_2, PIN_WAVE_SWITCH_2, PIN_OUTPUT_RELAY_2);
+    gen2.begin();
+    FuncGenController ctl(gen, gen2);
+    ValueRange r = ctl.limits().amplitude[(uint8_t)ctl.state(CHANNEL_1).waveform];
     BleCommand c;
-    CHECK(write(BLE_FIELD::AMPLITUDE, (uint32_t)lround(r.min * 1000.0), ctl.state(), c, ctl.limits()) == BLE_WRITE::OK);
+    CHECK(write(BLE_FIELD::AMPLITUDE, (uint32_t)lround(r.min * 1000.0), ctl.state(CHANNEL_1), c, ctl.limits()) == BLE_WRITE::OK);
     bleApply(ctl, c);
-    CHECK_NEAR(ctl.state().amplitude, r.min, 1e-6);
+    CHECK_NEAR(ctl.state(CHANNEL_1).amplitude, r.min, 1e-6);
 }

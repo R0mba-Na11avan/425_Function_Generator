@@ -28,13 +28,23 @@ bool parseWaveform(const char* name, WAVEFORM& out) {
     return false;
 }
 
-void writeStateJson(const FuncGenState& s, JsonObject out) {
+void writeStateJson(uint8_t channel, const FuncGenState& s, JsonObject out) {
+    out["channel"] = channel + 1;
     out["waveform"] = waveformJsonName(s.waveform);
     out["frequency_hz"] = s.frequency;
     out["amplitude_vpp"] = s.amplitude;
     out["phase_deg"] = s.phase;
     out["dc_offset_v"] = s.dcOffset;
     out["output_enabled"] = s.outputEnabled;
+}
+
+bool parseChannel(JsonVariantConst v, uint8_t& out) {
+    //is<int>() is false for 1.5 and for "1"
+    if (!v.is<int>()) return false;
+    int n = v.as<int>();
+    if (n < 1 || n > CHANNEL_COUNT) return false;
+    out = (uint8_t)(n - 1);
+    return true;
 }
 
 void writeRangeJson(ValueRange r, JsonObject out) {

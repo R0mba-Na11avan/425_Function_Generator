@@ -30,6 +30,11 @@ BLE (last). Read `README.md` for the architecture and status. Each stub header i
   `EDIT_ACTION::DEVICE` and reach the radios as a `DEVICE_ACTION`
   (`core/device_actions.h`) through `DisplayUI::setActionHandler`; the handler
   only sets a flag and wakes the radio's task.
+- Two channels, one `FuncGenController` (one lock: they share the SPI bus).
+  Setters and `state()` take the channel first (`CHANNEL_1`/`CHANNEL_2`,
+  0-based); MCP and the web API number them 1 and 2 and require it. The
+  mirror (LINK, CH2 follows CH1) lives in the controller: a mirrored CH2
+  setter returns false, never silently unlinks. BLE drives CH1 only for now.
 - Controller listeners are called from whatever task made the change. A listener
   must only copy state / set a flag. It must not draw, block, or call a setter.
 - Setters take a `CHANGE_SOURCE` (default `LOCAL`). MCP, BLE and the web API
@@ -44,8 +49,7 @@ BLE (last). Read `README.md` for the architecture and status. Each stub header i
   The pins there match the ordered PCB (checked against its netlist; the PCB is
   final, so fix things in firmware, not hardware). Never hardcode a pin elsewhere.
 - Boot: `holdSafePinStates()` (`core/safe_pins.*`) is the first thing in
-  `setup()`, then both channels' `FunctionGenerator::begin()` (CH2's only parks
-  its chips until CH2 is in the firmware). A new control pin that needs a boot
+  `setup()`, then both channels' `FunctionGenerator::begin()`. A new control pin that needs a boot
   level goes there. On ESP32 core 3.x `digitalWrite()` before `pinMode()` is
   dropped, so use `driveOutputPin()` / the safe-pin pattern, not write-then-pinMode.
 - The path switch must lead into square and trail out of it: a square on the

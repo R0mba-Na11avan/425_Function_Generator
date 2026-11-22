@@ -25,8 +25,11 @@ struct Rect {
     }
 };
 
-//editable fields, in the order the encoder moves through them (reading order on screen)
+//editable fields, in the order the encoder moves through them (reading order on screen).
+//CHANNEL and MIRROR are the tab row, the rest belong to the channel shown
 enum class UI_FIELD : uint8_t {
+    CHANNEL,        //the CH1 / CH2 tabs: which channel the fields below show
+    MIRROR,         //the LINK button: CH2 follows CH1
     WAVEFORM,
     OUTPUT_ENABLE,
     FREQUENCY,
@@ -34,13 +37,16 @@ enum class UI_FIELD : uint8_t {
     OFFSET
 };
 
-static const uint8_t UI_FIELD_COUNT = 5;
+static const uint8_t UI_FIELD_COUNT = 7;
 
 /*
     Layout (320x240 landscape)
 
         +--------------------------------------------+
         | network line                    [MCP] [ble] |  status bar
+        +------------------+-----------------+-------+
+        |CH1 SINE        ON|CH2 LINKED    OFF| LINK  |  tab row: both channels,
+        |    1.0000 kHz    |    1.0000 kHz   |       |  the shown one filled
         +---------------------+----------------------+
         | WAVEFORM      SINE  | OUTPUT               |
         |   ~~ preview ~~     |      [  ON  ]        |
@@ -59,8 +65,16 @@ Rect infoRect();        //the info panel, covers everything below the status bar
 Rect infoCloseRect();   //info panel, top right: "close"
 Rect infoButtonRect(uint8_t slot);  //info panel, bottom row: 0 left, 1 right (also the confirm buttons)
 Rect fieldRect(UI_FIELD field);
+Rect channelTabRect(uint8_t channel);   //one tab inside fieldRect(CHANNEL)
 //field under a screen point, false if none
 bool fieldAt(int16_t x, int16_t y, UI_FIELD& field);
+
+const char* channelName(uint8_t channel);   //"CH1", "CH2"
+
+//true if the mirror locks this field on that channel's state (CH2 while
+//LINK is on: everything but the output). a locked field shows CH1's values
+//greyed out and can't be edited
+bool fieldLocked(UI_FIELD field, const FuncGenState& state);
 
 /*
     Numbers are drawn in DigitalWF24 one character at a time with a tight,
@@ -69,7 +83,7 @@ bool fieldAt(int16_t x, int16_t y, UI_FIELD& field);
     share one layout.
 */
 static const int16_t NUM_GAP = 4;          //between characters
-static const int16_t FREQ_BASELINE = 56;   //frequency digits, from the top of the field
+static const int16_t FREQ_BASELINE = 52;   //frequency digits, from the top of the field
 int16_t numCharWidth(char c);
 int16_t numTextWidth(const char* text);
 //x of the character at index when the text starts at startX
@@ -107,6 +121,8 @@ void formatAmplitude(float vpp, char* out, size_t len);       //"2.50"
 void formatOffset(float volts, char* out, size_t len);        //"+0.25"
 const char* waveformName(WAVEFORM waveform);
 void formatNetLine(const NetStatus& net, char* out, size_t len);
+//a channel tab's two text lines: "SINE" (or "LINKED" while mirrored) and "1.5 kHz"
+void formatTabLines(const FuncGenState& state, char* line1, size_t len1, char* line2, size_t len2);
 
 //text of the info panel (opened by tapping the status bar), one line each
 static const uint8_t INFO_MAX_LINES = 8;
@@ -157,24 +173,25 @@ enum class INFO_CONFIRM : uint8_t {
 //fields are passed around as bit masks: bit (uint8_t)field
 inline uint8_t fieldBit(UI_FIELD field) { return (uint8_t)(1u << (uint8_t)field); }
 
-//fields whose shown value differs between two states (phase isn't on screen)
+//fields whose shown value differs between two states of one channel (phase
+//isn't on screen). the mirror flag counts as MIRROR
 uint8_t changedFields(const FuncGenState& before, const FuncGenState& after);
 
 //the badge text for a remote change: "MCP", "BLE" or "WEB" (3 characters)
 const char* remoteBadgeText(CHANGE_SOURCE source);
 
-//remembers recent remote (MCP/BLE/WEB) changes: which fields flash and whether
-//the status bar badge shows, and for whom
+//remembers recent remote (MCP/BLE/WEB) changes: which fields of which
+//channel flash and whether the status bar badge shows, and for whom
 class RemoteHighlight {
     public:
-        void changed(uint8_t fields, uint32_t nowMs, CHANGE_SOURCE source);
-        uint8_t flashing(uint32_t nowMs) const;   //mask of fields still flashing
+        void changed(uint8_t channel, uint8_t fields, uint32_t nowMs, CHANGE_SOURCE source);
+        uint8_t flashing(uint8_t channel, uint32_t nowMs) const;   //mask of that channel's fields still flashing
         bool badge(uint32_t nowMs) const;
         CHANGE_SOURCE badgeSource() const { return _badgeSource; }   //who made the latest change
 
     private:
-        uint32_t _fieldAt[UI_FIELD_COUNT] = {};
-        uint8_t _fields = 0;
+        uint32_t _fieldAt[CHANNEL_COUNT][UI_FIELD_COUNT] = {};
+        uint8_t _fields[CHANNEL_COUNT] = {};
         uint32_t _badgeAt = 0;
         bool _badge = false;
         CHANGE_SOURCE _badgeSource = CHANGE_SOURCE::MCP;
@@ -225,19 +242,25 @@ enum class EDIT_ACTION : uint8_t {
     SET_AMPLITUDE,
     SET_DC_OFFSET,
     SET_OUTPUT,
+    SET_MIRROR,     //the LINK button (no channel)
     DEVICE          //an info panel button: pass device on to the radios
 };
 
 struct EditCommand {
     EDIT_ACTION action;
+    uint8_t channel;    //SET_WAVEFORM .. SET_OUTPUT
     WAVEFORM waveform;  //SET_WAVEFORM
     float value;        //SET_FREQUENCY / SET_AMPLITUDE / SET_DC_OFFSET
-    bool enabled;       //SET_OUTPUT
+    bool enabled;       //SET_OUTPUT / SET_MIRROR
     DEVICE_ACTION device;   //DEVICE
 };
 
 /*
-    Selection + edit mode.
+    Selection + edit mode. The fields edit the channel shown (channel()).
+        - CHANNEL: a press switches to the other channel, tapping a tab shows
+          that channel. switching ends edit mode
+        - MIRROR: a press or tap turns LINK on/off (SET_MIRROR)
+        - fields the mirror locks (fieldLocked) can be selected but not edited
         - not editing: encoder turns move the selection
         - short press: enter edit mode (on OUTPUT it toggles the output). on
           amplitude/offset/waveform a second press leaves edit mode
@@ -253,7 +276,8 @@ struct EditCommand {
           that digit the step and starts editing
         - tap on the status bar: opens the info panel (buttons: see above)
         - edit mode ends after UI_EDIT_TIMEOUT_MS without input (tick), and
-          when an agent changes the field being edited (remoteChanged)
+          when an agent changes the field being edited or locks it by turning
+          LINK on (remoteChanged)
     It only returns commands. The values shown always come from the
     controller's state, so the screen shows what was actually applied.
 */
@@ -261,16 +285,18 @@ class DashboardEditor {
     public:
         DashboardEditor();
 
-        //buttons: what the info panel offers right now (infoButtons())
-        EditCommand handle(const InputEvent& event, const FuncGenState& state, const FuncGenLimits& limits,
+        //states: both channels, indexed by channel. buttons: what the info
+        //panel offers right now (infoButtons())
+        EditCommand handle(const InputEvent& event, const FuncGenState states[CHANNEL_COUNT], const FuncGenLimits& limits,
                            uint32_t nowMs, InfoButtons buttons = InfoButtons{WIFI_BUTTON::NONE, false});
 
         //call regularly: ends edit mode after UI_EDIT_TIMEOUT_MS without input
         void tick(uint32_t nowMs);
 
-        //an agent changed these fields (mask of fieldBit)
-        void remoteChanged(uint8_t fields);
+        //an agent changed these fields of that channel (mask of fieldBit)
+        void remoteChanged(uint8_t channel, uint8_t fields);
 
+        uint8_t channel() const { return _channel; }    //the channel shown
         UI_FIELD selected() const { return _selected; }
         bool editing() const { return _editing; }
         uint8_t freqStepIndex() const { return _stepIndex; }
@@ -282,13 +308,16 @@ class DashboardEditor {
 
     private:
         EditCommand onEncoder(const InputEvent& event, const FuncGenState& state, const FuncGenLimits& limits);
-        EditCommand onShortPress(const FuncGenState& state);
+        EditCommand onShortPress(const FuncGenState states[CHANNEL_COUNT]);
         void onLongPress();
-        EditCommand onTap(const InputEvent& event, const FuncGenState& state);
+        EditCommand onTap(const InputEvent& event, const FuncGenState states[CHANNEL_COUNT]);
+        void showChannel(uint8_t channel);
+        EditCommand toggleMirror(const FuncGenState states[CHANNEL_COUNT]);
         EditCommand onInfo(const InputEvent& event, InfoButtons buttons);
         EditCommand onConfirm(const InputEvent& event);
         EditCommand activate(INFO_ITEM item, InfoButtons buttons);
 
+        uint8_t _channel;
         UI_FIELD _selected;
         bool _editing;
         uint8_t _stepIndex;

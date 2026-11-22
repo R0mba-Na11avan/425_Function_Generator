@@ -15,12 +15,13 @@
 
 //everything the screen shows
 struct DashboardView {
-    FuncGenState state;
+    FuncGenState channels[CHANNEL_COUNT];   //indexed by channel
+    uint8_t shown;          //the channel the fields show
     NetStatus net;
     UI_FIELD selected;
     bool editing;
     uint8_t freqStepIndex;
-    uint8_t remoteFlash;    //fields an agent just changed (mask of fieldBit)
+    uint8_t remoteFlash[CHANNEL_COUNT];     //per channel: fields an agent just changed (mask of fieldBit)
     bool remoteBadge;       //"MCP" or "BLE" in the status bar
     CHANGE_SOURCE badgeSource;
     bool bleConnected;      //Bluetooth icon in the status bar

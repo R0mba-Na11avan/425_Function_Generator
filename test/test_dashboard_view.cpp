@@ -27,9 +27,10 @@ static const uint16_t TEXT_COLOR = 0xFFFF;
 static const uint16_t LABEL_COLOR = 0x8410;
 
 static DashboardView baseView() {
-    DashboardView v;
-    memset(&v, 0, sizeof(v));
-    v.state = FuncGenState{WAVEFORM::SINE, 1.0f, 0.0f, FunctionGenerator::amplitudeRange(WAVEFORM::SINE).min, 0.0f, false};
+    DashboardView v = {};
+    v.channels[CHANNEL_1] = FuncGenState{WAVEFORM::SINE, 1.0f, 0.0f, FunctionGenerator::amplitudeRange(WAVEFORM::SINE).min, 0.0f, false};
+    v.channels[CHANNEL_2] = FuncGenState{WAVEFORM::SQUARE, 50.0f, 0.0f, 2.0f, 0.5f, false};
+    v.shown = CHANNEL_1;
     v.net.state = WIFI_STATE::IDLE;
     v.selected = UI_FIELD::FREQUENCY;
     v.editing = false;
@@ -45,9 +46,9 @@ static DashboardView scenario(int i, const char*& name) {
             break;
         case 1:
             name = "ap_mode_square_12M5_editing";
-            v.state.waveform = WAVEFORM::SQUARE;
-            v.state.frequency = 12500000.0f;
-            v.state.outputEnabled = true;
+            v.channels[CHANNEL_1].waveform = WAVEFORM::SQUARE;
+            v.channels[CHANNEL_1].frequency = 12500000.0f;
+            v.channels[CHANNEL_1].outputEnabled = true;
             v.editing = true;
             v.freqStepIndex = 0;
             v.net.state = WIFI_STATE::AP_MODE;
@@ -56,11 +57,11 @@ static DashboardView scenario(int i, const char*& name) {
             break;
         case 2:
             name = "connected_triangle_amp_editing";
-            v.state.waveform = WAVEFORM::TRIANGLE;
-            v.state.frequency = 1500.0f;
-            v.state.amplitude = 2.35f;
-            v.state.dcOffset = -1.25f;
-            v.state.outputEnabled = true;
+            v.channels[CHANNEL_1].waveform = WAVEFORM::TRIANGLE;
+            v.channels[CHANNEL_1].frequency = 1500.0f;
+            v.channels[CHANNEL_1].amplitude = 2.35f;
+            v.channels[CHANNEL_1].dcOffset = -1.25f;
+            v.channels[CHANNEL_1].outputEnabled = true;
             v.selected = UI_FIELD::AMPLITUDE;
             v.editing = true;
             v.freqStepIndex = 2;
@@ -70,11 +71,11 @@ static DashboardView scenario(int i, const char*& name) {
             break;
         case 4:
             name = "remote_change_flash_and_badge";
-            v.state.frequency = 2500.0f;
-            v.state.amplitude = 3.0f;
-            v.state.outputEnabled = true;
+            v.channels[CHANNEL_1].frequency = 2500.0f;
+            v.channels[CHANNEL_1].amplitude = 3.0f;
+            v.channels[CHANNEL_1].outputEnabled = true;
             v.selected = UI_FIELD::FREQUENCY;
-            v.remoteFlash = fieldBit(UI_FIELD::FREQUENCY) | fieldBit(UI_FIELD::AMPLITUDE);
+            v.remoteFlash[CHANNEL_1] = fieldBit(UI_FIELD::FREQUENCY) | fieldBit(UI_FIELD::AMPLITUDE);
             v.remoteBadge = true;
             v.net.state = WIFI_STATE::CONNECTED;
             strcpy(v.net.hostname, "funcgen");
@@ -82,10 +83,10 @@ static DashboardView scenario(int i, const char*& name) {
             break;
         case 5:
             name = "ble_change_badge_and_icon";
-            v.state.waveform = WAVEFORM::SQUARE;
-            v.state.outputEnabled = true;
+            v.channels[CHANNEL_1].waveform = WAVEFORM::SQUARE;
+            v.channels[CHANNEL_1].outputEnabled = true;
             v.selected = UI_FIELD::WAVEFORM;
-            v.remoteFlash = fieldBit(UI_FIELD::OUTPUT_ENABLE);
+            v.remoteFlash[CHANNEL_1] = fieldBit(UI_FIELD::OUTPUT_ENABLE);
             v.remoteBadge = true;
             v.badgeSource = CHANGE_SOURCE::BLE;
             v.bleConnected = true;
@@ -95,7 +96,7 @@ static DashboardView scenario(int i, const char*& name) {
             break;
         default:
             name = "connecting_long_ssid_output_selected";
-            v.state.frequency = 440.0f;
+            v.channels[CHANNEL_1].frequency = 440.0f;
             v.selected = UI_FIELD::OUTPUT_ENABLE;
             v.net.state = WIFI_STATE::CONNECTING;
             strcpy(v.net.ssid, "a-really-long-network-name-32chr");
@@ -104,17 +105,46 @@ static DashboardView scenario(int i, const char*& name) {
             //widest numbers the limits allow (the peak rule never allows both at
             //once, but the view has to fit each one)
             name = "widest_amplitude_and_offset";
-            v.state.amplitude = AMP_MAX_VPP_SINE;
-            v.state.dcOffset = DC_OFFSET_MIN_V;
-            v.state.outputEnabled = true;
+            v.channels[CHANNEL_1].amplitude = AMP_MAX_VPP_SINE;
+            v.channels[CHANNEL_1].dcOffset = DC_OFFSET_MIN_V;
+            v.channels[CHANNEL_1].outputEnabled = true;
             v.selected = UI_FIELD::OFFSET;
             v.editing = true;
+            break;
+        case 7:
+            name = "ch2_linked_locked";
+            v.channels[CHANNEL_1].waveform = WAVEFORM::TRIANGLE;
+            v.channels[CHANNEL_1].frequency = 12345.6f;
+            v.channels[CHANNEL_1].amplitude = 4.0f;
+            v.channels[CHANNEL_1].dcOffset = 1.5f;
+            v.channels[CHANNEL_1].outputEnabled = true;
+            v.channels[CHANNEL_2] = v.channels[CHANNEL_1];
+            v.channels[CHANNEL_2].outputEnabled = false;
+            v.channels[CHANNEL_2].mirrored = true;
+            v.shown = CHANNEL_2;
+            v.selected = UI_FIELD::MIRROR;
+            v.net.state = WIFI_STATE::CONNECTED;
+            strcpy(v.net.hostname, "funcgen");
+            strcpy(v.net.ip, "192.168.1.137");
+            break;
+        case 8:
+            name = "ch1_tabs_selected_ch2_remote_flash";
+            v.channels[CHANNEL_2].frequency = 12500000.0f;
+            v.channels[CHANNEL_2].waveform = WAVEFORM::TRIANGLE;
+            v.channels[CHANNEL_2].outputEnabled = true;
+            v.remoteFlash[CHANNEL_2] = fieldBit(UI_FIELD::FREQUENCY);
+            v.remoteBadge = true;
+            v.badgeSource = CHANGE_SOURCE::MCP;
+            v.selected = UI_FIELD::CHANNEL;
+            v.net.state = WIFI_STATE::CONNECTED;
+            strcpy(v.net.hostname, "funcgen");
+            strcpy(v.net.ip, "192.168.1.137");
             break;
     }
     return v;
 }
 
-static const int SCENARIO_COUNT = 7;
+static const int SCENARIO_COUNT = 9;
 
 //one area through the canvas path, like DisplayUI with PSRAM
 static void renderToCanvas(GFXcanvas16& canvas, uint8_t area, const DashboardView& v) {
@@ -218,7 +248,7 @@ TEST(output_badge_colour_follows_state) {
     CHECK(countColor(canvas, 0x8000) > 1000); //red badge
     CHECK_EQ(countColor(canvas, 0x07E0), 0);
 
-    v.state.outputEnabled = true;
+    v.channels[CHANNEL_1].outputEnabled = true;
     renderToCanvas(canvas, (uint8_t)UI_FIELD::OUTPUT_ENABLE, v);
     CHECK(countColor(canvas, 0x07E0) > 1000); //green badge
 }
@@ -227,7 +257,7 @@ TEST(frequency_underline_shows_the_step_really_used) {
     //0.1 Hz isn't on screen in MHz, so the knob uses 1 Hz there and the last
     //digit gets the underline
     DashboardView v = baseView();
-    v.state.frequency = 5000000.0f;
+    v.channels[CHANNEL_1].frequency = 5000000.0f;
     v.freqStepIndex = 0;
     v.editing = true;
     uint8_t area = (uint8_t)UI_FIELD::FREQUENCY;
@@ -235,11 +265,11 @@ TEST(frequency_underline_shows_the_step_really_used) {
     GFXcanvas16 canvas(r.w, r.h);
     renderToCanvas(canvas, area, v);
 
-    FrequencyText f = formatFrequency(v.state.frequency);
+    FrequencyText f = formatFrequency(v.channels[CHANNEL_1].frequency);
     int8_t last = (int8_t)strlen(f.text) - 1;
     int16_t x0 = numCharX(f.text, freqTextStartX(f.text), last);
     int ink = 0;
-    for (int16_t y = FREQ_BASELINE + 12; y < FREQ_BASELINE + 15; y++)
+    for (int16_t y = FREQ_BASELINE + 11; y < FREQ_BASELINE + 14; y++)
         for (int16_t x = x0; x < x0 + numCharWidth(f.text[last]); x++)
             if (canvas.getPixel(x, y) != DASHBOARD_BG) ink++;
     CHECK(ink > 0);
@@ -266,13 +296,14 @@ TEST(area_keys_track_what_is_shown) {
         CHECK(strcmp(ka, kb) == 0);
     }
 
-    //a frequency change only dirties the frequency field
-    b.state.frequency = 2000.0f;
+    //a frequency change only dirties the frequency field (and its tab)
+    b.channels[CHANNEL_1].frequency = 2000.0f;
     for (uint8_t area = 0; area < DASHBOARD_AREA_COUNT; area++) {
         areaKey(a, area, ka, sizeof(ka));
         areaKey(b, area, kb, sizeof(kb));
         bool changed = strcmp(ka, kb) != 0;
-        CHECK(changed == (area == (uint8_t)UI_FIELD::FREQUENCY));
+        //and the tab row, which sums up both channels
+        CHECK(changed == (area == (uint8_t)UI_FIELD::FREQUENCY || area == (uint8_t)UI_FIELD::CHANNEL));
     }
 
     //moving the selection dirties the old and the new field
@@ -287,7 +318,7 @@ TEST(area_keys_track_what_is_shown) {
 
     //output state is shown in two places (badge and preview colour)
     b = a;
-    b.state.outputEnabled = true;
+    b.channels[CHANNEL_1].outputEnabled = true;
     areaKey(a, (uint8_t)UI_FIELD::WAVEFORM, ka, sizeof(ka));
     areaKey(b, (uint8_t)UI_FIELD::WAVEFORM, kb, sizeof(kb));
     CHECK(strcmp(ka, kb) != 0);
@@ -317,7 +348,7 @@ TEST(remote_change_flash_and_badge) {
     GFXcanvas16 field(fr.w, fr.h);
     renderToCanvas(field, (uint8_t)UI_FIELD::FREQUENCY, v);
     CHECK_EQ(countColor(field, REMOTE_COLOR), 0);
-    v.remoteFlash = fieldBit(UI_FIELD::FREQUENCY);
+    v.remoteFlash[CHANNEL_1] = fieldBit(UI_FIELD::FREQUENCY);
     renderToCanvas(field, (uint8_t)UI_FIELD::FREQUENCY, v);
     CHECK(countColor(field, REMOTE_COLOR) > 2 * (fr.w + fr.h)); //thick frame
     //other fields don't flash
@@ -342,7 +373,7 @@ TEST(remote_change_flash_and_badge) {
 TEST(remote_flash_and_badge_change_area_keys) {
     DashboardView a = baseView();
     DashboardView b = a;
-    b.remoteFlash = fieldBit(UI_FIELD::OFFSET);
+    b.remoteFlash[CHANNEL_1] = fieldBit(UI_FIELD::OFFSET);
     b.remoteBadge = true;
     char ka[AREA_KEY_LEN], kb[AREA_KEY_LEN];
     for (uint8_t area = 0; area < DASHBOARD_AREA_COUNT; area++) {
@@ -711,4 +742,87 @@ TEST(save_extra_screens_as_bmp) {
         snprintf(path, sizeof(path), "%s/%s.bmp", SCREENS_DIR, pairNames[i]);
         saveBmp(path, screen);
     }
+}
+
+//two channels
+
+TEST(fields_show_the_channel_picked_in_the_tabs) {
+    DashboardView v = baseView();
+    v.channels[CHANNEL_1].frequency = 1000.0f;
+    v.channels[CHANNEL_2].frequency = 2000.0f;
+    char k1[AREA_KEY_LEN], k2[AREA_KEY_LEN];
+    areaKey(v, (uint8_t)UI_FIELD::FREQUENCY, k1, sizeof(k1));
+    v.shown = CHANNEL_2;
+    areaKey(v, (uint8_t)UI_FIELD::FREQUENCY, k2, sizeof(k2));
+    CHECK(strcmp(k1, k2) != 0);
+    CHECK(strstr(k2, "2.0000") != nullptr);
+
+    //the tab row shows both either way, and which one is picked
+    areaKey(v, (uint8_t)UI_FIELD::CHANNEL, k2, sizeof(k2));
+    v.shown = CHANNEL_1;
+    areaKey(v, (uint8_t)UI_FIELD::CHANNEL, k1, sizeof(k1));
+    CHECK(strcmp(k1, k2) != 0);
+    CHECK(strstr(k1, "1 kHz") && strstr(k1, "2 kHz"));
+}
+
+TEST(link_button_and_locked_fields) {
+    DashboardView v = baseView();
+    Rect r = areaRect((uint8_t)UI_FIELD::MIRROR);
+    GFXcanvas16 canvas(r.w, r.h);
+    const uint16_t LINK_COLOR = 0x5D5F;
+
+    renderToCanvas(canvas, (uint8_t)UI_FIELD::MIRROR, v);
+    CHECK_EQ(countColor(canvas, LINK_COLOR), 0);
+    v.channels[CHANNEL_2].mirrored = true;
+    renderToCanvas(canvas, (uint8_t)UI_FIELD::MIRROR, v);
+    CHECK(countColor(canvas, LINK_COLOR) > r.w * r.h / 2); //filled
+
+    //CH2 shown while linked: its numbers turn grey, the key changes, CH1 is untouched
+    char before[AREA_KEY_LEN], after[AREA_KEY_LEN];
+    v.channels[CHANNEL_2].mirrored = false;
+    v.shown = CHANNEL_2;
+    areaKey(v, (uint8_t)UI_FIELD::AMPLITUDE, before, sizeof(before));
+    Rect ar = areaRect((uint8_t)UI_FIELD::AMPLITUDE);
+    GFXcanvas16 amp(ar.w, ar.h);
+    renderToCanvas(amp, (uint8_t)UI_FIELD::AMPLITUDE, v);
+    int white = countColor(amp, TEXT_COLOR);
+    CHECK(white > 100);
+
+    v.channels[CHANNEL_2].mirrored = true;
+    areaKey(v, (uint8_t)UI_FIELD::AMPLITUDE, after, sizeof(after));
+    CHECK(strcmp(before, after) != 0);
+    renderToCanvas(amp, (uint8_t)UI_FIELD::AMPLITUDE, v);
+    CHECK(countColor(amp, TEXT_COLOR) < white / 4);
+    CHECK(countColor(amp, LINK_COLOR) > 0);   //"LINKED" in the label row
+
+    //the output is never locked
+    char k1[AREA_KEY_LEN], k2[AREA_KEY_LEN];
+    areaKey(v, (uint8_t)UI_FIELD::OUTPUT_ENABLE, k1, sizeof(k1));
+    v.channels[CHANNEL_2].mirrored = false;
+    areaKey(v, (uint8_t)UI_FIELD::OUTPUT_ENABLE, k2, sizeof(k2));
+    CHECK(strcmp(k1, k2) == 0);
+}
+
+TEST(remote_change_on_the_hidden_channel_flashes_its_tab) {
+    DashboardView v = baseView();
+    Rect r = areaRect((uint8_t)UI_FIELD::CHANNEL);
+    GFXcanvas16 canvas(r.w, r.h);
+    renderToCanvas(canvas, (uint8_t)UI_FIELD::CHANNEL, v);
+    CHECK_EQ(countColor(canvas, REMOTE_COLOR), 0);
+
+    v.remoteFlash[CHANNEL_2] = fieldBit(UI_FIELD::FREQUENCY);
+    renderToCanvas(canvas, (uint8_t)UI_FIELD::CHANNEL, v);
+    //only CH2's tab: every magenta pixel is right of CH1's tab
+    int left = 0, right = 0;
+    Rect t1 = channelTabRect(CHANNEL_1);
+    for (int y = 0; y < r.h; y++)
+        for (int x = 0; x < r.w; x++)
+            if (canvas.getPixel(x, y) == REMOTE_COLOR) (x < t1.x + t1.w - r.x ? left : right)++;
+    CHECK_EQ(left, 0);
+    CHECK(right > 50);
+
+    //the fields below show CH1, which didn't change: no flash there
+    char key[AREA_KEY_LEN];
+    areaKey(v, (uint8_t)UI_FIELD::FREQUENCY, key, sizeof(key));
+    CHECK(strncmp(key, "1|0|0|", 6) == 0); //selected, not editing, not remote
 }

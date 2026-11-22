@@ -5,9 +5,14 @@
 **************************************************************************/
 
 /*
-    State JSON (MCP's get_state / set_* results and the REST API's "state")
-        { "waveform": "sine" | "square" | "triangle", "frequency_hz", "amplitude_vpp",
-          "phase_deg", "dc_offset_v", "output_enabled" }
+    State JSON, one channel (MCP's get_state / set_* results and the REST
+    API's "state")
+        { "channel": 1 | 2, "waveform": "sine" | "square" | "triangle", "frequency_hz",
+          "amplitude_vpp", "phase_deg", "dc_offset_v", "output_enabled" }
+    the mirror (CH2 follows CH1) is one "mirror": true | false next to it,
+    written by the caller
+
+    Channels are numbered 1 and 2 in JSON (CHANNEL_1 / CHANNEL_2 + 1)
 
     Origin check
         - a browser always sends Origin on POST. it must be
@@ -31,7 +36,11 @@ const char* waveformJsonName(WAVEFORM waveform);
 //case-insensitive. false if name is null or not a waveform
 bool parseWaveform(const char* name, WAVEFORM& out);
 
-void writeStateJson(const FuncGenState& state, JsonObject out);
+//channel is the index (CHANNEL_1 / CHANNEL_2), written as 1 / 2
+void writeStateJson(uint8_t channel, const FuncGenState& state, JsonObject out);
+
+//a JSON channel number (1 .. CHANNEL_COUNT, an integer) as an index. false if it isn't one
+bool parseChannel(JsonVariantConst value, uint8_t& out);
 
 //{ min, max }
 void writeRangeJson(ValueRange range, JsonObject out);

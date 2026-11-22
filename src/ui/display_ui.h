@@ -21,6 +21,11 @@
           picks up the latest state and redraws what changed (at most every
           UI_FRAME_MS, so ~25 Hz)
 
+    Channels: the tab row shows both channels, the fields below show the one
+    picked there (DashboardEditor::channel()). the listener keeps the latest
+    state of each channel. a remote change to the channel not shown flashes
+    its tab. while LINK is on, CH2's mirrored fields are greyed and locked
+
     Redraw strategy
         - the screen is split into areas (status bar + one per field, see
           dashboard_logic.h). each area keeps a key string of what it last
@@ -97,7 +102,7 @@ class DisplayUI {
         bool begin();
 
     private:
-        static void onStateChanged(const FuncGenState& state, CHANGE_SOURCE source, void* ctx);
+        static void onStateChanged(uint8_t channel, const FuncGenState& state, CHANGE_SOURCE source, void* ctx);
         static void taskEntry(void* arg);
         void run();
 
@@ -128,17 +133,17 @@ class DisplayUI {
         ActionFn _actionFn;
         void* _actionCtx;
 
-        //written by the listener (any task), read by the UI task
+        //written by the listener (any task), read by the UI task. per channel
         portMUX_TYPE _stateMux;
-        FuncGenState _latest;
+        FuncGenState _latest[CHANNEL_COUNT];
         bool _stateDirty;
-        FuncGenState _lastSeen;     //state after the previous change, to find what a remote change touched
-        uint8_t _remoteFields;      //fields changed remotely since the UI task last looked
-        bool _remotePending;
+        FuncGenState _lastSeen[CHANNEL_COUNT];  //state after the previous change, to find what a remote change touched
+        uint8_t _remoteFields[CHANNEL_COUNT];   //fields changed remotely since the UI task last looked
+        bool _remotePending[CHANNEL_COUNT];
         CHANGE_SOURCE _remoteSource;    //of the latest remote change
 
         //UI task only
-        FuncGenState _state;
+        FuncGenState _state[CHANNEL_COUNT];
         FuncGenLimits _limits;
         DashboardEditor _editor;
         RemoteHighlight _highlight;

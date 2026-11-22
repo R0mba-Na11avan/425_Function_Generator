@@ -12,6 +12,7 @@
     out-of-range value the way the MCP tools do.
 
     GATT layout and value encoding: see ble_logic.h. Test with nRF Connect.
+    CH1 only for now (ble_logic.h).
 
     Security
         - every characteristic needs an encrypted, authenticated (MITM) link:
@@ -88,7 +89,7 @@ class BleService {
         static void onReset(int reason);
         static int onGapEvent(struct ble_gap_event* event, void* arg);
         static int onAccess(uint16_t connHandle, uint16_t attrHandle, struct ble_gatt_access_ctxt* ctxt, void* arg);
-        static void onStateChanged(const FuncGenState& state, CHANGE_SOURCE source, void* ctx);
+        static void onStateChanged(uint8_t channel, const FuncGenState& state, CHANGE_SOURCE source, void* ctx);
         static void onNotifyEvent(struct ble_npl_event* ev);
         static void onCancelEvent(struct ble_npl_event* ev);
         static void onForgetEvent(struct ble_npl_event* ev);

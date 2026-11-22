@@ -10,6 +10,10 @@
     Plain styling for now, a nicer look is planned later.
 
     Controls tab
+        - CH1 / CH2 buttons pick the channel the controls below show and
+          change (each request carries "channel"). the Link toggle turns the
+          mirror on/off: CH2 follows CH1, so while it is on CH2's controls
+          (all but the output) are disabled with a note saying why
         - waveform buttons, output toggle, number fields for frequency (with a
           Hz/kHz/MHz unit), amplitude, DC offset and phase
         - a field is sent when Enter is pressed or it loses focus (one
@@ -74,6 +78,9 @@ nav button[aria-selected=true]{color:var(--fg);border-bottom-color:var(--acc);fo
 .seg button[aria-pressed=true]{border-color:var(--acc);background:var(--acc);color:#fff;font-weight:600}
 .toggle{flex:0 0 96px;font-weight:600}
 .toggle[aria-pressed=true]{border-color:var(--ok);background:var(--ok);color:#fff}
+#chancard .seg{flex:1;margin:0}
+#link[aria-pressed=true]{border-color:var(--acc);background:var(--acc)}
+button:disabled,input:disabled{opacity:.45;cursor:not-allowed}
 canvas{display:block;width:100%;height:150px;border:1px solid var(--line);border-radius:8px}
 #cap{font-size:13px;color:var(--dim);margin-top:4px}
 .field{padding:6px;margin:0 -6px 6px;border-radius:8px}
@@ -101,6 +108,14 @@ dd{margin:0;overflow-wrap:anywhere}
 <div id="banner" class="banner" hidden>Can't reach the generator. Retrying...</div>
 
 <section id="ctl" role="tabpanel" aria-labelledby="tab-ctl">
+<div class="card" id="chancard">
+<div class="row"><div class="seg" id="chan">
+<button data-ch="0" aria-pressed="true">CH1</button>
+<button data-ch="1" aria-pressed="false">CH2</button>
+</div><button id="link" class="toggle" aria-pressed="false" title="CH2 follows CH1 (all but the output)">Link</button></div>
+<div class="hint" id="lockmsg" hidden>CH2 follows CH1 while Link is on. Change CH1, or turn Link off to set CH2 on its own. Its output stays separate.</div>
+</div>
+
 <div class="card" id="outcard">
 <div class="row"><h2>Output</h2><button id="out" class="toggle" aria-pressed="false">OFF</button></div>
 </div>
@@ -156,6 +171,9 @@ const DECIMALS={amplitude_vpp:3,dc_offset_v:3,phase_deg:2};
 const KEYS=['frequency_hz','amplitude_vpp','dc_offset_v','phase_deg'];
 const UNIT_TEXT={amplitude_vpp:'Vpp',dc_offset_v:'V',phase_deg:'°'};
 
+//last: the whole /api/state reply. ch: the channel shown (0 = CH1). cur and
+//ranges are that channel's
+let last=null,ch=0,curCh=-1,mirror=false;
 let cur=null,ranges=null,peak=10;
 let pollMs=)HTML" INDEX_HTML_STR(WEB_POLL_MS) R"HTML(,timer=null,inflight=false,gen=0,busy=0;
 
@@ -195,16 +213,32 @@ function rangeText(key){
 }
 
 function apply(d,own){
-  const prev=cur;
-  cur=d.state;ranges=d.ranges;peak=d.output_peak_v;
-  document.querySelectorAll('#wave button').forEach(b=>b.setAttribute('aria-pressed',b.dataset.w===cur.waveform));
+  last=d;
+  //a channel switch shows the other channel's values as they are, without flashing
+  const switched=curCh!==ch;
+  const prev=switched?null:cur,prevMirror=mirror;
+  const c=d.channels[ch];
+  cur=c.state;ranges=c.ranges;peak=d.output_peak_v;mirror=!!d.mirror;curCh=ch;
+  document.querySelectorAll('#chan button').forEach((b,i)=>{
+    b.setAttribute('aria-pressed',i===ch);
+    b.textContent='CH'+(i+1)+(d.channels[i].state.output_enabled?' ON':'');
+  });
+  const link=$('link');
+  link.setAttribute('aria-pressed',mirror);
+  //CH2 follows CH1 while linked: everything but its output is locked
+  const locked=ch===1&&mirror;
+  $('lockmsg').hidden=!locked;
+  document.querySelectorAll('#wave button').forEach(b=>{b.setAttribute('aria-pressed',b.dataset.w===cur.waveform);b.disabled=locked});
   const out=$('out');
   out.setAttribute('aria-pressed',cur.output_enabled);
   out.textContent=cur.output_enabled?'ON':'OFF';
+  if(switched)$('unit').value=autoUnit(cur.frequency_hz);
   KEYS.forEach(k=>{
-    showInput(k,false);
+    $('in-'+k).disabled=locked;
+    showInput(k,switched);
     $('f-'+k).querySelector('.range').textContent=rangeText(k);
   });
+  if(!own&&prevMirror!==mirror)flash($('chancard'));
   if(prev&&!own){
     //changed somewhere else: knob, MCP, BLE or another browser
     KEYS.forEach(k=>{if(prev[k]!==cur[k])flash($('f-'+k))});
@@ -217,7 +251,8 @@ function apply(d,own){
 //page -> generator
 
 async function send(key,value){
-  const body={};body[key]=value;
+  //the mirror is the one setting that isn't per channel
+  const body=key==='mirror'?{}:{channel:ch+1};body[key]=value;
   //where a clamp note belongs: a waveform change can only clamp the amplitude
   const noteKey=key==='waveform'?'amplitude_vpp':key;
   if(KEYS.includes(key))msg(key,'');
@@ -227,7 +262,7 @@ async function send(key,value){
     let d=null;
     try{d=await r.json()}catch(e){}
     online(true);
-    if(!r.ok||!d||!d.state){
+    if(!r.ok||!d||!d.channels){
       if(KEYS.includes(key)){msg(key,(d&&d.error)||('Error '+r.status),'err');if(cur)showInput(key,true)}
       return;
     }
@@ -263,6 +298,12 @@ $('unit').addEventListener('change',()=>{if(cur)showInput('frequency_hz',true)})
 
 document.querySelectorAll('#wave button').forEach(b=>b.addEventListener('click',()=>send('waveform',b.dataset.w)));
 $('out').addEventListener('click',()=>{if(cur)send('output_enabled',!cur.output_enabled)});
+$('link').addEventListener('click',()=>{if(cur)send('mirror',!mirror)});
+document.querySelectorAll('#chan button').forEach(b=>b.addEventListener('click',()=>{
+  ch=+b.dataset.ch;
+  KEYS.forEach(k=>msg(k,''));
+  if(last)apply(last,true);
+}));
 
 //polling
 

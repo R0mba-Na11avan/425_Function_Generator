@@ -1,53 +1,91 @@
 #include "funcgen_controller.h"
 
-FuncGenController::FuncGenController(FunctionGenerator& funcGen)
-    : _funcGen(funcGen), _lock(xSemaphoreCreateMutex()), _listenerCount(0) {}
-
-void FuncGenController::setWaveform(WAVEFORM waveform, CHANGE_SOURCE source) {
-    xSemaphoreTake(_lock, portMAX_DELAY);
-    _funcGen.setWaveform(waveform);
-    xSemaphoreGive(_lock);
-    notify(source);
+FuncGenController::FuncGenController(FunctionGenerator& ch1, FunctionGenerator& ch2)
+    : _mirror(false), _lock(xSemaphoreCreateMutex()), _listenerCount(0) {
+    _gen[CHANNEL_1] = &ch1;
+    _gen[CHANNEL_2] = &ch2;
 }
 
-void FuncGenController::setFrequency(float frequency, CHANGE_SOURCE source) {
+template <typename Apply>
+bool FuncGenController::change(uint8_t channel, bool followed, CHANGE_SOURCE source, Apply apply) {
+    if (channel >= CHANNEL_COUNT) return false;
+
     xSemaphoreTake(_lock, portMAX_DELAY);
-    _funcGen.setFrequency(frequency);
+    if (followed && _mirror && channel == CHANNEL_2) {
+        xSemaphoreGive(_lock);
+        return false;
+    }
+    apply(*_gen[channel]);
+    bool copied = followed && _mirror && channel == CHANNEL_1;
+    if (copied) syncMirror();
     xSemaphoreGive(_lock);
-    notify(source);
+
+    notify(channel, source);
+    if (copied) notify(CHANNEL_2, source);
+    return true;
 }
 
-void FuncGenController::setPhase(float phase, CHANGE_SOURCE source) {
-    xSemaphoreTake(_lock, portMAX_DELAY);
-    _funcGen.setPhase(phase);
-    xSemaphoreGive(_lock);
-    notify(source);
+bool FuncGenController::setWaveform(uint8_t channel, WAVEFORM waveform, CHANGE_SOURCE source) {
+    return change(channel, true, source, [&](FunctionGenerator& g) { g.setWaveform(waveform); });
 }
 
-void FuncGenController::setAmplitude(float amplitude, CHANGE_SOURCE source) {
-    xSemaphoreTake(_lock, portMAX_DELAY);
-    _funcGen.setAmplitude(amplitude);
-    xSemaphoreGive(_lock);
-    notify(source);
+bool FuncGenController::setFrequency(uint8_t channel, float frequency, CHANGE_SOURCE source) {
+    return change(channel, true, source, [&](FunctionGenerator& g) { g.setFrequency(frequency); });
 }
 
-void FuncGenController::setDCOffset(float dcOffset, CHANGE_SOURCE source) {
-    xSemaphoreTake(_lock, portMAX_DELAY);
-    _funcGen.setDCOffset(dcOffset);
-    xSemaphoreGive(_lock);
-    notify(source);
+bool FuncGenController::setPhase(uint8_t channel, float phase, CHANGE_SOURCE source) {
+    return change(channel, true, source, [&](FunctionGenerator& g) { g.setPhase(phase); });
 }
 
-void FuncGenController::setOutputEnabled(bool enabled, CHANGE_SOURCE source) {
-    xSemaphoreTake(_lock, portMAX_DELAY);
-    _funcGen.setOutput(enabled);
-    xSemaphoreGive(_lock);
-    notify(source);
+bool FuncGenController::setAmplitude(uint8_t channel, float amplitude, CHANGE_SOURCE source) {
+    return change(channel, true, source, [&](FunctionGenerator& g) { g.setAmplitude(amplitude); });
 }
 
-FuncGenState FuncGenController::state() {
+bool FuncGenController::setDCOffset(uint8_t channel, float dcOffset, CHANGE_SOURCE source) {
+    return change(channel, true, source, [&](FunctionGenerator& g) { g.setDCOffset(dcOffset); });
+}
+
+bool FuncGenController::setOutputEnabled(uint8_t channel, bool enabled, CHANGE_SOURCE source) {
+    return change(channel, false, source, [&](FunctionGenerator& g) { g.setOutput(enabled); });
+}
+
+void FuncGenController::setMirror(bool on, CHANGE_SOURCE source) {
     xSemaphoreTake(_lock, portMAX_DELAY);
-    FuncGenState s = snapshot();
+    _mirror = on;
+    if (on) syncMirror();
+    xSemaphoreGive(_lock);
+    notify(CHANNEL_2, source);
+}
+
+bool FuncGenController::mirror() {
+    xSemaphoreTake(_lock, portMAX_DELAY);
+    bool on = _mirror;
+    xSemaphoreGive(_lock);
+    return on;
+}
+
+void FuncGenController::syncMirror() {
+    const FunctionGenerator& from = *_gen[CHANNEL_1];
+    FunctionGenerator& to = *_gen[CHANNEL_2];
+
+    //only what differs is written, so CH2's output doesn't glitch on a no-op.
+    //the waveform first: it can pull the amplitude (and offset) into its range
+    if (to.waveform() != from.waveform()) to.setWaveform(from.waveform());
+    if (to.frequency() != from.frequency()) to.setFrequency(from.frequency());
+    if (to.phase() != from.phase()) to.setPhase(from.phase());
+
+    //peak rule: CH1's pair fits, CH2's current pair fits. lowering CH2's
+    //amplitude first leaves room for CH1's offset, and CH1's amplitude fits
+    //next to its own offset, so no step is clamped
+    if (to.amplitude() > from.amplitude()) to.setAmplitude(from.amplitude());
+    if (to.DCOffset() != from.DCOffset()) to.setDCOffset(from.DCOffset());
+    if (to.amplitude() != from.amplitude()) to.setAmplitude(from.amplitude());
+}
+
+FuncGenState FuncGenController::state(uint8_t channel) {
+    if (channel >= CHANNEL_COUNT) channel = CHANNEL_1;
+    xSemaphoreTake(_lock, portMAX_DELAY);
+    FuncGenState s = snapshot(channel);
     xSemaphoreGive(_lock);
     return s;
 }
@@ -72,21 +110,17 @@ bool FuncGenController::addListener(Listener listener, void* ctx) {
     return true;
 }
 
-void FuncGenController::notify(CHANGE_SOURCE source) {
-    FuncGenState s = state();
+void FuncGenController::notify(uint8_t channel, CHANGE_SOURCE source) {
+    FuncGenState s = state(channel);
     for (uint8_t i = 0; i < _listenerCount; i++) {
-        _listeners[i](s, source, _listenerCtx[i]);
+        _listeners[i](channel, s, source, _listenerCtx[i]);
     }
 }
 
-FuncGenState FuncGenController::snapshot() const {
+FuncGenState FuncGenController::snapshot(uint8_t channel) const {
     //the getters return what FunctionGenerator actually applied (after clamping)
-    return FuncGenState{
-        _funcGen.waveform(),
-        _funcGen.frequency(),
-        _funcGen.phase(),
-        _funcGen.amplitude(),
-        _funcGen.DCOffset(),
-        _funcGen.outputOn()
-    };
+    const FunctionGenerator& g = *_gen[channel];
+    FuncGenState s = {g.waveform(), g.frequency(), g.phase(), g.amplitude(), g.DCOffset(), g.outputOn()};
+    s.mirrored = channel == CHANNEL_2 && _mirror;
+    return s;
 }

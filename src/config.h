@@ -48,9 +48,7 @@
 //10k pull-ups on the AD5452 SYNCs and the MCP4822 CS, the relays' 47k base
 //pull-downs and the TS5A23157 module's own pull resistors
 
-//second channel (CH2) chips, on the same generator bus. CH2 isn't in the
-//firmware yet: setup() runs begin() on a CH2 FunctionGenerator only to park
-//its chips (AD9833 reset to sine and asleep, amplitude 0, offset 0 V)
+//second channel (CH2) chips, on the same generator bus
 //(GPIO38 and 48 are skipped: one of them drives the board's RGB LED,
 //depending on the board revision). CH2's offset is on the MCP4822 above
 //(PIN_OFFSET_DAC_CS, channel B), so GPIO41 went to the CH1 output relay
@@ -71,12 +69,10 @@
 #define PIN_OUTPUT_RELAY    41
 
 //TS5A23157 channel 2 IN2 pin, same logic for the second generator channel:
-//HIGH from the start of setup() until CH2's parking begin() has reset its
-//AD9833 to sine
+//HIGH from the start of setup() until CH2's begin() has reset its AD9833 to sine
 #define PIN_WAVE_SWITCH_2   47
 
-//CH2 output relay, same circuit. held LOW (output disconnected): CH2's
-//output is never turned on until CH2 is in the firmware.
+//CH2 output relay, same circuit, same rules as PIN_OUTPUT_RELAY.
 //GPIO13 was the generator bus MISO, which nothing used
 #define PIN_OUTPUT_RELAY_2  13
 
@@ -99,6 +95,11 @@
 #define PIN_ENC_B       2
 #define PIN_ENC_SW      42
 
+
+//generator channels (CH1, CH2). each one is a FunctionGenerator with its own
+//AD9833, amplitude AD5452, path switch and relay (the offset MCP4822 is shared).
+//FuncGenController drives both
+#define CHANNEL_COUNT       2
 
 /*
     Signal limits. This is the only place valid ranges are defined: the LCD,

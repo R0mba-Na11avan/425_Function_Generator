@@ -15,12 +15,16 @@
 //generator + controller + HTTP server + MCP server, all running
 struct McpRig {
     FunctionGenerator gen;
+    FunctionGenerator gen2;
     FuncGenController ctl;
     HttpServer http;
     McpServer mcp;
-    McpRig() : gen(PIN_AD9833_CS, PIN_AMP_DAC_CS, PIN_OFFSET_DAC_CS, OFFSET_DAC_CHANNEL, PIN_WAVE_SWITCH, PIN_OUTPUT_RELAY), ctl(gen), mcp(ctl, http) {
+    McpRig() : gen(PIN_AD9833_CS, PIN_AMP_DAC_CS, PIN_OFFSET_DAC_CS, OFFSET_DAC_CHANNEL, PIN_WAVE_SWITCH, PIN_OUTPUT_RELAY),
+               gen2(PIN_AD9833_CS_2, PIN_AMP_DAC_CS_2, PIN_OFFSET_DAC_CS, OFFSET_DAC_CHANNEL_2, PIN_WAVE_SWITCH_2, PIN_OUTPUT_RELAY_2),
+               ctl(gen, gen2), mcp(ctl, http) {
         fakeHttpdReset();
         gen.begin();
+        gen2.begin();
         mcp.begin();
         http.begin();
     }
@@ -73,7 +77,7 @@ static bool contains(const std::string& s, const char* part) {
 }
 
 //counts MCP-tagged changes. a LOCAL one would make the LCD treat an agent's change as its own
-static void countingListener(const FuncGenState&, CHANGE_SOURCE source, void* ctx) {
+static void countingListener(uint8_t, const FuncGenState&, CHANGE_SOURCE source, void* ctx) {
     if (source == CHANGE_SOURCE::MCP) (*(int*)ctx)++;
 }
 
@@ -105,7 +109,7 @@ TEST(mcp_notifications_and_client_responses_get_202) {
     CHECK(r.body.empty());
     r = post("{\"jsonrpc\":\"2.0\",\"method\":\"tools/call\",\"params\":{\"name\":\"set_output\",\"arguments\":{\"enabled\":true}}}");
     CHECK_EQ(r.status, 202); //a notification never runs anything
-    CHECK(!rig.ctl.state().outputEnabled);
+    CHECK(!rig.ctl.state(CHANNEL_1).outputEnabled);
     CHECK_EQ(post("{\"jsonrpc\":\"2.0\",\"id\":7,\"result\":{}}").status, 202);
     CHECK_EQ(post("{\"jsonrpc\":\"2.0\",\"id\":7,\"error\":{\"code\":1,\"message\":\"x\"}}").status, 202);
 }
@@ -180,7 +184,7 @@ TEST(mcp_tools_list_schemas_follow_limits) {
     Rpc r = rpc("tools/list");
     CHECK_EQ(r.status, 200);
     JsonArray tools = r.doc["result"]["tools"];
-    CHECK_EQ(tools.size(), 8u);
+    CHECK_EQ(tools.size(), 9u);
 
     FuncGenLimits limits = rig.ctl.limits();
     bool sawFreq = false, sawPhase = false, sawWave = false, sawState = false;
@@ -195,7 +199,12 @@ TEST(mcp_tools_list_schemas_follow_limits) {
             CHECK(strcmp(hz["type"] | "", "number") == 0);
             CHECK_NEAR(hz["minimum"].as<double>(), limits.frequency.min, 1e-6);
             CHECK_NEAR(hz["maximum"].as<double>(), limits.frequency.max, 1e-3);
-            CHECK(strcmp(t["inputSchema"]["required"][0] | "", "hz") == 0);
+            CHECK(strcmp(t["inputSchema"]["required"][0] | "", "channel") == 0);
+            CHECK(strcmp(t["inputSchema"]["required"][1] | "", "hz") == 0);
+            JsonObject ch = t["inputSchema"]["properties"]["channel"];
+            CHECK(strcmp(ch["type"] | "", "integer") == 0);
+            CHECK_EQ(ch["minimum"].as<int>(), 1);
+            CHECK_EQ(ch["maximum"].as<int>(), CHANNEL_COUNT);
             CHECK(!t["annotations"]["readOnlyHint"].as<bool>());
         }
         if (strcmp(name, "set_phase") == 0) {
@@ -212,7 +221,9 @@ TEST(mcp_tools_list_schemas_follow_limits) {
         }
         if (strcmp(name, "get_state") == 0) {
             sawState = true;
-            CHECK_EQ(t["inputSchema"]["properties"].as<JsonObject>().size(), 0u);
+            //channel is optional here: every channel without it
+            CHECK_EQ(t["inputSchema"]["properties"].as<JsonObject>().size(), 1u);
+            CHECK(t["inputSchema"]["properties"]["channel"].is<JsonObject>());
             CHECK(t["inputSchema"]["required"].isNull());
             CHECK(t["annotations"]["readOnlyHint"].as<bool>());
         }
@@ -227,10 +238,10 @@ TEST(mcp_setters_apply_and_report_state) {
     int notified = 0;
     rig.ctl.addListener(countingListener, &notified);
 
-    Rpc r = call("set_frequency", "{\"hz\":1000}"); //integer JSON number
+    Rpc r = call("set_frequency", "{\"channel\":1,\"hz\":1000}"); //integer JSON number
     CHECK_EQ(r.status, 200);
     CHECK(!isToolError(r));
-    CHECK_NEAR(rig.ctl.state().frequency, 1000, 1e-3);
+    CHECK_NEAR(rig.ctl.state(CHANNEL_1).frequency, 1000, 1e-3);
     CHECK_NEAR(r.doc["result"]["structuredContent"]["frequency_hz"].as<double>(), 1000, 1e-3);
     CHECK_EQ(notified, 1); //the LCD hears about it
 
@@ -240,22 +251,24 @@ TEST(mcp_setters_apply_and_report_state) {
     CHECK_NEAR(text["frequency_hz"].as<double>(), 1000, 1e-3);
     CHECK(strcmp(text["waveform"] | "", "sine") == 0);
 
-    call("set_waveform", "{\"waveform\":\"SQUARE\"}");
-    CHECK(rig.ctl.state().waveform == WAVEFORM::SQUARE);
-    call("set_amplitude", "{\"vpp\":2.5}");
-    CHECK_NEAR(rig.ctl.state().amplitude, 2.5, 1e-6);
-    call("set_phase", "{\"degrees\":90.5}");
-    CHECK_NEAR(rig.ctl.state().phase, 90.5, 0.01);
-    call("set_dc_offset", "{\"volts\":-1.25}");
-    CHECK_NEAR(rig.ctl.state().dcOffset, -1.25, 1e-6);
-    r = call("set_output", "{\"enabled\":true}");
-    CHECK(rig.ctl.state().outputEnabled);
+    call("set_waveform", "{\"channel\":1,\"waveform\":\"SQUARE\"}");
+    CHECK(rig.ctl.state(CHANNEL_1).waveform == WAVEFORM::SQUARE);
+    call("set_amplitude", "{\"channel\":1,\"vpp\":2.5}");
+    CHECK_NEAR(rig.ctl.state(CHANNEL_1).amplitude, 2.5, 1e-6);
+    call("set_phase", "{\"channel\":1,\"degrees\":90.5}");
+    CHECK_NEAR(rig.ctl.state(CHANNEL_1).phase, 90.5, 0.01);
+    call("set_dc_offset", "{\"channel\":1,\"volts\":-1.25}");
+    CHECK_NEAR(rig.ctl.state(CHANNEL_1).dcOffset, -1.25, 1e-6);
+    r = call("set_output", "{\"channel\":1,\"enabled\":true}");
+    CHECK(rig.ctl.state(CHANNEL_1).outputEnabled);
     CHECK(r.doc["result"]["structuredContent"]["output_enabled"].as<bool>());
     CHECK_EQ(notified, 6);
 
-    r = call("get_state");
+    r = call("get_state", "{\"channel\":1}");
     CHECK(!isToolError(r));
     JsonObject s = r.doc["result"]["structuredContent"];
+    CHECK_EQ(s["channel"].as<int>(), 1);
+    CHECK(s["mirror"].is<bool>());
     CHECK(strcmp(s["waveform"] | "", "square") == 0);
     CHECK_NEAR(s["amplitude_vpp"].as<double>(), 2.5, 1e-6);
     CHECK_NEAR(s["dc_offset_v"].as<double>(), -1.25, 1e-6);
@@ -267,55 +280,69 @@ TEST(mcp_out_of_range_is_rejected_not_clamped) {
     int notified = 0;
     rig.ctl.addListener(countingListener, &notified);
 
-    Rpc r = call("set_frequency", "{\"hz\":20000000}");
+    Rpc r = call("set_frequency", "{\"channel\":1,\"hz\":20000000}");
     CHECK_EQ(r.status, 200); //a tool error, not a protocol error
     CHECK(isToolError(r));
     CHECK(contains(toolText(r), "between 0.1 and 12500000 Hz"));
     CHECK(contains(toolText(r), "got 20000000"));
     CHECK(r.doc["result"]["structuredContent"].isNull());
-    CHECK_NEAR(rig.ctl.state().frequency, 1.0, 1e-6); //untouched
+    CHECK_NEAR(rig.ctl.state(CHANNEL_1).frequency, 1.0, 1e-6); //untouched
     CHECK_EQ(notified, 0);
 
-    CHECK(isToolError(r = call("set_frequency", "{\"hz\":0.09}")));
-    CHECK(!isToolError(r = call("set_frequency", "{\"hz\":0.1}"))); //0.1 passes the 0.1f minimum
-    CHECK(!isToolError(r = call("set_frequency", "{\"hz\":12500000}")));
-    CHECK(isToolError(r = call("set_frequency", "{\"hz\":1e999}")));
+    CHECK(isToolError(r = call("set_frequency", "{\"channel\":1,\"hz\":0.09}")));
+    CHECK(!isToolError(r = call("set_frequency", "{\"channel\":1,\"hz\":0.1}"))); //0.1 passes the 0.1f minimum
+    CHECK(!isToolError(r = call("set_frequency", "{\"channel\":1,\"hz\":12500000}")));
+    CHECK(isToolError(r = call("set_frequency", "{\"channel\":1,\"hz\":1e999}")));
 
-    r = call("set_amplitude", "{\"vpp\":100}");
+    r = call("set_amplitude", "{\"channel\":1,\"vpp\":100}");
     CHECK(isToolError(r));
-    CHECK(contains(toolText(r), "for the sine waveform at 0 V offset"));
+    CHECK(contains(toolText(r), "for channel 1's sine waveform at 0 V offset"));
 
-    CHECK(isToolError(r = call("set_phase", "{\"degrees\":360}"))); //exclusive
+    CHECK(isToolError(r = call("set_phase", "{\"channel\":1,\"degrees\":360}"))); //exclusive
     CHECK(contains(toolText(r), "less than 360"));
-    CHECK(isToolError(call("set_phase", "{\"degrees\":-1}")));
-    CHECK(!isToolError(call("set_phase", "{\"degrees\":0}")));
-    CHECK(!isToolError(call("set_phase", "{\"degrees\":359.9}")));
+    CHECK(isToolError(call("set_phase", "{\"channel\":1,\"degrees\":-1}")));
+    CHECK(!isToolError(call("set_phase", "{\"channel\":1,\"degrees\":0}")));
+    CHECK(!isToolError(call("set_phase", "{\"channel\":1,\"degrees\":359.9}")));
 
-    CHECK(isToolError(call("set_dc_offset", "{\"volts\":100}")));
-    CHECK(isToolError(call("set_dc_offset", "{\"volts\":-100}")));
+    CHECK(isToolError(call("set_dc_offset", "{\"channel\":1,\"volts\":100}")));
+    CHECK(isToolError(call("set_dc_offset", "{\"channel\":1,\"volts\":-100}")));
 }
 
 TEST(mcp_bad_arguments_are_tool_errors) {
     McpRig rig;
     Rpc r;
     CHECK(isToolError(r = call("set_frequency")));
+    CHECK(contains(toolText(r), "missing required argument 'channel'"));
+    CHECK(isToolError(r = call("set_frequency", "{\"hz\":1000}")));    //no silent default channel
+    CHECK(contains(toolText(r), "missing required argument 'channel'"));
+    CHECK(isToolError(r = call("set_frequency", "{\"channel\":1}")));
     CHECK(contains(toolText(r), "missing required argument 'hz'"));
-    CHECK(isToolError(r = call("set_frequency", "{\"hz\":null}")));
-    CHECK(isToolError(r = call("set_frequency", "{\"hz\":\"1000\"}")));
+    CHECK(isToolError(r = call("set_frequency", "{\"channel\":3,\"hz\":1000}")));
+    CHECK(contains(toolText(r), "'channel' must be the number 1 or 2"));
+    CHECK(isToolError(call("set_frequency", "{\"channel\":0,\"hz\":1000}")));
+    CHECK(isToolError(call("set_frequency", "{\"channel\":\"1\",\"hz\":1000}")));
+    CHECK(isToolError(call("set_frequency", "{\"channel\":1.5,\"hz\":1000}")));
+    CHECK(isToolError(r = call("set_frequency", "{\"channel\":1,\"hz\":null}")));
+    CHECK(isToolError(r = call("set_frequency", "{\"channel\":1,\"hz\":\"1000\"}")));
     CHECK(contains(toolText(r), "must be a number"));
-    CHECK(isToolError(r = call("set_frequency", "{\"hz\":1000,\"phase\":3}")));
+    CHECK(isToolError(r = call("set_frequency", "{\"channel\":1,\"hz\":1000,\"phase\":3}")));
     CHECK(contains(toolText(r), "unknown argument 'phase'"));
-    CHECK(isToolError(r = call("set_frequency", "{\"frequency\":1000}")));
-    CHECK(isToolError(r = call("set_output", "{\"enabled\":1}")));
+    CHECK(isToolError(r = call("set_frequency", "{\"channel\":1,\"frequency\":1000}")));
+    CHECK(isToolError(r = call("set_output", "{\"channel\":1,\"enabled\":1}")));
     CHECK(contains(toolText(r), "true or false"));
-    CHECK(isToolError(r = call("set_waveform", "{\"waveform\":\"sawtooth\"}")));
+    CHECK(isToolError(r = call("set_waveform", "{\"channel\":1,\"waveform\":\"sawtooth\"}")));
     CHECK(contains(toolText(r), "\"triangle\""));
-    CHECK(isToolError(call("set_waveform", "{\"waveform\":2}")));
+    CHECK(isToolError(call("set_waveform", "{\"channel\":1,\"waveform\":2}")));
     CHECK(isToolError(r = call("get_state", "{\"verbose\":true}")));
+    CHECK(contains(toolText(r), "only takes 'channel'"));
+    CHECK(isToolError(r = call("get_limits", "{\"channel\":1}")));
     CHECK(contains(toolText(r), "takes no arguments"));
+    CHECK(isToolError(r = call("set_mirror", "{\"channel\":2,\"enabled\":true}")));
+    CHECK(contains(toolText(r), "only takes 'enabled'"));
     CHECK(!isToolError(call("get_state", "{}")));
-    CHECK(rig.ctl.state().waveform == WAVEFORM::SINE);
-    CHECK(!rig.ctl.state().outputEnabled);
+    CHECK(rig.ctl.state(CHANNEL_1).waveform == WAVEFORM::SINE);
+    CHECK(!rig.ctl.mirror());
+    CHECK(!rig.ctl.state(CHANNEL_1).outputEnabled);
 }
 
 TEST(mcp_get_limits_matches_controller) {
@@ -335,6 +362,7 @@ TEST(mcp_get_limits_matches_controller) {
     }
     CHECK_NEAR(s["dc_offset_v"]["min"].as<double>(), l.dcOffset.min, 1e-6);
     CHECK_NEAR(s["output_peak_v"].as<double>(), l.outputPeak, 1e-6);
+    CHECK_EQ(s["channels"].as<int>(), CHANNEL_COUNT);
     //floats are printed short, not as 0.1000000015
     CHECK(contains(toolText(r), "0.1"));
     CHECK(!contains(toolText(r), "0.1000000"));
@@ -343,37 +371,103 @@ TEST(mcp_get_limits_matches_controller) {
 TEST(mcp_amplitude_and_offset_share_the_peak_limit) {
     McpRig rig;
     float peak = rig.ctl.limits().outputPeak;
-    CHECK(!isToolError(call("set_amplitude", "{\"vpp\":12}")));
-    CHECK_NEAR(rig.ctl.state().amplitude, 12.0, 1e-6);
+    CHECK(!isToolError(call("set_amplitude", "{\"channel\":1,\"vpp\":12}")));
+    CHECK_NEAR(rig.ctl.state(CHANNEL_1).amplitude, 12.0, 1e-6);
 
     //12 Vpp leaves peak - 6 V of offset; asking for more is an error, nothing changes
-    char args[48];
-    snprintf(args, sizeof(args), "{\"volts\":%.3f}", peak - 6.0f + 0.5f);
+    char args[64];
+    snprintf(args, sizeof(args), "{\"channel\":1,\"volts\":%.3f}", peak - 6.0f + 0.5f);
     Rpc r = call("set_dc_offset", args);
     CHECK(isToolError(r));
-    CHECK(contains(toolText(r), "at 12 Vpp amplitude"));
-    CHECK_NEAR(rig.ctl.state().dcOffset, 0.0, 1e-6);
-    CHECK_NEAR(rig.ctl.state().amplitude, 12.0, 1e-6);
+    CHECK(contains(toolText(r), "at channel 1's 12 Vpp amplitude"));
+    CHECK_NEAR(rig.ctl.state(CHANNEL_1).dcOffset, 0.0, 1e-6);
+    CHECK_NEAR(rig.ctl.state(CHANNEL_1).amplitude, 12.0, 1e-6);
 
-    snprintf(args, sizeof(args), "{\"volts\":%.3f}", peak - 6.0f);
+    snprintf(args, sizeof(args), "{\"channel\":1,\"volts\":%.3f}", peak - 6.0f);
     CHECK(!isToolError(call("set_dc_offset", args)));
-    CHECK_NEAR(rig.ctl.state().dcOffset, peak - 6.0f, 1e-5);
+    CHECK_NEAR(rig.ctl.state(CHANNEL_1).dcOffset, peak - 6.0f, 1e-5);
 
     //and back: with a big offset the amplitude can't grow, even below its own max.
     //the most negative offset is the biggest one (the range isn't symmetric)
     float off = rig.ctl.limits().dcOffset.min;
     float left = 2.0f * (peak - fabsf(off));
     CHECK(left < 12.0f); //the peak rule has to bite here, or this tests nothing
-    CHECK(!isToolError(call("set_amplitude", "{\"vpp\":1}")));
-    snprintf(args, sizeof(args), "{\"volts\":%.3f}", off);
+    CHECK(!isToolError(call("set_amplitude", "{\"channel\":1,\"vpp\":1}")));
+    snprintf(args, sizeof(args), "{\"channel\":1,\"volts\":%.3f}", off);
     CHECK(!isToolError(call("set_dc_offset", args)));
-    snprintf(args, sizeof(args), "{\"vpp\":%.3f}", left + 0.5f);
+    snprintf(args, sizeof(args), "{\"channel\":1,\"vpp\":%.3f}", left + 0.5f);
     CHECK(isToolError(r = call("set_amplitude", args))); //only `left` Vpp left
     CHECK(contains(toolText(r), "V offset"));
-    CHECK_NEAR(rig.ctl.state().amplitude, 1.0, 1e-6);
-    snprintf(args, sizeof(args), "{\"vpp\":%.3f}", left);
+    CHECK_NEAR(rig.ctl.state(CHANNEL_1).amplitude, 1.0, 1e-6);
+    snprintf(args, sizeof(args), "{\"channel\":1,\"vpp\":%.3f}", left);
     CHECK(!isToolError(call("set_amplitude", args)));
-    CHECK_NEAR(rig.ctl.state().amplitude, left, 1e-5);
+    CHECK_NEAR(rig.ctl.state(CHANNEL_1).amplitude, left, 1e-5);
+}
+
+TEST(mcp_channels_are_separate) {
+    McpRig rig;
+    Rpc r = call("set_frequency", "{\"channel\":2,\"hz\":2500}");
+    CHECK(!isToolError(r));
+    CHECK_EQ(r.doc["result"]["structuredContent"]["channel"].as<int>(), 2);
+    CHECK_NEAR(r.doc["result"]["structuredContent"]["frequency_hz"].as<double>(), 2500, 1e-3);
+    CHECK_NEAR(rig.ctl.state(CHANNEL_2).frequency, 2500, 1e-3);
+    CHECK_NEAR(rig.ctl.state(CHANNEL_1).frequency, 1.0, 1e-6);
+
+    CHECK(!isToolError(call("set_output", "{\"channel\":2,\"enabled\":true}")));
+    CHECK(rig.ctl.state(CHANNEL_2).outputEnabled);
+    CHECK(!rig.ctl.state(CHANNEL_1).outputEnabled);
+
+    //without a channel get_state lists both
+    r = call("get_state");
+    CHECK(!isToolError(r));
+    JsonObject s = r.doc["result"]["structuredContent"];
+    JsonArray all = s["channels"];
+    CHECK_EQ(all.size(), (size_t)CHANNEL_COUNT);
+    CHECK_EQ(all[0]["channel"].as<int>(), 1);
+    CHECK_EQ(all[1]["channel"].as<int>(), 2);
+    CHECK_NEAR(all[1]["frequency_hz"].as<double>(), 2500, 1e-3);
+    CHECK(all[1]["output_enabled"].as<bool>());
+    CHECK(!s["mirror"].as<bool>());
+
+    r = call("get_state", "{\"channel\":2}");
+    CHECK_EQ(r.doc["result"]["structuredContent"]["channel"].as<int>(), 2);
+    CHECK(r.doc["result"]["structuredContent"]["channels"].isNull());
+}
+
+TEST(mcp_mirror_follows_and_locks_channel_2) {
+    McpRig rig;
+    call("set_frequency", "{\"channel\":1,\"hz\":1234}");
+    Rpc r = call("set_mirror", "{\"enabled\":true}");
+    CHECK(!isToolError(r));
+    JsonObject s = r.doc["result"]["structuredContent"];
+    CHECK(s["mirror"].as<bool>());
+    CHECK_NEAR(s["channels"][1]["frequency_hz"].as<double>(), 1234, 1e-3);
+    CHECK(rig.ctl.mirror());
+
+    //channel 1 changes reach channel 2
+    CHECK(!isToolError(call("set_amplitude", "{\"channel\":1,\"vpp\":3}")));
+    CHECK_NEAR(rig.ctl.state(CHANNEL_2).amplitude, 3.0, 1e-6);
+
+    //mirrored settings on channel 2 are rejected with a way out
+    r = call("set_frequency", "{\"channel\":2,\"hz\":50}");
+    CHECK(isToolError(r));
+    CHECK(contains(toolText(r), "channel 2 mirrors channel 1"));
+    CHECK(contains(toolText(r), "set_mirror"));
+    CHECK_NEAR(rig.ctl.state(CHANNEL_2).frequency, 1234, 1e-3);
+    CHECK(isToolError(call("set_waveform", "{\"channel\":2,\"waveform\":\"square\"}")));
+    CHECK(isToolError(call("set_phase", "{\"channel\":2,\"degrees\":10}")));
+    CHECK(isToolError(call("set_dc_offset", "{\"channel\":2,\"volts\":1}")));
+
+    //its output stays its own
+    CHECK(!isToolError(call("set_output", "{\"channel\":2,\"enabled\":true}")));
+    CHECK(rig.ctl.state(CHANNEL_2).outputEnabled);
+    CHECK(!rig.ctl.state(CHANNEL_1).outputEnabled);
+
+    CHECK(isToolError(call("set_mirror", "{\"enabled\":\"no\"}")));
+    CHECK(!isToolError(call("set_mirror", "{\"enabled\":false}")));
+    CHECK(!rig.ctl.mirror());
+    CHECK(!isToolError(call("set_frequency", "{\"channel\":2,\"hz\":50}")));
+    CHECK_NEAR(rig.ctl.state(CHANNEL_2).frequency, 50, 1e-3);
 }
 
 //HTTP-level checks

@@ -17,11 +17,18 @@ static const Rect INFO_BUTTON_RECTS[2] = {
 };
 
 static const Rect FIELD_RECTS[UI_FIELD_COUNT] = {
-    {2, 22, 156, 70},       //WAVEFORM
-    {162, 22, 156, 70},     //OUTPUT
-    {2, 94, 316, 76},       //FREQUENCY
+    {2, 22, 254, 24},       //CHANNEL (both tabs)
+    {258, 22, 60, 24},      //MIRROR
+    {2, 48, 156, 52},       //WAVEFORM
+    {162, 48, 156, 52},     //OUTPUT
+    {2, 102, 316, 68},      //FREQUENCY
     {2, 172, 156, 66},      //AMPLITUDE
     {162, 172, 156, 66}     //OFFSET
+};
+
+static const Rect TAB_RECTS[CHANNEL_COUNT] = {
+    {2, 22, 126, 24},
+    {130, 22, 126, 24}
 };
 
 //frequency field: unit column at the right, digits right aligned before it
@@ -54,6 +61,27 @@ Rect infoButtonRect(uint8_t slot) {
 
 Rect fieldRect(UI_FIELD field) {
     return FIELD_RECTS[(uint8_t)field];
+}
+
+Rect channelTabRect(uint8_t channel) {
+    return TAB_RECTS[channel < CHANNEL_COUNT ? channel : 0];
+}
+
+const char* channelName(uint8_t channel) {
+    return channel == CHANNEL_2 ? "CH2" : "CH1";
+}
+
+bool fieldLocked(UI_FIELD field, const FuncGenState& state) {
+    if (!state.mirrored) return false;
+    switch (field) {
+        case UI_FIELD::WAVEFORM:
+        case UI_FIELD::FREQUENCY:
+        case UI_FIELD::AMPLITUDE:
+        case UI_FIELD::OFFSET:
+            return true;
+        default:
+            return false;
+    }
 }
 
 bool fieldAt(int16_t x, int16_t y, UI_FIELD& field) {
@@ -225,6 +253,14 @@ void formatNetLine(const NetStatus& net, char* out, size_t len) {
     }
 }
 
+void formatTabLines(const FuncGenState& state, char* line1, size_t len1, char* line2, size_t len2) {
+    snprintf(line1, len1, "%s", state.mirrored ? "LINKED" : waveformName(state.waveform));
+    //same unit as the big readout, but at most 7 digits and no trailing
+    //zeros, so it fits a tab: "12.34568 MHz", "1.5 kHz", "1 Hz"
+    FrequencyText f = formatFrequency(state.frequency);
+    snprintf(line2, len2, "%.7g %s", (double)state.frequency / f.unitScale, f.unit);
+}
+
 uint8_t formatInfoLines(const NetStatus& net, const BleStatus& ble, char lines[][INFO_LINE_LEN], uint8_t maxLines) {
     uint8_t n = 0;
     #define INFO_LINE(...) do { if (n < maxLines) snprintf(lines[n++], INFO_LINE_LEN, __VA_ARGS__); } while (0)
@@ -293,6 +329,7 @@ uint8_t changedFields(const FuncGenState& a, const FuncGenState& b) {
     if (a.frequency != b.frequency) mask |= fieldBit(UI_FIELD::FREQUENCY);
     if (a.amplitude != b.amplitude) mask |= fieldBit(UI_FIELD::AMPLITUDE);
     if (a.dcOffset != b.dcOffset) mask |= fieldBit(UI_FIELD::OFFSET);
+    if (a.mirrored != b.mirrored) mask |= fieldBit(UI_FIELD::MIRROR);
     return mask;
 }
 
@@ -307,20 +344,22 @@ const char* remoteBadgeText(CHANGE_SOURCE source) {
     }
 }
 
-void RemoteHighlight::changed(uint8_t fields, uint32_t nowMs, CHANGE_SOURCE source) {
+void RemoteHighlight::changed(uint8_t channel, uint8_t fields, uint32_t nowMs, CHANGE_SOURCE source) {
+    if (channel >= CHANNEL_COUNT) return;
     for (uint8_t i = 0; i < UI_FIELD_COUNT; i++) {
-        if (fields & (1u << i)) _fieldAt[i] = nowMs;
+        if (fields & (1u << i)) _fieldAt[channel][i] = nowMs;
     }
-    _fields |= fields;
+    _fields[channel] |= fields;
     _badgeAt = nowMs;
     _badge = true;
     _badgeSource = source;
 }
 
-uint8_t RemoteHighlight::flashing(uint32_t nowMs) const {
+uint8_t RemoteHighlight::flashing(uint8_t channel, uint32_t nowMs) const {
+    if (channel >= CHANNEL_COUNT) return 0;
     uint8_t mask = 0;
     for (uint8_t i = 0; i < UI_FIELD_COUNT; i++) {
-        if ((_fields & (1u << i)) && nowMs - _fieldAt[i] < UI_REMOTE_FLASH_MS) mask |= (uint8_t)(1u << i);
+        if ((_fields[channel] & (1u << i)) && nowMs - _fieldAt[channel][i] < UI_REMOTE_FLASH_MS) mask |= (uint8_t)(1u << i);
     }
     return mask;
 }
@@ -396,7 +435,7 @@ static float stepSnapped(float v, int32_t delta, float step, ValueRange r) {
 }
 
 static EditCommand noCommand() {
-    return EditCommand{EDIT_ACTION::NONE, WAVEFORM::SINE, 0.0f, false, DEVICE_ACTION::OPEN_WIFI_SETUP};
+    return EditCommand{EDIT_ACTION::NONE, CHANNEL_1, WAVEFORM::SINE, 0.0f, false, DEVICE_ACTION::OPEN_WIFI_SETUP};
 }
 
 static EditCommand deviceCommand(DEVICE_ACTION action) {
@@ -415,28 +454,32 @@ static bool itemAvailable(INFO_ITEM item, InfoButtons buttons) {
     }
 }
 
-static EditCommand valueCommand(EDIT_ACTION action, float value, float current) {
+static EditCommand valueCommand(EDIT_ACTION action, uint8_t channel, float value, float current) {
     if (value == current) return noCommand();
     EditCommand c = noCommand();
     c.action = action;
+    c.channel = channel;
     c.value = value;
     return c;
 }
 
-static EditCommand outputCommand(bool enabled) {
+static EditCommand outputCommand(uint8_t channel, bool enabled) {
     EditCommand c = noCommand();
     c.action = EDIT_ACTION::SET_OUTPUT;
+    c.channel = channel;
     c.enabled = enabled;
     return c;
 }
 
 DashboardEditor::DashboardEditor()
-    : _selected(UI_FIELD::FREQUENCY), _editing(false), _stepIndex(UI_FREQ_STEP_DEFAULT), _infoOpen(false),
-      _infoFocus(INFO_ITEM::CLOSE), _confirm(INFO_CONFIRM::NONE), _confirmOk(false), _lastInputMs(0) {}
+    : _channel(CHANNEL_1), _selected(UI_FIELD::FREQUENCY), _editing(false), _stepIndex(UI_FREQ_STEP_DEFAULT),
+      _infoOpen(false), _infoFocus(INFO_ITEM::CLOSE), _confirm(INFO_CONFIRM::NONE), _confirmOk(false),
+      _lastInputMs(0) {}
 
-EditCommand DashboardEditor::handle(const InputEvent& event, const FuncGenState& state, const FuncGenLimits& limits,
-                                    uint32_t nowMs, InfoButtons buttons) {
+EditCommand DashboardEditor::handle(const InputEvent& event, const FuncGenState states[CHANNEL_COUNT],
+                                    const FuncGenLimits& limits, uint32_t nowMs, InfoButtons buttons) {
     _lastInputMs = nowMs;
+    const FuncGenState& state = states[_channel];
 
     if (_infoOpen) return onInfo(event, buttons);
     if (event.type == INPUT_EVENT::TOUCH_TAP && statusRect().contains(event.x, event.y)) {
@@ -449,9 +492,9 @@ EditCommand DashboardEditor::handle(const InputEvent& event, const FuncGenState&
 
     switch (event.type) {
         case INPUT_EVENT::ENCODER_DELTA: return onEncoder(event, state, limits);
-        case INPUT_EVENT::BUTTON_SHORT: return onShortPress(state);
+        case INPUT_EVENT::BUTTON_SHORT: return onShortPress(states);
         case INPUT_EVENT::BUTTON_LONG: onLongPress(); return noCommand();
-        case INPUT_EVENT::TOUCH_TAP: return onTap(event, state);
+        case INPUT_EVENT::TOUCH_TAP: return onTap(event, states);
         default: return noCommand();
     }
 }
@@ -542,9 +585,28 @@ void DashboardEditor::tick(uint32_t nowMs) {
     if (_editing && nowMs - _lastInputMs >= UI_EDIT_TIMEOUT_MS) _editing = false;
 }
 
-void DashboardEditor::remoteChanged(uint8_t fields) {
-    //the agent's value wins, the next turn starts from it
-    if (_editing && (fields & fieldBit(_selected))) _editing = false;
+void DashboardEditor::remoteChanged(uint8_t channel, uint8_t fields) {
+    //the agent's value wins, the next turn starts from it. LINK turned on
+    //locks whatever CH2 field is being edited
+    if (_editing && channel == _channel && (fields & (fieldBit(_selected) | fieldBit(UI_FIELD::MIRROR)))) {
+        _editing = false;
+    }
+}
+
+void DashboardEditor::showChannel(uint8_t channel) {
+    if (channel >= CHANNEL_COUNT) return;
+    _channel = channel;
+    _selected = UI_FIELD::CHANNEL;
+    _editing = false;
+}
+
+EditCommand DashboardEditor::toggleMirror(const FuncGenState states[CHANNEL_COUNT]) {
+    _selected = UI_FIELD::MIRROR;
+    _editing = false;
+    EditCommand c = noCommand();
+    c.action = EDIT_ACTION::SET_MIRROR;
+    c.enabled = !states[CHANNEL_2].mirrored;
+    return c;
 }
 
 EditCommand DashboardEditor::onEncoder(const InputEvent& event, const FuncGenState& state, const FuncGenLimits& limits) {
@@ -552,6 +614,11 @@ EditCommand DashboardEditor::onEncoder(const InputEvent& event, const FuncGenSta
         int32_t i = ((int32_t)_selected + event.clicks) % UI_FIELD_COUNT;
         if (i < 0) i += UI_FIELD_COUNT;
         _selected = (UI_FIELD)i;
+        return noCommand();
+    }
+    if (fieldLocked(_selected, state)) {
+        //LINK came on while editing CH2
+        _editing = false;
         return noCommand();
     }
 
@@ -562,6 +629,7 @@ EditCommand DashboardEditor::onEncoder(const InputEvent& event, const FuncGenSta
             if ((WAVEFORM)i == state.waveform) return noCommand();
             EditCommand c = noCommand();
             c.action = EDIT_ACTION::SET_WAVEFORM;
+            c.channel = _channel;
             c.waveform = (WAVEFORM)i;
             return c;
         }
@@ -572,16 +640,16 @@ EditCommand DashboardEditor::onEncoder(const InputEvent& event, const FuncGenSta
             double res = freqResolutionHz(state.frequency);
             double shown = round((double)state.frequency / res) * res;
             double hz = shown + (double)event.delta * freqStepHz(freqStepShown(state.frequency, _stepIndex));
-            return valueCommand(EDIT_ACTION::SET_FREQUENCY, clampRange((float)hz, limits.frequency), state.frequency);
+            return valueCommand(EDIT_ACTION::SET_FREQUENCY, _channel, clampRange((float)hz, limits.frequency), state.frequency);
         }
         case UI_FIELD::AMPLITUDE: {
             //the offset stays put, so the knob stops at the peak limit
             ValueRange r = limits.amplitudeFor(state);
-            return valueCommand(EDIT_ACTION::SET_AMPLITUDE,
+            return valueCommand(EDIT_ACTION::SET_AMPLITUDE, _channel,
                                 stepSnapped(state.amplitude, event.delta, UI_AMP_STEP_V, r), state.amplitude);
         }
         case UI_FIELD::OFFSET:
-            return valueCommand(EDIT_ACTION::SET_DC_OFFSET,
+            return valueCommand(EDIT_ACTION::SET_DC_OFFSET, _channel,
                                 stepSnapped(state.dcOffset, event.delta, UI_OFFSET_STEP_V, limits.dcOffsetFor(state)),
                                 state.dcOffset);
         case UI_FIELD::OUTPUT_ENABLE:
@@ -590,10 +658,23 @@ EditCommand DashboardEditor::onEncoder(const InputEvent& event, const FuncGenSta
     }
 }
 
-EditCommand DashboardEditor::onShortPress(const FuncGenState& state) {
-    if (_selected == UI_FIELD::OUTPUT_ENABLE) {
+EditCommand DashboardEditor::onShortPress(const FuncGenState states[CHANNEL_COUNT]) {
+    const FuncGenState& state = states[_channel];
+    switch (_selected) {
+        case UI_FIELD::CHANNEL:
+            showChannel((uint8_t)((_channel + 1) % CHANNEL_COUNT));
+            return noCommand();
+        case UI_FIELD::MIRROR:
+            return toggleMirror(states);
+        case UI_FIELD::OUTPUT_ENABLE:
+            _editing = false;
+            return outputCommand(_channel, !state.outputEnabled);
+        default:
+            break;
+    }
+    if (fieldLocked(_selected, state)) {
         _editing = false;
-        return outputCommand(!state.outputEnabled);
+        return noCommand();
     }
     if (_selected == UI_FIELD::FREQUENCY && _editing) {
         //while editing frequency a press picks the digit, a long press leaves
@@ -608,14 +689,31 @@ void DashboardEditor::onLongPress() {
     _editing = false;
 }
 
-EditCommand DashboardEditor::onTap(const InputEvent& event, const FuncGenState& state) {
+EditCommand DashboardEditor::onTap(const InputEvent& event, const FuncGenState states[CHANNEL_COUNT]) {
     UI_FIELD field;
     if (!fieldAt(event.x, event.y, field)) return noCommand();
+    const FuncGenState& state = states[_channel];
 
-    if (field == UI_FIELD::OUTPUT_ENABLE) {
+    switch (field) {
+        case UI_FIELD::CHANNEL:
+            for (uint8_t ch = 0; ch < CHANNEL_COUNT; ch++) {
+                if (channelTabRect(ch).contains(event.x, event.y)) showChannel(ch);
+            }
+            return noCommand();
+        case UI_FIELD::MIRROR:
+            return toggleMirror(states);
+        case UI_FIELD::OUTPUT_ENABLE:
+            _selected = field;
+            _editing = false;
+            return outputCommand(_channel, !state.outputEnabled);
+        default:
+            break;
+    }
+
+    if (fieldLocked(field, state)) {
         _selected = field;
         _editing = false;
-        return outputCommand(!state.outputEnabled);
+        return noCommand();
     }
 
     if (field == UI_FIELD::FREQUENCY) {

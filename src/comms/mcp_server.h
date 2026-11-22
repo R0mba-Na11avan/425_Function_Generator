@@ -42,11 +42,20 @@
           2.0 object -32600 (HTTP 400 without a usable id)
 
     Tools (TOOLS table in mcp_server.cpp, one entry each)
-        - set_waveform { waveform: "sine" | "square" | "triangle" }
-        - set_frequency { hz }, set_amplitude { vpp }, set_phase { degrees },
-          set_dc_offset { volts }, set_output { enabled }
-        - get_state, get_limits
+        - set_waveform { channel, waveform: "sine" | "square" | "triangle" }
+        - set_frequency { channel, hz }, set_amplitude { channel, vpp },
+          set_phase { channel, degrees }, set_dc_offset { channel, volts },
+          set_output { channel, enabled }
+        - set_mirror { enabled }: CH2 follows CH1 (see funcgen_controller.h)
+        - get_state { channel? }: one channel, or every channel without it
+        - get_limits (shared by both channels, plus "channels": 2)
+        - channel is 1 or 2 and required on every set_* tool except
+          set_mirror, so an agent never changes the wrong output by leaving it out
         - out-of-range values are rejected, never clamped (the LCD clamps instead)
+        - a mirrored setting on channel 2 while the mirror is on is rejected
+          the same way, with a message saying how to change it
+        - set_* results: that channel's state + "mirror". set_mirror and
+          get_state without a channel: { "channels": [ ... ], "mirror" }
 
     Threading
         - handlers run in the HTTP task. the controller's mutex serializes them

@@ -9,8 +9,12 @@ DisplayUI::DisplayUI(FuncGenController& controller, InputManager& input, SPIClas
     : _tft(&bus, PIN_LCD_DC, PIN_LCD_CS, PIN_LCD_RST), _controller(controller), _input(input), _bus(bus),
       _netFn(nullptr), _netCtx(nullptr), _bleFn(nullptr), _bleCancelFn(nullptr), _bleCtx(nullptr),
       _actionFn(nullptr), _actionCtx(nullptr),
-      _stateMux(portMUX_INITIALIZER_UNLOCKED), _stateDirty(false), _remoteFields(0), _remotePending(false),
+      _stateMux(portMUX_INITIALIZER_UNLOCKED), _stateDirty(false),
       _remoteSource(CHANGE_SOURCE::MCP), _lastNetPoll(0), _lastDraw(0) {
+    for (uint8_t ch = 0; ch < CHANNEL_COUNT; ch++) {
+        _remoteFields[ch] = 0;
+        _remotePending[ch] = false;
+    }
     _infoKey[0] = '\0';
     _pairingKey[0] = '\0';
     memset(&_net, 0, sizeof(_net));
@@ -54,7 +58,7 @@ bool DisplayUI::begin() {
         }
     }
 
-    _state = _latest = _lastSeen = _controller.state();
+    for (uint8_t ch = 0; ch < CHANNEL_COUNT; ch++) _state[ch] = _latest[ch] = _lastSeen[ch] = _controller.state(ch);
     _limits = _controller.limits();
     if (!_controller.addListener(onStateChanged, this)) return false;
 
@@ -63,17 +67,18 @@ bool DisplayUI::begin() {
     return ok == pdPASS;
 }
 
-void DisplayUI::onStateChanged(const FuncGenState& state, CHANGE_SOURCE source, void* ctx) {
+void DisplayUI::onStateChanged(uint8_t channel, const FuncGenState& state, CHANGE_SOURCE source, void* ctx) {
     //runs in whatever task changed the generator: copy and flag only
     DisplayUI* ui = (DisplayUI*)ctx;
+    if (channel >= CHANNEL_COUNT) return;
     portENTER_CRITICAL(&ui->_stateMux);
     if (source != CHANGE_SOURCE::LOCAL) {
-        ui->_remoteFields |= changedFields(ui->_lastSeen, state);
-        ui->_remotePending = true;
+        ui->_remoteFields[channel] |= changedFields(ui->_lastSeen[channel], state);
+        ui->_remotePending[channel] = true;
         ui->_remoteSource = source;
     }
-    ui->_lastSeen = state;
-    ui->_latest = state;
+    ui->_lastSeen[channel] = state;
+    ui->_latest[channel] = state;
     ui->_stateDirty = true;
     portEXIT_CRITICAL(&ui->_stateMux);
 }
@@ -120,36 +125,40 @@ void DisplayUI::run() {
 }
 
 void DisplayUI::takeLatestState() {
-    uint8_t remoteFields = 0;
-    bool remote = false;
-    CHANGE_SOURCE source = CHANGE_SOURCE::MCP;
+    uint8_t remoteFields[CHANNEL_COUNT];
+    bool remote[CHANNEL_COUNT];
+    CHANGE_SOURCE source;
     portENTER_CRITICAL(&_stateMux);
     if (_stateDirty) {
-        _state = _latest;
+        for (uint8_t ch = 0; ch < CHANNEL_COUNT; ch++) _state[ch] = _latest[ch];
         _stateDirty = false;
     }
-    if (_remotePending) {
-        remoteFields = _remoteFields;
-        remote = true;
-        source = _remoteSource;
-        _remoteFields = 0;
-        _remotePending = false;
+    for (uint8_t ch = 0; ch < CHANNEL_COUNT; ch++) {
+        remoteFields[ch] = _remoteFields[ch];
+        remote[ch] = _remotePending[ch];
+        _remoteFields[ch] = 0;
+        _remotePending[ch] = false;
     }
+    source = _remoteSource;
     portEXIT_CRITICAL(&_stateMux);
 
-    if (remote) {
-        _highlight.changed(remoteFields, millis(), source);
-        _editor.remoteChanged(remoteFields);
+    uint32_t now = millis();
+    for (uint8_t ch = 0; ch < CHANNEL_COUNT; ch++) {
+        if (!remote[ch]) continue;
+        _highlight.changed(ch, remoteFields[ch], now, source);
+        _editor.remoteChanged(ch, remoteFields[ch]);
     }
 }
 
 void DisplayUI::apply(const EditCommand& command) {
+    uint8_t ch = command.channel;
     switch (command.action) {
-        case EDIT_ACTION::SET_WAVEFORM: _controller.setWaveform(command.waveform); break;
-        case EDIT_ACTION::SET_FREQUENCY: _controller.setFrequency(command.value); break;
-        case EDIT_ACTION::SET_AMPLITUDE: _controller.setAmplitude(command.value); break;
-        case EDIT_ACTION::SET_DC_OFFSET: _controller.setDCOffset(command.value); break;
-        case EDIT_ACTION::SET_OUTPUT: _controller.setOutputEnabled(command.enabled); break;
+        case EDIT_ACTION::SET_WAVEFORM: _controller.setWaveform(ch, command.waveform); break;
+        case EDIT_ACTION::SET_FREQUENCY: _controller.setFrequency(ch, command.value); break;
+        case EDIT_ACTION::SET_AMPLITUDE: _controller.setAmplitude(ch, command.value); break;
+        case EDIT_ACTION::SET_DC_OFFSET: _controller.setDCOffset(ch, command.value); break;
+        case EDIT_ACTION::SET_OUTPUT: _controller.setOutputEnabled(ch, command.enabled); break;
+        case EDIT_ACTION::SET_MIRROR: _controller.setMirror(command.enabled); break;
         case EDIT_ACTION::DEVICE:
             if (_actionFn) _actionFn(command.device, _actionCtx);
             break;
@@ -184,9 +193,19 @@ void DisplayUI::redraw(uint32_t nowMs) {
         for (uint8_t area = 0; area < DASHBOARD_AREA_COUNT; area++) _drawnKey[area][0] = '\0';
     }
 
-    DashboardView view = {_state, _net, _editor.selected(), _editor.editing(), _editor.freqStepIndex(),
-                          _highlight.flashing(nowMs), _highlight.badge(nowMs), _highlight.badgeSource(),
-                          _ble.state == BLE_STATE::CONNECTED};
+    DashboardView view;
+    for (uint8_t ch = 0; ch < CHANNEL_COUNT; ch++) {
+        view.channels[ch] = _state[ch];
+        view.remoteFlash[ch] = _highlight.flashing(ch, nowMs);
+    }
+    view.shown = _editor.channel();
+    view.net = _net;
+    view.selected = _editor.selected();
+    view.editing = _editor.editing();
+    view.freqStepIndex = _editor.freqStepIndex();
+    view.remoteBadge = _highlight.badge(nowMs);
+    view.badgeSource = _highlight.badgeSource();
+    view.bleConnected = _ble.state == BLE_STATE::CONNECTED;
     char key[AREA_KEY_LEN];
 
     if (_editor.infoOpen()) {

@@ -16,12 +16,16 @@
 //generator + controller + HTTP server + REST API, all running
 struct RestRig {
     FunctionGenerator gen;
+    FunctionGenerator gen2;
     FuncGenController ctl;
     HttpServer http;
     RestApi api;
-    RestRig() : gen(PIN_AD9833_CS, PIN_AMP_DAC_CS, PIN_OFFSET_DAC_CS, OFFSET_DAC_CHANNEL, PIN_WAVE_SWITCH, PIN_OUTPUT_RELAY), ctl(gen), api(ctl, http) {
+    RestRig() : gen(PIN_AD9833_CS, PIN_AMP_DAC_CS, PIN_OFFSET_DAC_CS, OFFSET_DAC_CHANNEL, PIN_WAVE_SWITCH, PIN_OUTPUT_RELAY),
+                gen2(PIN_AD9833_CS_2, PIN_AMP_DAC_CS_2, PIN_OFFSET_DAC_CS, OFFSET_DAC_CHANNEL_2, PIN_WAVE_SWITCH_2, PIN_OUTPUT_RELAY_2),
+                ctl(gen, gen2), api(ctl, http) {
         fakeHttpdReset();
         gen.begin();
+        gen2.begin();
         api.begin();
         http.begin();
     }
@@ -76,7 +80,7 @@ struct SourceLog {
     int other = 0;
 };
 
-static void sourceListener(const FuncGenState&, CHANGE_SOURCE source, void* ctx) {
+static void sourceListener(uint8_t, const FuncGenState&, CHANGE_SOURCE source, void* ctx) {
     SourceLog* log = (SourceLog*)ctx;
     if (source == CHANGE_SOURCE::WEB) log->web++;
     else log->other++;
@@ -106,7 +110,8 @@ TEST(rest_routes_fit_next_to_mcp_and_setup) {
     //setup (AP) mode has the most routes: setup page + MCP + REST
     fakeHttpdReset();
     FunctionGenerator gen(PIN_AD9833_CS, PIN_AMP_DAC_CS, PIN_OFFSET_DAC_CS, OFFSET_DAC_CHANNEL, PIN_WAVE_SWITCH, PIN_OUTPUT_RELAY);
-    FuncGenController ctl(gen);
+    FunctionGenerator gen2(PIN_AD9833_CS_2, PIN_AMP_DAC_CS_2, PIN_OFFSET_DAC_CS, OFFSET_DAC_CHANNEL_2, PIN_WAVE_SWITCH_2, PIN_OUTPUT_RELAY_2);
+    FuncGenController ctl(gen, gen2);
     HttpServer http;
     Provisioning prov(http);
     McpServer mcp(ctl, http);
@@ -130,7 +135,7 @@ TEST(rest_get_state) {
     RestRig rig;
     Reply r = getJson(API_STATE_PATH);
     CHECK_EQ(r.status, 200);
-    JsonObject s = r.doc["state"];
+    JsonObject s = r.doc["channels"][0]["state"];
     CHECK(strcmp(s["waveform"] | "", "sine") == 0);
     CHECK_NEAR(s["frequency_hz"].as<float>(), 1.0f, 0.1f);
     CHECK_NEAR(s["amplitude_vpp"].as<float>(), AMP_DEFAULT_VPP, 1e-4);
@@ -138,20 +143,23 @@ TEST(rest_get_state) {
     CHECK(s["output_enabled"].is<bool>());
     CHECK(!s["output_enabled"].as<bool>());
 
-    JsonObject ranges = r.doc["ranges"];
+    JsonObject ranges = r.doc["channels"][0]["ranges"];
     CHECK_NEAR(ranges["frequency_hz"]["min"].as<float>(), FREQ_MIN_HZ, 1e-4);
     CHECK_NEAR(ranges["frequency_hz"]["max"].as<float>(), FREQ_MAX_HZ, 1);
     CHECK(ranges["phase_deg"]["max_exclusive"].as<bool>());
     CHECK_NEAR(r.doc["output_peak_v"].as<float>(), OUTPUT_PEAK_MAX_V, 1e-4);
+    CHECK(r.doc["mirror"].is<bool>() && !r.doc["mirror"].as<bool>());
+    CHECK_EQ(r.doc["channels"].size(), (size_t)CHANNEL_COUNT);
+    CHECK_EQ(r.doc["channels"][1]["state"]["channel"].as<int>(), 2);
 
     //the ranges are the ones allowed right now: they follow the peak rule
     FuncGenLimits l = rig.ctl.limits();
-    rig.ctl.setDCOffset(7.0f);
-    FuncGenState st = rig.ctl.state();
+    rig.ctl.setDCOffset(CHANNEL_1, 7.0f);
+    FuncGenState st = rig.ctl.state(CHANNEL_1);
     r = getJson(API_STATE_PATH);
-    CHECK_NEAR(r.doc["ranges"]["amplitude_vpp"]["max"].as<float>(), l.amplitudeFor(st).max, 1e-4);
-    CHECK_NEAR(r.doc["ranges"]["dc_offset_v"]["max"].as<float>(), l.dcOffsetFor(st).max, 1e-4);
-    CHECK(r.doc["ranges"]["amplitude_vpp"]["max"].as<float>() < l.amplitude[0].max);
+    CHECK_NEAR(r.doc["channels"][0]["ranges"]["amplitude_vpp"]["max"].as<float>(), l.amplitudeFor(st).max, 1e-4);
+    CHECK_NEAR(r.doc["channels"][0]["ranges"]["dc_offset_v"]["max"].as<float>(), l.dcOffsetFor(st).max, 1e-4);
+    CHECK(r.doc["channels"][0]["ranges"]["amplitude_vpp"]["max"].as<float>() < l.amplitude[0].max);
 }
 
 //POST /api/state: values
@@ -161,25 +169,25 @@ TEST(rest_set_each_setting) {
     SourceLog log;
     rig.ctl.addListener(sourceListener, &log);
 
-    Reply r = update("{\"frequency_hz\": 1000}");
+    Reply r = update("{\"channel\": 1, \"frequency_hz\": 1000}");
     CHECK_EQ(r.status, 200);
     CHECK(!r.doc["clamped"].as<bool>());
     CHECK(r.doc["note"].isNull());
-    CHECK_NEAR(rig.ctl.state().frequency, 1000.0f, 0.1f);
-    CHECK_NEAR(r.doc["state"]["frequency_hz"].as<float>(), rig.ctl.state().frequency, 1e-3);
+    CHECK_NEAR(rig.ctl.state(CHANNEL_1).frequency, 1000.0f, 0.1f);
+    CHECK_NEAR(r.doc["channels"][0]["state"]["frequency_hz"].as<float>(), rig.ctl.state(CHANNEL_1).frequency, 1e-3);
 
-    CHECK_EQ(update("{\"amplitude_vpp\": 2.5}").status, 200);
-    CHECK_NEAR(rig.ctl.state().amplitude, 2.5f, 1e-4);
-    CHECK_EQ(update("{\"dc_offset_v\": -0.25}").status, 200);
-    CHECK_NEAR(rig.ctl.state().dcOffset, -0.25f, 1e-4);
-    CHECK_EQ(update("{\"phase_deg\": 90}").status, 200);
-    CHECK_NEAR(rig.ctl.state().phase, 90.0f, 0.1f);
-    CHECK_EQ(update("{\"waveform\": \"Square\"}").status, 200); //any case
-    CHECK(rig.ctl.state().waveform == WAVEFORM::SQUARE);
-    r = update("{\"output_enabled\": true}");
+    CHECK_EQ(update("{\"channel\": 1, \"amplitude_vpp\": 2.5}").status, 200);
+    CHECK_NEAR(rig.ctl.state(CHANNEL_1).amplitude, 2.5f, 1e-4);
+    CHECK_EQ(update("{\"channel\": 1, \"dc_offset_v\": -0.25}").status, 200);
+    CHECK_NEAR(rig.ctl.state(CHANNEL_1).dcOffset, -0.25f, 1e-4);
+    CHECK_EQ(update("{\"channel\": 1, \"phase_deg\": 90}").status, 200);
+    CHECK_NEAR(rig.ctl.state(CHANNEL_1).phase, 90.0f, 0.1f);
+    CHECK_EQ(update("{\"channel\": 1, \"waveform\": \"Square\"}").status, 200); //any case
+    CHECK(rig.ctl.state(CHANNEL_1).waveform == WAVEFORM::SQUARE);
+    r = update("{\"channel\": 1, \"output_enabled\": true}");
     CHECK_EQ(r.status, 200);
-    CHECK(rig.ctl.state().outputEnabled);
-    CHECK(r.doc["state"]["output_enabled"].as<bool>());
+    CHECK(rig.ctl.state(CHANNEL_1).outputEnabled);
+    CHECK(r.doc["channels"][0]["state"]["output_enabled"].as<bool>());
 
     //every change tagged WEB, so the LCD shows the badge
     CHECK_EQ(log.web, 6);
@@ -190,65 +198,122 @@ TEST(rest_out_of_range_is_clamped) {
     RestRig rig;
     FuncGenLimits l = rig.ctl.limits();
 
-    Reply r = update("{\"frequency_hz\": 99000000}");
+    Reply r = update("{\"channel\": 1, \"frequency_hz\": 99000000}");
     CHECK_EQ(r.status, 200);
     CHECK(r.doc["clamped"].as<bool>());
-    CHECK_NEAR(rig.ctl.state().frequency, FREQ_MAX_HZ, 1);
+    CHECK_NEAR(rig.ctl.state(CHANNEL_1).frequency, FREQ_MAX_HZ, 1);
     CHECK(contains(noteText(r), "frequency_hz clamped to 12500000 Hz"));
 
-    r = update("{\"frequency_hz\": 0}");
+    r = update("{\"channel\": 1, \"frequency_hz\": 0}");
     CHECK(r.doc["clamped"].as<bool>());
-    CHECK_NEAR(rig.ctl.state().frequency, FREQ_MIN_HZ, 0.1f);
+    CHECK_NEAR(rig.ctl.state(CHANNEL_1).frequency, FREQ_MIN_HZ, 0.1f);
 
     //amplitude stops at the peak limit, the offset stays where it is
     float offMax = l.dcOffset.max;
-    rig.ctl.setDCOffset(offMax);
-    CHECK_NEAR(rig.ctl.state().dcOffset, offMax, 1e-4);
-    float ampMax = l.amplitudeFor(rig.ctl.state()).max;
-    r = update("{\"amplitude_vpp\": 50}");
+    rig.ctl.setDCOffset(CHANNEL_1, offMax);
+    CHECK_NEAR(rig.ctl.state(CHANNEL_1).dcOffset, offMax, 1e-4);
+    float ampMax = l.amplitudeFor(rig.ctl.state(CHANNEL_1)).max;
+    r = update("{\"channel\": 1, \"amplitude_vpp\": 50}");
     CHECK_EQ(r.status, 200);
     CHECK(r.doc["clamped"].as<bool>());
-    CHECK_NEAR(rig.ctl.state().amplitude, ampMax, 1e-4);
-    CHECK_NEAR(rig.ctl.state().dcOffset, offMax, 1e-4);
+    CHECK_NEAR(rig.ctl.state(CHANNEL_1).amplitude, ampMax, 1e-4);
+    CHECK_NEAR(rig.ctl.state(CHANNEL_1).dcOffset, offMax, 1e-4);
     CHECK(contains(noteText(r), "amplitude_vpp clamped to"));
     CHECK(contains(noteText(r), "less with this offset"));
     //and the reply's range shows the new edge
-    CHECK_NEAR(r.doc["ranges"]["amplitude_vpp"]["max"].as<float>(), ampMax, 1e-4);
+    CHECK_NEAR(r.doc["channels"][0]["ranges"]["amplitude_vpp"]["max"].as<float>(), ampMax, 1e-4);
 
     //offset stops at the peak limit, the amplitude stays
-    float amp = rig.ctl.state().amplitude;
-    float offMin = l.dcOffsetFor(rig.ctl.state()).min;
-    r = update("{\"dc_offset_v\": -100}");
+    float amp = rig.ctl.state(CHANNEL_1).amplitude;
+    float offMin = l.dcOffsetFor(rig.ctl.state(CHANNEL_1)).min;
+    r = update("{\"channel\": 1, \"dc_offset_v\": -100}");
     CHECK(r.doc["clamped"].as<bool>());
-    CHECK_NEAR(rig.ctl.state().dcOffset, offMin, 1e-4);
-    CHECK_NEAR(rig.ctl.state().amplitude, amp, 1e-4);
+    CHECK_NEAR(rig.ctl.state(CHANNEL_1).dcOffset, offMin, 1e-4);
+    CHECK_NEAR(rig.ctl.state(CHANNEL_1).amplitude, amp, 1e-4);
     CHECK(contains(noteText(r), "dc_offset_v clamped to"));
 
     //exactly on the edge is not a clamp
-    r = update("{\"dc_offset_v\": 0}");
+    r = update("{\"channel\": 1, \"dc_offset_v\": 0}");
     CHECK(!r.doc["clamped"].as<bool>());
 }
 
 TEST(rest_phase_wraps) {
     RestRig rig;
-    Reply r = update("{\"phase_deg\": 400}");
+    Reply r = update("{\"channel\": 1, \"phase_deg\": 400}");
     CHECK_EQ(r.status, 200);
     CHECK(r.doc["clamped"].as<bool>());
     CHECK(contains(noteText(r), "phase_deg wrapped to 40 degrees"));
-    CHECK_NEAR(rig.ctl.state().phase, 40.0f, 0.1f);
+    CHECK_NEAR(rig.ctl.state(CHANNEL_1).phase, 40.0f, 0.1f);
 
-    r = update("{\"phase_deg\": -90}");
-    CHECK_NEAR(rig.ctl.state().phase, 270.0f, 0.1f);
+    r = update("{\"channel\": 1, \"phase_deg\": -90}");
+    CHECK_NEAR(rig.ctl.state(CHANNEL_1).phase, 270.0f, 0.1f);
 
-    r = update("{\"phase_deg\": 360}");
-    CHECK_NEAR(rig.ctl.state().phase, 0.0f, 0.1f);
+    r = update("{\"channel\": 1, \"phase_deg\": 360}");
+    CHECK_NEAR(rig.ctl.state(CHANNEL_1).phase, 0.0f, 0.1f);
 
     //a huge value would never finish the driver's wrap loop: wrapped before it gets there
-    r = update("{\"phase_deg\": 1e20}");
+    r = update("{\"channel\": 1, \"phase_deg\": 1e20}");
     CHECK_EQ(r.status, 200);
-    CHECK(rig.ctl.state().phase >= 0.0f && rig.ctl.state().phase < 360.0f);
-    r = update("{\"phase_deg\": -0.000001}");
-    CHECK(rig.ctl.state().phase >= 0.0f && rig.ctl.state().phase < 360.0f);
+    CHECK(rig.ctl.state(CHANNEL_1).phase >= 0.0f && rig.ctl.state(CHANNEL_1).phase < 360.0f);
+    r = update("{\"channel\": 1, \"phase_deg\": -0.000001}");
+    CHECK(rig.ctl.state(CHANNEL_1).phase >= 0.0f && rig.ctl.state(CHANNEL_1).phase < 360.0f);
+}
+
+TEST(rest_channels_are_separate) {
+    RestRig rig;
+    Reply r = update("{\"channel\": 2, \"frequency_hz\": 2500}");
+    CHECK_EQ(r.status, 200);
+    CHECK_NEAR(rig.ctl.state(CHANNEL_2).frequency, 2500.0f, 0.1f);
+    CHECK_NEAR(rig.ctl.state(CHANNEL_1).frequency, 1.0f, 0.1f);
+    CHECK_NEAR(r.doc["channels"][1]["state"]["frequency_hz"].as<float>(), 2500.0f, 0.1f);
+
+    //each channel's ranges follow its own peak rule
+    rig.ctl.setDCOffset(CHANNEL_2, 4.0f);
+    r = getJson(API_STATE_PATH);
+    FuncGenLimits l = rig.ctl.limits();
+    CHECK_NEAR(r.doc["channels"][1]["ranges"]["amplitude_vpp"]["max"].as<float>(),
+               l.amplitudeFor(rig.ctl.state(CHANNEL_2)).max, 1e-4);
+    CHECK_NEAR(r.doc["channels"][0]["ranges"]["amplitude_vpp"]["max"].as<float>(),
+               l.amplitudeFor(rig.ctl.state(CHANNEL_1)).max, 1e-4);
+
+    CHECK_EQ(update("{\"output_enabled\": true, \"channel\": 2}").status, 200); //key order doesn't matter
+    CHECK(rig.ctl.state(CHANNEL_2).outputEnabled);
+    CHECK(!rig.ctl.state(CHANNEL_1).outputEnabled);
+}
+
+TEST(rest_mirror) {
+    RestRig rig;
+    SourceLog log;
+    rig.ctl.addListener(sourceListener, &log);
+    update("{\"channel\": 1, \"frequency_hz\": 1234}");
+
+    Reply r = update("{\"mirror\": true}");
+    CHECK_EQ(r.status, 200);
+    CHECK(r.doc["mirror"].as<bool>());
+    CHECK(rig.ctl.mirror());
+    CHECK_NEAR(rig.ctl.state(CHANNEL_2).frequency, 1234.0f, 0.1f);
+
+    //channel 1 changes reach channel 2
+    update("{\"channel\": 1, \"amplitude_vpp\": 3}");
+    CHECK_NEAR(rig.ctl.state(CHANNEL_2).amplitude, 3.0f, 1e-4);
+
+    //channel 2's mirrored settings are locked: 409, nothing changes
+    r = update("{\"channel\": 2, \"frequency_hz\": 50}");
+    CHECK_EQ(r.status, 409);
+    CHECK(contains(errorText(r), "channel 2 mirrors channel 1"));
+    CHECK_NEAR(rig.ctl.state(CHANNEL_2).frequency, 1234.0f, 0.1f);
+    CHECK_EQ(update("{\"channel\": 2, \"waveform\": \"square\"}").status, 409);
+    CHECK_EQ(update("{\"channel\": 2, \"phase_deg\": 10}").status, 409);
+
+    //but not its output
+    CHECK_EQ(update("{\"channel\": 2, \"output_enabled\": true}").status, 200);
+    CHECK(rig.ctl.state(CHANNEL_2).outputEnabled);
+
+    CHECK_EQ(update("{\"mirror\": false}").status, 200);
+    CHECK(!rig.ctl.mirror());
+    CHECK_EQ(update("{\"channel\": 2, \"frequency_hz\": 50}").status, 200);
+    CHECK_NEAR(rig.ctl.state(CHANNEL_2).frequency, 50.0f, 0.1f);
+    CHECK_EQ(log.other, 0);
 }
 
 //POST /api/state: rejected bodies
@@ -257,7 +322,7 @@ TEST(rest_bad_bodies_rejected) {
     RestRig rig;
     SourceLog log;
     rig.ctl.addListener(sourceListener, &log);
-    FuncGenState before = rig.ctl.state();
+    FuncGenState before = rig.ctl.state(CHANNEL_1);
 
     struct Case { const char* body; const char* error; };
     const Case cases[] = {
@@ -265,17 +330,23 @@ TEST(rest_bad_bodies_rejected) {
         {"[1]", "JSON object"},
         {"42", "JSON object"},
         {"{}", "exactly one setting"},
-        {"{\"amplitude_vpp\": 1, \"dc_offset_v\": 1}", "exactly one setting"},
-        {"{\"volume\": 11}", "unknown setting 'volume'"},
-        {"{\"amplitude_vpp\": \"2\"}", "'amplitude_vpp' must be a finite number in Vpp"},
-        {"{\"frequency_hz\": true}", "'frequency_hz' must be a finite number"},
-        {"{\"frequency_hz\": null}", "'frequency_hz' must be a finite number"},
-        {"{\"frequency_hz\": 1e999}", "'frequency_hz' must be a finite number"},
-        {"{\"phase_deg\": 1e300}", "'phase_deg' must be a finite number"},
-        {"{\"waveform\": \"sawtooth\"}", "'waveform' must be one of"},
-        {"{\"waveform\": 1}", "'waveform' must be one of"},
-        {"{\"output_enabled\": \"true\"}", "'output_enabled' must be true or false"},
-        {"{\"output_enabled\": 1}", "'output_enabled' must be true or false"},
+        {"{\"channel\": 1}", "exactly one setting"},
+        {"{\"channel\": 1, \"amplitude_vpp\": 1, \"dc_offset_v\": 1}", "exactly one setting"},
+        {"{\"channel\": 1, \"volume\": 11}", "unknown setting 'volume'"},
+        {"{\"amplitude_vpp\": 2}", "'amplitude_vpp' needs \"channel\": 1 or 2"},
+        {"{\"channel\": 3, \"amplitude_vpp\": 2}", "'channel' must be the number 1 or 2"},
+        {"{\"channel\": \"1\", \"amplitude_vpp\": 2}", "'channel' must be the number 1 or 2"},
+        {"{\"channel\": 1, \"mirror\": true}", "'mirror' is not per channel"},
+        {"{\"mirror\": 1}", "'mirror' must be true or false"},
+        {"{\"channel\": 1, \"amplitude_vpp\": \"2\"}", "'amplitude_vpp' must be a finite number in Vpp"},
+        {"{\"channel\": 1, \"frequency_hz\": true}", "'frequency_hz' must be a finite number"},
+        {"{\"channel\": 1, \"frequency_hz\": null}", "'frequency_hz' must be a finite number"},
+        {"{\"channel\": 1, \"frequency_hz\": 1e999}", "'frequency_hz' must be a finite number"},
+        {"{\"channel\": 1, \"phase_deg\": 1e300}", "'phase_deg' must be a finite number"},
+        {"{\"channel\": 1, \"waveform\": \"sawtooth\"}", "'waveform' must be one of"},
+        {"{\"channel\": 1, \"waveform\": 1}", "'waveform' must be one of"},
+        {"{\"channel\": 1, \"output_enabled\": \"true\"}", "'output_enabled' must be true or false"},
+        {"{\"channel\": 1, \"output_enabled\": 1}", "'output_enabled' must be true or false"},
     };
     for (const Case& c : cases) {
         Reply r = update(c.body);
@@ -287,26 +358,27 @@ TEST(rest_bad_bodies_rejected) {
     }
 
     //nothing was changed or announced
-    FuncGenState after = rig.ctl.state();
+    FuncGenState after = rig.ctl.state(CHANNEL_1);
     CHECK(after.waveform == before.waveform);
     CHECK(after.frequency == before.frequency);
     CHECK(after.amplitude == before.amplitude);
     CHECK(after.phase == before.phase);
     CHECK(after.dcOffset == before.dcOffset);
     CHECK(after.outputEnabled == before.outputEnabled);
+    CHECK(!rig.ctl.mirror());
     CHECK_EQ(log.web, 0);
 }
 
 TEST(rest_request_checks) {
     RestRig rig;
-    const std::string body = "{\"output_enabled\": true}";
+    const std::string body = "{\"channel\": 1, \"output_enabled\": true}";
 
     //a cross-site form or a simple fetch can't send JSON
     FakeHttpOptions o;
     CHECK_EQ(post(body, o).status, 415);
     o.headers["Content-Type"] = "text/plain";
     CHECK_EQ(post(body, o).status, 415);
-    CHECK(!rig.ctl.state().outputEnabled);
+    CHECK(!rig.ctl.state(CHANNEL_1).outputEnabled);
 
     //another site open in the same browser
     o = jsonBody();
@@ -316,14 +388,14 @@ TEST(rest_request_checks) {
     CHECK(contains(r.body, "origin not allowed"));
     o.headers["Origin"] = "http://" + std::string(200, 'a') + ".example"; //too long to read is not "absent"
     CHECK_EQ(post(body, o).status, 403);
-    CHECK(!rig.ctl.state().outputEnabled);
+    CHECK(!rig.ctl.state(CHANNEL_1).outputEnabled);
 
     //the page itself, from funcgen.local or an IP
     o.headers["Origin"] = "http://" MDNS_HOSTNAME ".local";
     CHECK_EQ(post(body, o).status, 200);
     o.headers["Origin"] = "http://192.168.4.1";
-    CHECK_EQ(post("{\"output_enabled\": false}", o).status, 200);
-    CHECK(!rig.ctl.state().outputEnabled);
+    CHECK_EQ(post("{\"channel\": 1, \"output_enabled\": false}", o).status, 200);
+    CHECK(!rig.ctl.state(CHANNEL_1).outputEnabled);
 
     //content type with a charset is fine
     o = jsonBody();

@@ -1,9 +1,9 @@
 # Function Generator (ECE 425)
 
-Firmware for a function generator built around an ESP32-S3 (N16R8). An AD9833
-produces the waveform, a TS5A23157 switch picks the sine/triangle or square
-path, an AD5452 multiplying DAC sets the amplitude and an MCP4822 DAC the DC
-offset (see
+Firmware for a two-channel function generator built around an ESP32-S3
+(N16R8). Per channel, an AD9833 produces the waveform, a TS5A23157 switch picks
+the sine/triangle or square path and an AD5452 multiplying DAC sets the
+amplitude; one MCP4822 DAC sets both channels' DC offsets (see
 `docs/parts.md` for the output stage, `docs/pinout_table.md` for the wiring).
 The ESP32 provides three ways to control it:
 
@@ -24,7 +24,8 @@ flowchart LR
     WEB["Web page + /api (HTTP)"]
     BLE["BLE (NimBLE)"]
     CTRL["FuncGenController<br/>(mutex, listeners)"]
-    FG["FunctionGenerator"]
+    FG["FunctionGenerator (CH1)"]
+    FG2["FunctionGenerator (CH2)"]
     HW["AD9833 + AD5452 + MCP4822<br/>+ path switch"]
 
     LCD --> CTRL
@@ -32,12 +33,15 @@ flowchart LR
     WEB --> CTRL
     BLE --> CTRL
     CTRL --> FG --> HW
+    CTRL --> FG2 --> HW
 ```
 
-Every interface is a client of `FuncGenController`. It serializes access to the
-hardware (each interface runs in its own task) and notifies listeners when the
-state changes, so the LCD always shows what an agent, phone or browser just set. Nothing
-outside `core/` touches `FunctionGenerator` directly.
+Every interface is a client of `FuncGenController`. It drives both channels,
+serializes access to the hardware (each interface runs in its own task, and
+both channels share one SPI bus) and notifies listeners when a channel's state
+changes, so the LCD always shows what an agent, phone or browser just set. It
+also runs the mirror (LINK: CH2 follows CH1). Nothing outside `core/` touches
+`FunctionGenerator` directly.
 
 ## Layout
 
@@ -72,16 +76,16 @@ headers, so include across folders with relative paths (`"../core/..."`).
 | Part | State |
 |---|---|
 | `FunctionGenerator` (AD9833 + AD5452 + MCP4822 + path switch) | done (incl. output enable, DC offset, peak limit and limit getters), host-tested, calibration values in `config.h` are placeholders until the output stage is measured |
-| `FuncGenController` / `FuncGenState` | done |
-| `core/safe_pins` (relays open, every generator chip deselected, path switches on the divided path from the top of `setup()`) + CH2 parked at boot | done, host-tested against a fake that drops writes to unclaimed pins like ESP32 core 3.x, not tried on hardware yet |
+| `FuncGenController` / `FuncGenState` (two channels, mirror) | done, host-tested |
+| `core/safe_pins` (relays open, every generator chip deselected, path switches on the divided path from the top of `setup()`) + both channels reset at boot | done, host-tested against a fake that drops writes to unclaimed pins like ESP32 core 3.x, not tried on hardware yet |
 | `ui/input` (encoder via PCNT, button, XPT2046 touch) | done, not tried on hardware yet, touch calibration is a placeholder |
-| `ui/display_ui` (dashboard, editing, info panel with Wi-Fi/phone buttons, remote-change flash, pairing popup) | done, not tried on hardware yet |
+| `ui/display_ui` (dashboard with CH1/CH2 tabs and LINK, editing, info panel with Wi-Fi/phone buttons, remote-change flash, pairing popup) | done, logic and drawing host-tested (screens in `test/build/screens`), not tried on hardware yet |
 | `425_Function_Generator.ino` (wiring, boot-time Wi-Fi + phones reset) | done, compiled, not tried on hardware yet |
 | `comms/http_server` (shared esp_http_server + route table) | done, host-tested against a fake httpd, not tried on hardware yet |
 | `comms/wifi_manager` (STA, AP fallback, setup page, mDNS, NVS) | done, state machine and setup routes host-tested, radio part only compiled, not tried on hardware yet |
-| `comms/mcp_server` (JSON-RPC, 8 tools) | done, host-tested end to end against a fake httpd, not tried on hardware yet |
-| `comms/ble_service` (NimBLE GATT, passkey pairing, notifications) | done, encoding and range checks host-tested, the stack part only compiled, not tried on hardware yet |
-| `comms/rest_api` + `web/index_html.h` (web control page, `/api/state`, `/api/info`) | done, API host-tested end to end against a fake httpd, page JS only syntax-checked, not tried in a browser against hardware yet |
+| `comms/mcp_server` (JSON-RPC, 9 tools, both channels) | done, host-tested end to end against a fake httpd, not tried on hardware yet |
+| `comms/ble_service` (NimBLE GATT, passkey pairing, notifications) | CH1 only (CH2 layout still to be decided), done, encoding and range checks host-tested, the stack part only compiled, not tried on hardware yet |
+| `comms/rest_api` + `web/index_html.h` (web control page with a CH1/CH2 switch and Link, `/api/state`, `/api/info`) | done, API host-tested end to end against a fake httpd, page JS only syntax-checked, not tried in a browser against hardware yet |
 
 Suggested order: `config.h` -> display + input -> Wi-Fi + HTTP server (STA, then
 AP fallback + provisioning page) -> MCP server -> BLE.
@@ -90,6 +94,16 @@ AP fallback + provisioning page) -> MCP server -> BLE.
 
 - **No LVGL.** The dashboard is a single screen drawn directly with Adafruit GFX,
   redrawing only the fields that changed.
+- **Two channels:** one controller drives both (`CHANNEL_1`/`CHANNEL_2` in
+  code, 1 and 2 in MCP and the web API, where the channel is required so a
+  client never changes the wrong output by leaving it out). The LCD shows one
+  channel's full dashboard at a time with both channels summed up in a tab row.
+- **Mirror (LINK):** CH2 follows CH1's waveform, frequency, amplitude, offset
+  and phase; each output's on/off stays its own. Turning it on copies CH1 to
+  CH2 right away. While it is on, those CH2 settings are locked everywhere
+  (greyed on the LCD, an error over MCP and the web API) instead of quietly
+  ending the link. The two AD9833s have their own crystals, so CH2 drifts
+  against CH1 in phase; the mirror copies settings, not a phase lock.
 - **Wi-Fi:** join the saved network (STA) and fall back to an access point with a
   setup page when that fails, so credentials can be changed without reflashing.
   Credentials are stored in NVS and the device is reachable at `funcgen.local`.
@@ -126,9 +140,9 @@ AP fallback + provisioning page) -> MCP server -> BLE.
 - **Safe pins at boot:** `holdSafePinStates()` (`core/safe_pins.*`) is the
   first thing `setup()` does: both output relays open, every generator chip
   deselected, both path switches on the divided square path (safe whatever the
-  AD9833s powered up making). Both channels' `begin()` follow straight away;
-  CH2 isn't in the firmware yet, so its `begin()` only parks the chips (AD9833
-  reset to sine and asleep, amplitude 0, offset 0 V, relay open). The path switch always moves to the divided path before
+  AD9833s powered up making). Both channels' `begin()` follow straight away
+  (AD9833 reset to sine and asleep, amplitude 0, offset 0 V, relay open). The
+  path switch always moves to the divided path before
   a square starts and back only after it stops, so a 3.3 V square never
   reaches the direct sine/triangle path.
 - **Output off** opens the output relay (the BNC is disconnected), puts the
@@ -152,6 +166,14 @@ setup routes and the MCP server, include it as
 
 ## Using it
 
+- **Channels:** the row under the status bar has a tab per channel (waveform,
+  frequency and ON/OFF of each) and a LINK button. The fields below show the
+  filled tab's channel. Tap a tab to show that channel, or select the tabs with
+  the knob and press to switch.
+- **LINK:** tap it (or select it and press) to make CH2 follow CH1. While it is
+  lit, CH2's fields read "LINKED", are greyed and can't be edited (change CH1
+  instead); CH2's OUTPUT still works on its own. Tap it again to unlink: CH2
+  keeps its values.
 - **Knob:** turn to pick a field, press to edit it (press on OUTPUT toggles the
   output), turn to change the value. Long press when done (on amplitude, offset
   and waveform a second press works too). Edit mode also ends after 10 s
@@ -166,10 +188,11 @@ setup routes and the MCP server, include it as
   magenta and an "MCP", "BLE" or "WEB" badge shows in the status bar for a few
   seconds. If you were
   editing that field, editing stops and your next turn starts from the new value.
+  A change to the channel that isn't shown flashes its tab instead.
 - **Bluetooth:** a Bluetooth icon at the right of the status bar means a phone is
   connected. When a new phone pairs, a full-screen popup shows the code to type
   on the phone; press or tap to cancel (it cancels itself after 30 s).
-- **Power-on:** sine, 1 Hz, 1 Vpp, 0 V offset, output OFF.
+- **Power-on:** both channels sine, 1 Hz, 1 Vpp, 0 V offset, output OFF, LINK off, CH1 shown.
 - **Amplitude and offset** share one limit: the bigger the amplitude, the less
   offset is allowed (and the other way round). The knob just stops at the edge.
 - **Info panel buttons:** turn the knob to highlight "Change Wi-Fi", "Forget
@@ -198,7 +221,9 @@ the same URL (the Inspector's default proxy mode works; its direct mode needs
 CORS, which this server doesn't offer).
 
 Tools: `set_waveform`, `set_frequency`, `set_amplitude`, `set_phase`,
-`set_dc_offset`, `set_output`, `get_state`, `get_limits`.
+`set_dc_offset`, `set_output` (each needs `"channel": 1` or `2`), `set_mirror`
+(`{"enabled": true}`: CH2 follows CH1), `get_state` (one channel with
+`"channel"`, both without), `get_limits` (shared by both channels).
 
 ## Web control page
 
@@ -206,7 +231,9 @@ Open `http://funcgen.local/` (or the IP from the LCD) on any phone or laptop on
 the same network. In setup mode `/` is the Wi-Fi setup page; the controls are
 at `http://192.168.4.1/control` (the setup page links to them).
 
-- **Controls tab:** output on/off, waveform, and fields for frequency (pick
+- **Controls tab:** CH1/CH2 buttons pick the channel the controls change, and
+  Link makes CH2 follow CH1 (CH2's controls, except its output, are disabled
+  while it is on). Then output on/off, waveform, and fields for frequency (pick
   Hz/kHz/MHz), amplitude, DC offset and phase. A field is sent when you press
   Enter or leave it; Esc undoes the typing. Amplitude and offset show the range
   allowed right now. A value past the edge is clamped and a note says what was
@@ -220,11 +247,11 @@ API (JSON, the same names as MCP's `get_state`):
 
 | Route | What |
 |---|---|
-| `GET /api/state` | `{"state": {...}, "ranges": {...}, "output_peak_v"}`, ranges are the ones allowed right now |
-| `POST /api/state` | exactly one setting, e.g. `{"amplitude_vpp": 2.5}`, `{"waveform": "square"}`, `{"output_enabled": true}`. Answers like GET plus `"clamped"` (and a `"note"` when it was). Needs `Content-Type: application/json` |
+| `GET /api/state` | `{"channels": [{"state": {...}, "ranges": {...}}, ...], "mirror", "output_peak_v"}`, ranges are the ones allowed right now for that channel |
+| `POST /api/state` | exactly one setting plus its channel, e.g. `{"channel": 1, "amplitude_vpp": 2.5}`, `{"channel": 2, "waveform": "square"}`, or `{"mirror": true}` on its own. Answers like GET plus `"clamped"` (and a `"note"` when it was). A mirrored CH2 setting while Link is on gets 409. Needs `Content-Type: application/json` |
 | `GET /api/info` | firmware, `poll_ms`, Wi-Fi and BLE status |
 
-    curl -X POST -H "Content-Type: application/json" -d "{\"frequency_hz\": 1000}" http://funcgen.local/api/state
+    curl -X POST -H "Content-Type: application/json" -d "{\"channel\": 1, \"frequency_hz\": 1000}" http://funcgen.local/api/state
 
 ## Connecting a phone (BLE)
 
@@ -234,7 +261,7 @@ API (JSON, the same names as MCP's `get_state`):
    info panel shows it).
 3. The phone asks to pair: type the code from the LCD popup. This happens once
    per phone.
-4. Open the service `54750f00-...`. Each characteristic is labelled. Tap the up
+4. Open the service `54750f00-...` (CH1; CH2 isn't on BLE yet). Each characteristic is labelled. Tap the up
    arrow to write a value, the triple arrow to get live updates.
 
 | UUID | Setting | Bytes | Unit / values | Example |

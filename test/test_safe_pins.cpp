@@ -3,7 +3,7 @@
 *   Purpose: host tests for the boot sequence at the top of setup(): each
              safe pin goes straight to its level (never the other one for a
              moment), no chip select blips LOW outside a transfer, CH2's
-             parking begin() leaves its chips in a known state, and CH1
+             begin() leaves its chips in a known state, and CH1
              never disturbs the CH2 pins
 **************************************************************************/
 
@@ -76,7 +76,7 @@ TEST(relays_stay_open_through_boot) {
     CHECK_EQ(fakePinLevel(PIN_OUTPUT_RELAY_2), LOW); //CH2 stays open
 }
 
-//the generators in setup() order: safe pins, CH1 begin(), CH2's parking begin()
+//the generators in setup() order: safe pins, CH1 begin(), CH2's begin()
 struct BootRig {
     FunctionGenerator ch1;
     FunctionGenerator ch2;
@@ -179,7 +179,7 @@ TEST(ch2_parking_leaves_ch1_alone) {
 }
 
 TEST(ch1_never_touches_the_ch2_pins) {
-    //after boot (CH2 parked), nothing CH1 does reaches a CH2 pin or chip
+    //after boot, nothing CH1 does reaches a CH2 pin or chip
     BootRig rig;
     const uint8_t ch2Pins[] = {PIN_OUTPUT_RELAY_2, PIN_AD9833_CS_2, PIN_AMP_DAC_CS_2, PIN_WAVE_SWITCH_2};
     int drivesBefore[4];

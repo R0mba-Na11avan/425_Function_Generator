@@ -22,11 +22,14 @@ static const int RPC_INVALID_PARAMS = -32602;
 static const int RPC_INTERNAL_ERROR = -32603;
 
 static const char* const INSTRUCTIONS =
-    "Controls a bench function generator (AD9833 DDS with a digital-pot amplitude stage). "
-    "Changes take effect on the physical output immediately. Call get_limits before setting "
-    "values: out-of-range values are rejected, not clamped, and the amplitude range depends on "
-    "the waveform. Every set_* tool returns the state that was actually applied. The LCD can "
-    "change the settings too, so call get_state when in doubt.";
+    "Controls a two-channel bench function generator (one AD9833 DDS per channel, with DAC-set "
+    "amplitude and DC offset). Changes take effect on the physical outputs immediately. Every "
+    "set_* tool needs \"channel\": 1 or 2. Call get_limits before setting values: out-of-range "
+    "values are rejected, not clamped, and the amplitude and offset ranges depend on each other. "
+    "Mirror (set_mirror): while it is on, channel 2 follows channel 1's waveform, frequency, "
+    "amplitude, phase and offset, and setting those on channel 2 is rejected; each channel's "
+    "output on/off stays its own. Every set_* tool returns the state that was actually applied. "
+    "The LCD can change the settings too, so call get_state when in doubt.";
 
 //tool table
 
@@ -37,10 +40,18 @@ enum class PARAM : uint8_t {
     WAVEFORM
 };
 
+//whether a tool takes "channel"
+enum class CHANNEL_ARG : uint8_t {
+    NONE,
+    REQUIRED,
+    OPTIONAL    //left out = every channel
+};
+
 struct ToolArg {
     float number;
     bool boolean;
     WAVEFORM waveform;
+    int8_t channel;     //index, -1 if left out
 };
 
 struct Tool {
@@ -48,6 +59,8 @@ struct Tool {
     const char* title;
     const char* description;
     PARAM param;
+    CHANNEL_ARG channelArg;
+    bool mirrored;      //a setting the mirror copies to CH2 (so it is locked there while on)
     const char* paramName;
     const char* paramDescription;
     const char* unit;   //NUMBER: for error messages
@@ -55,12 +68,26 @@ struct Tool {
     ValueRange (*range)(const FuncGenLimits& limits, const FuncGenState* state);
     bool maxExclusive;  //NUMBER: the max itself is not allowed
     bool readOnly;
-    //applies the argument (setters) and fills out with the result
-    void (*run)(FuncGenController& controller, const ToolArg& arg, JsonObject out);
+    //applies the argument (setters) and fills out with the result. false if
+    //the controller refused (the mirror came on since the arguments were checked)
+    bool (*run)(FuncGenController& controller, const ToolArg& arg, JsonObject out);
 };
 
-static void writeState(FuncGenController& c, JsonObject out) { writeStateJson(c.state(), out); }
-static void writeLimits(FuncGenController& c, JsonObject out) { writeLimitsJson(c.limits(), out); }
+//one channel's state + the mirror flag, or every channel when channel is -1
+static void writeState(FuncGenController& c, int8_t channel, JsonObject out) {
+    if (channel >= 0) {
+        writeStateJson((uint8_t)channel, c.state((uint8_t)channel), out);
+    } else {
+        JsonArray all = out["channels"].to<JsonArray>();
+        for (uint8_t ch = 0; ch < CHANNEL_COUNT; ch++) writeStateJson(ch, c.state(ch), all.add<JsonObject>());
+    }
+    out["mirror"] = c.mirror();
+}
+
+static void writeLimits(FuncGenController& c, JsonObject out) {
+    writeLimitsJson(c.limits(), out);
+    out["channels"] = CHANNEL_COUNT;
+}
 
 static ValueRange frequencyRange(const FuncGenLimits& l, const FuncGenState*) { return l.frequency; }
 static ValueRange phaseRange(const FuncGenLimits& l, const FuncGenState*) { return l.phase; }
@@ -79,38 +106,75 @@ static ValueRange amplitudeRange(const FuncGenLimits& l, const FuncGenState* sta
     return r;
 }
 
-static void runSetWaveform(FuncGenController& c, const ToolArg& a, JsonObject out) { c.setWaveform(a.waveform, CHANGE_SOURCE::MCP); writeState(c, out); }
-static void runSetFrequency(FuncGenController& c, const ToolArg& a, JsonObject out) { c.setFrequency(a.number, CHANGE_SOURCE::MCP); writeState(c, out); }
-static void runSetAmplitude(FuncGenController& c, const ToolArg& a, JsonObject out) { c.setAmplitude(a.number, CHANGE_SOURCE::MCP); writeState(c, out); }
-static void runSetPhase(FuncGenController& c, const ToolArg& a, JsonObject out) { c.setPhase(a.number, CHANGE_SOURCE::MCP); writeState(c, out); }
-static void runSetDCOffset(FuncGenController& c, const ToolArg& a, JsonObject out) { c.setDCOffset(a.number, CHANGE_SOURCE::MCP); writeState(c, out); }
-static void runSetOutput(FuncGenController& c, const ToolArg& a, JsonObject out) { c.setOutputEnabled(a.boolean, CHANGE_SOURCE::MCP); writeState(c, out); }
-static void runGetState(FuncGenController& c, const ToolArg&, JsonObject out) { writeState(c, out); }
-static void runGetLimits(FuncGenController& c, const ToolArg&, JsonObject out) { writeLimits(c, out); }
+static uint8_t channelOf(const ToolArg& a) { return (uint8_t)a.channel; }
+
+static bool runSetWaveform(FuncGenController& c, const ToolArg& a, JsonObject out) {
+    if (!c.setWaveform(channelOf(a), a.waveform, CHANGE_SOURCE::MCP)) return false;
+    writeState(c, a.channel, out);
+    return true;
+}
+static bool runSetFrequency(FuncGenController& c, const ToolArg& a, JsonObject out) {
+    if (!c.setFrequency(channelOf(a), a.number, CHANGE_SOURCE::MCP)) return false;
+    writeState(c, a.channel, out);
+    return true;
+}
+static bool runSetAmplitude(FuncGenController& c, const ToolArg& a, JsonObject out) {
+    if (!c.setAmplitude(channelOf(a), a.number, CHANGE_SOURCE::MCP)) return false;
+    writeState(c, a.channel, out);
+    return true;
+}
+static bool runSetPhase(FuncGenController& c, const ToolArg& a, JsonObject out) {
+    if (!c.setPhase(channelOf(a), a.number, CHANGE_SOURCE::MCP)) return false;
+    writeState(c, a.channel, out);
+    return true;
+}
+static bool runSetDCOffset(FuncGenController& c, const ToolArg& a, JsonObject out) {
+    if (!c.setDCOffset(channelOf(a), a.number, CHANGE_SOURCE::MCP)) return false;
+    writeState(c, a.channel, out);
+    return true;
+}
+static bool runSetOutput(FuncGenController& c, const ToolArg& a, JsonObject out) {
+    if (!c.setOutputEnabled(channelOf(a), a.boolean, CHANGE_SOURCE::MCP)) return false;
+    writeState(c, a.channel, out);
+    return true;
+}
+static bool runSetMirror(FuncGenController& c, const ToolArg& a, JsonObject out) {
+    c.setMirror(a.boolean, CHANGE_SOURCE::MCP);
+    writeState(c, -1, out);
+    return true;
+}
+static bool runGetState(FuncGenController& c, const ToolArg& a, JsonObject out) { writeState(c, a.channel, out); return true; }
+static bool runGetLimits(FuncGenController& c, const ToolArg&, JsonObject out) { writeLimits(c, out); return true; }
 
 //adding a tool = one entry here
 static const Tool TOOLS[] = {
     {"set_waveform", "Set waveform",
-     "Select the output waveform. If the current amplitude is outside the new waveform's range it is clamped into it.",
-     PARAM::WAVEFORM, "waveform", "Output waveform", nullptr, nullptr, false, false, runSetWaveform},
-    {"set_frequency", "Set frequency", "Set the output frequency in Hz.",
-     PARAM::NUMBER, "hz", "Frequency in Hz", "Hz", frequencyRange, false, false, runSetFrequency},
+     "Select a channel's waveform. If the current amplitude is outside the new waveform's range it is clamped into it.",
+     PARAM::WAVEFORM, CHANNEL_ARG::REQUIRED, true, "waveform", "Output waveform", nullptr, nullptr, false, false, runSetWaveform},
+    {"set_frequency", "Set frequency", "Set a channel's frequency in Hz.",
+     PARAM::NUMBER, CHANNEL_ARG::REQUIRED, true, "hz", "Frequency in Hz", "Hz", frequencyRange, false, false, runSetFrequency},
     {"set_amplitude", "Set amplitude",
-     "Set the peak-to-peak amplitude in volts. The valid range depends on the current waveform and DC offset: amplitude / 2 + |offset| must stay at or below output_peak_v (see get_limits). The offset is never changed by this call.",
-     PARAM::NUMBER, "vpp", "Amplitude in volts peak-to-peak", "Vpp", amplitudeRange, false, false, runSetAmplitude},
-    {"set_phase", "Set phase", "Set the phase offset in degrees, from 0 up to (not including) 360.",
-     PARAM::NUMBER, "degrees", "Phase in degrees", "degrees", phaseRange, true, false, runSetPhase},
+     "Set a channel's peak-to-peak amplitude in volts. The valid range depends on that channel's waveform and DC offset: amplitude / 2 + |offset| must stay at or below output_peak_v (see get_limits). The offset is never changed by this call.",
+     PARAM::NUMBER, CHANNEL_ARG::REQUIRED, true, "vpp", "Amplitude in volts peak-to-peak", "Vpp", amplitudeRange, false, false, runSetAmplitude},
+    {"set_phase", "Set phase", "Set a channel's phase offset in degrees, from 0 up to (not including) 360.",
+     PARAM::NUMBER, CHANNEL_ARG::REQUIRED, true, "degrees", "Phase in degrees", "degrees", phaseRange, true, false, runSetPhase},
     {"set_dc_offset", "Set DC offset",
-     "Set the DC offset in volts. The valid range depends on the current amplitude: amplitude / 2 + |offset| must stay at or below output_peak_v (see get_limits). The amplitude is never changed by this call.",
-     PARAM::NUMBER, "volts", "DC offset in volts", "V", dcOffsetRange, false, false, runSetDCOffset},
-    {"set_output", "Enable/disable output", "Turn the signal output on or off.",
-     PARAM::BOOLEAN, "enabled", "true = output on", nullptr, nullptr, false, false, runSetOutput},
-    {"get_state", "Get state", "Read the current settings.",
-     PARAM::NONE, nullptr, nullptr, nullptr, nullptr, false, true, runGetState},
+     "Set a channel's DC offset in volts. The valid range depends on that channel's amplitude: amplitude / 2 + |offset| must stay at or below output_peak_v (see get_limits). The amplitude is never changed by this call.",
+     PARAM::NUMBER, CHANNEL_ARG::REQUIRED, true, "volts", "DC offset in volts", "V", dcOffsetRange, false, false, runSetDCOffset},
+    {"set_output", "Enable/disable output", "Turn a channel's output on or off. Allowed on channel 2 while mirrored.",
+     PARAM::BOOLEAN, CHANNEL_ARG::REQUIRED, false, "enabled", "true = output on", nullptr, nullptr, false, false, runSetOutput},
+    {"set_mirror", "Mirror channel 1 on channel 2",
+     "Turn the mirror on or off. On: channel 2 copies channel 1's waveform, frequency, amplitude, phase and offset right away and follows every later change to them; setting those on channel 2 is rejected. Output on/off stays per channel. Off: channel 2 keeps its current values. Returns both channels.",
+     PARAM::BOOLEAN, CHANNEL_ARG::NONE, false, "enabled", "true = channel 2 follows channel 1", nullptr, nullptr, false, false, runSetMirror},
+    {"get_state", "Get state",
+     "Read the current settings: one channel's if \"channel\" is given, otherwise every channel. Includes the mirror flag.",
+     PARAM::NONE, CHANNEL_ARG::OPTIONAL, false, nullptr, nullptr, nullptr, nullptr, false, true, runGetState},
     {"get_limits", "Get limits",
-     "Read the valid range of every setting (amplitude per waveform) and output_peak_v. Amplitude and DC offset also share one limit: amplitude / 2 + |offset| <= output_peak_v. Values outside these ranges are rejected.",
-     PARAM::NONE, nullptr, nullptr, nullptr, nullptr, false, true, runGetLimits},
+     "Read the valid range of every setting (amplitude per waveform), output_peak_v and the number of channels. Both channels share these limits. Amplitude and DC offset also share one limit: amplitude / 2 + |offset| <= output_peak_v. Values outside these ranges are rejected.",
+     PARAM::NONE, CHANNEL_ARG::NONE, false, nullptr, nullptr, nullptr, nullptr, false, true, runGetLimits},
 };
+
+static const char* const CHANNEL_KEY = "channel";
 
 static const size_t TOOL_COUNT = sizeof(TOOLS) / sizeof(TOOLS[0]);
 
@@ -129,6 +193,16 @@ static void writeToolSchema(const Tool& t, const FuncGenLimits& limits, JsonObje
     JsonObject schema = out["inputSchema"].to<JsonObject>();
     schema["type"] = "object";
     JsonObject props = schema["properties"].to<JsonObject>();
+    JsonArray required = schema["required"].to<JsonArray>();
+    if (t.channelArg != CHANNEL_ARG::NONE) {
+        JsonObject c = props[CHANNEL_KEY].to<JsonObject>();
+        c["type"] = "integer";
+        c["minimum"] = 1;
+        c["maximum"] = CHANNEL_COUNT;
+        c["description"] = t.channelArg == CHANNEL_ARG::REQUIRED ? "Output channel, 1 or 2"
+                                                                 : "Output channel, 1 or 2. Leave out for every channel";
+        if (t.channelArg == CHANNEL_ARG::REQUIRED) required.add(CHANNEL_KEY);
+    }
     if (t.param != PARAM::NONE) {
         JsonObject p = props[t.paramName].to<JsonObject>();
         p["description"] = t.paramDescription;
@@ -144,8 +218,9 @@ static void writeToolSchema(const Tool& t, const FuncGenLimits& limits, JsonObje
             JsonArray e = p["enum"].to<JsonArray>();
             for (uint8_t i = 0; i < WAVEFORM_COUNT; i++) e.add(waveformJsonName((WAVEFORM)i));
         }
-        schema["required"].to<JsonArray>().add(t.paramName);
+        required.add(t.paramName);
     }
+    if (required.size() == 0) schema.remove("required");
     schema["additionalProperties"] = false;
 
     JsonObject hints = out["annotations"].to<JsonObject>();
@@ -155,17 +230,61 @@ static void writeToolSchema(const Tool& t, const FuncGenLimits& limits, JsonObje
     hints["openWorldHint"] = false;
 }
 
-//checks the arguments against the tool. false + message (for an isError result) if they don't fit
-static bool readArgument(const Tool& t, JsonObjectConst args, const FuncGenLimits& limits,
-                         const FuncGenState& state, ToolArg& out, char* err, size_t len) {
+//"'channel' and 'vpp'", "'channel'", ... for error messages
+static void argumentList(const Tool& t, char* out, size_t len) {
+    bool channel = t.channelArg != CHANNEL_ARG::NONE;
+    bool param = t.param != PARAM::NONE;
+    if (channel && param) snprintf(out, len, "'%s' and '%s'", CHANNEL_KEY, t.paramName);
+    else if (channel) snprintf(out, len, "'%s'", CHANNEL_KEY);
+    else if (param) snprintf(out, len, "'%s'", t.paramName);
+    else snprintf(out, len, "no arguments");
+}
+
+//checks the arguments against the tool and that channel's state. false +
+//message (for an isError result) if they don't fit
+static bool readArgument(const Tool& t, JsonObjectConst args, FuncGenController& controller,
+                         ToolArg& out, char* err, size_t len) {
     for (JsonPairConst kv : args) {
-        if (t.param == PARAM::NONE || strcmp(kv.key().c_str(), t.paramName) != 0) {
-            if (t.param == PARAM::NONE) snprintf(err, len, "unknown argument '%.32s', %s takes no arguments", kv.key().c_str(), t.name);
-            else snprintf(err, len, "unknown argument '%.32s', %s only takes '%s'", kv.key().c_str(), t.name, t.paramName);
+        const char* key = kv.key().c_str();
+        bool known = (t.param != PARAM::NONE && strcmp(key, t.paramName) == 0) ||
+                     (t.channelArg != CHANNEL_ARG::NONE && strcmp(key, CHANNEL_KEY) == 0);
+        if (!known) {
+            char allowed[48];
+            argumentList(t, allowed, sizeof(allowed));
+            if (t.param == PARAM::NONE && t.channelArg == CHANNEL_ARG::NONE) {
+                snprintf(err, len, "unknown argument '%.32s', %s takes no arguments", key, t.name);
+            } else {
+                snprintf(err, len, "unknown argument '%.32s', %s only takes %s", key, t.name, allowed);
+            }
             return false;
         }
     }
+
+    out.channel = -1;
+    if (t.channelArg != CHANNEL_ARG::NONE) {
+        JsonVariantConst c = args[CHANNEL_KEY];
+        uint8_t ch;
+        if (c.isNull()) {
+            if (t.channelArg == CHANNEL_ARG::REQUIRED) {
+                snprintf(err, len, "missing required argument '%s' (1 or 2)", CHANNEL_KEY);
+                return false;
+            }
+        } else if (!parseChannel(c, ch)) {
+            snprintf(err, len, "'%s' must be the number 1 or 2", CHANNEL_KEY);
+            return false;
+        } else {
+            out.channel = (int8_t)ch;
+        }
+    }
     if (t.param == PARAM::NONE) return true;
+
+    FuncGenLimits limits = controller.limits();
+    FuncGenState state = controller.state(out.channel >= 0 ? (uint8_t)out.channel : CHANNEL_1);
+    if (t.mirrored && state.mirrored) {
+        snprintf(err, len, "channel 2 mirrors channel 1, so %s is locked on it. Set channel 1 instead "
+                 "(channel 2 follows), or call set_mirror with enabled false first", t.paramName);
+        return false;
+    }
 
     JsonVariantConst v = args[t.paramName];
     if (v.isNull()) {
@@ -195,10 +314,11 @@ static bool readArgument(const Tool& t, JsonObjectConst args, const FuncGenLimit
                 char other[24];
                 if (t.range == amplitudeRange) {
                     formatNumber(state.dcOffset, other, sizeof(other));
-                    snprintf(forWave, sizeof(forWave), " for the %s waveform at %s V offset", waveformJsonName(state.waveform), other);
+                    snprintf(forWave, sizeof(forWave), " for channel %d's %s waveform at %s V offset",
+                             out.channel + 1, waveformJsonName(state.waveform), other);
                 } else if (t.range == dcOffsetRange) {
                     formatNumber(state.amplitude, other, sizeof(other));
-                    snprintf(forWave, sizeof(forWave), " at %s Vpp amplitude", other);
+                    snprintf(forWave, sizeof(forWave), " at channel %d's %s Vpp amplitude", out.channel + 1, other);
                 }
                 if (t.maxExclusive) {
                     snprintf(err, len, "'%s' must be at least %s and less than %s %s, got %s", t.paramName, lo, hi, t.unit, got);
@@ -352,15 +472,20 @@ int McpServer::handleMessage(const char* body, size_t len, char** out) {
         text["type"] = "text";
 
         ToolArg arg = {};
-        char err[192];
-        if (!readArgument(*tool, args.as<JsonObjectConst>(), _controller.limits(), _controller.state(), arg, err, sizeof(err))) {
+        char err[224];
+        if (!readArgument(*tool, args.as<JsonObjectConst>(), _controller, arg, err, sizeof(err))) {
             text["text"] = err;
             result["isError"] = true;
             return finish(resp, 200, out);
         }
 
         JsonObject structured = result["structuredContent"].to<JsonObject>();
-        tool->run(_controller, arg, structured);
+        if (!tool->run(_controller, arg, structured)) {
+            result.remove("structuredContent");
+            text["text"] = "channel 2 mirrors channel 1 (the mirror was just turned on), nothing was changed";
+            result["isError"] = true;
+            return finish(resp, 200, out);
+        }
         //the same JSON as text, for clients that ignore structuredContent
         size_t size = measureJson(structured) + 1;
         char* json = (char*)malloc(size);

@@ -13,7 +13,9 @@
 #include "api_json.h"
 #include "../web/index_html.h"
 
-static const size_t UPDATE_BODY_MAX = 256; //one setting, e.g. {"frequency_hz": 12345.6}
+static const size_t UPDATE_BODY_MAX = 256; //one setting, e.g. {"channel": 1, "frequency_hz": 12345.6}
+
+static const char* const CHANNEL_KEY = "channel";
 
 enum class SETTING : uint8_t {
     WAVEFORM,
@@ -21,22 +23,26 @@ enum class SETTING : uint8_t {
     AMPLITUDE,
     PHASE,
     DC_OFFSET,
-    OUTPUT_ENABLE
+    OUTPUT_ENABLE,
+    MIRROR
 };
 
 struct SettingKey {
     const char* key;    //same names as the state JSON
     SETTING setting;
     const char* unit;   //numbers only
+    bool perChannel;    //needs "channel"
+    bool mirrored;      //copied to CH2 by the mirror, so locked there while it is on
 };
 
 static const SettingKey SETTINGS[] = {
-    {"waveform", SETTING::WAVEFORM, nullptr},
-    {"frequency_hz", SETTING::FREQUENCY, "Hz"},
-    {"amplitude_vpp", SETTING::AMPLITUDE, "Vpp"},
-    {"phase_deg", SETTING::PHASE, "degrees"},
-    {"dc_offset_v", SETTING::DC_OFFSET, "V"},
-    {"output_enabled", SETTING::OUTPUT_ENABLE, nullptr},
+    {"waveform", SETTING::WAVEFORM, nullptr, true, true},
+    {"frequency_hz", SETTING::FREQUENCY, "Hz", true, true},
+    {"amplitude_vpp", SETTING::AMPLITUDE, "Vpp", true, true},
+    {"phase_deg", SETTING::PHASE, "degrees", true, true},
+    {"dc_offset_v", SETTING::DC_OFFSET, "V", true, true},
+    {"output_enabled", SETTING::OUTPUT_ENABLE, nullptr, true, false},
+    {"mirror", SETTING::MIRROR, nullptr, false, false},
 };
 
 static const SettingKey* findSetting(const char* key) {
@@ -62,16 +68,22 @@ static int error(int status, const char* message, char** out) {
     return finish(doc, status, out);
 }
 
-//state + the ranges allowed with that state
-static void writeStateBody(const FuncGenState& s, const FuncGenLimits& l, JsonObject out) {
-    writeStateJson(s, out["state"].to<JsonObject>());
-    JsonObject ranges = out["ranges"].to<JsonObject>();
-    writeRangeJson(l.frequency, ranges["frequency_hz"].to<JsonObject>());
-    writeRangeJson(l.amplitudeFor(s), ranges["amplitude_vpp"].to<JsonObject>());
-    JsonObject phase = ranges["phase_deg"].to<JsonObject>();
-    writeRangeJson(l.phase, phase);
-    phase["max_exclusive"] = true;
-    writeRangeJson(l.dcOffsetFor(s), ranges["dc_offset_v"].to<JsonObject>());
+//every channel's state + the ranges allowed with that state, the mirror flag and the peak limit
+static void writeStateBody(FuncGenController& c, const FuncGenLimits& l, JsonObject out) {
+    JsonArray channels = out["channels"].to<JsonArray>();
+    for (uint8_t ch = 0; ch < CHANNEL_COUNT; ch++) {
+        FuncGenState s = c.state(ch);
+        JsonObject entry = channels.add<JsonObject>();
+        writeStateJson(ch, s, entry["state"].to<JsonObject>());
+        JsonObject ranges = entry["ranges"].to<JsonObject>();
+        writeRangeJson(l.frequency, ranges["frequency_hz"].to<JsonObject>());
+        writeRangeJson(l.amplitudeFor(s), ranges["amplitude_vpp"].to<JsonObject>());
+        JsonObject phase = ranges["phase_deg"].to<JsonObject>();
+        writeRangeJson(l.phase, phase);
+        phase["max_exclusive"] = true;
+        writeRangeJson(l.dcOffsetFor(s), ranges["dc_offset_v"].to<JsonObject>());
+    }
+    out["mirror"] = c.mirror();
     out["output_peak_v"] = l.outputPeak;
 }
 
@@ -115,7 +127,7 @@ bool RestApi::begin() {
 
 int RestApi::stateJson(char** out) {
     JsonDocument doc;
-    writeStateBody(_controller.state(), _controller.limits(), doc.to<JsonObject>());
+    writeStateBody(_controller, _controller.limits(), doc.to<JsonObject>());
     return finish(doc, 200, out);
 }
 
@@ -125,20 +137,49 @@ int RestApi::updateJson(const char* body, size_t len, char** out) {
     if (deserializeJson(req, body, len)) return error(400, "body is not valid JSON", out);
     if (!req.is<JsonObject>()) return error(400, "body must be a JSON object with one setting", out);
     JsonObjectConst obj = req.as<JsonObjectConst>();
-    if (obj.size() != 1) return error(400, "send exactly one setting per request, e.g. {\"amplitude_vpp\": 2.5}", out);
+
+    //one setting, plus "channel" for the per-channel ones
+    JsonVariantConst channelValue = obj[CHANNEL_KEY];
+    size_t settings = obj.size() - (channelValue.isNull() ? 0 : 1);
+    if (settings != 1) {
+        return error(400, "send exactly one setting per request, e.g. {\"channel\": 1, \"amplitude_vpp\": 2.5}", out);
+    }
 
     JsonPairConst kv = *obj.begin();
+    for (JsonPairConst p : obj) {
+        if (strcmp(p.key().c_str(), CHANNEL_KEY) != 0) kv = p;
+    }
     const SettingKey* key = findSetting(kv.key().c_str());
-    char msg[160];
+    char msg[200];
     if (!key) {
         snprintf(msg, sizeof(msg), "unknown setting '%.32s', use one of waveform, frequency_hz, "
-                 "amplitude_vpp, phase_deg, dc_offset_v, output_enabled", kv.key().c_str());
+                 "amplitude_vpp, phase_deg, dc_offset_v, output_enabled (with \"channel\") or mirror",
+                 kv.key().c_str());
         return error(400, msg, out);
     }
     JsonVariantConst v = kv.value();
 
-    FuncGenState before = _controller.state();
+    uint8_t channel = CHANNEL_1;
+    if (key->perChannel) {
+        if (channelValue.isNull()) {
+            snprintf(msg, sizeof(msg), "'%s' needs \"channel\": 1 or 2", key->key);
+            return error(400, msg, out);
+        }
+        if (!parseChannel(channelValue, channel)) return error(400, "'channel' must be the number 1 or 2", out);
+    } else if (!channelValue.isNull()) {
+        snprintf(msg, sizeof(msg), "'%s' is not per channel, leave out \"channel\"", key->key);
+        return error(400, msg, out);
+    }
+
+    FuncGenState before = _controller.state(channel);
     FuncGenLimits limits = _controller.limits();
+    if (key->mirrored && before.mirrored) {
+        snprintf(msg, sizeof(msg), "channel 2 mirrors channel 1, so %s is locked on it. Change channel 1 "
+                 "(channel 2 follows) or turn the mirror off first", key->key);
+        return error(409, msg, out);
+    }
+    //false if the mirror came on between the check above and the setter
+    bool applied = true;
     bool clamped = false;
     char note[128] = "";
     char num[24], lo[24], hi[24];
@@ -149,9 +190,9 @@ int RestApi::updateJson(const char* body, size_t len, char** out) {
             if (!parseWaveform(v.is<const char*>() ? v.as<const char*>() : nullptr, w)) {
                 return error(400, "'waveform' must be one of \"sine\", \"square\", \"triangle\"", out);
             }
-            _controller.setWaveform(w, CHANGE_SOURCE::WEB);
+            applied = _controller.setWaveform(channel, w, CHANGE_SOURCE::WEB);
             //a waveform with a smaller amplitude range pulls the amplitude in
-            float amp = _controller.state().amplitude;
+            float amp = _controller.state(channel).amplitude;
             if (amp != before.amplitude) {
                 clamped = true;
                 formatNumber(amp, num, sizeof(num));
@@ -161,7 +202,11 @@ int RestApi::updateJson(const char* body, size_t len, char** out) {
         }
         case SETTING::OUTPUT_ENABLE:
             if (!v.is<bool>()) return error(400, "'output_enabled' must be true or false", out);
-            _controller.setOutputEnabled(v.as<bool>(), CHANGE_SOURCE::WEB);
+            applied = _controller.setOutputEnabled(channel, v.as<bool>(), CHANGE_SOURCE::WEB);
+            break;
+        case SETTING::MIRROR:
+            if (!v.is<bool>()) return error(400, "'mirror' must be true or false", out);
+            _controller.setMirror(v.as<bool>(), CHANGE_SOURCE::WEB);
             break;
         default: {
             //bool and string are not numbers for ArduinoJson, so they end up here
@@ -181,7 +226,7 @@ int RestApi::updateJson(const char* body, size_t len, char** out) {
                     formatNumber(wrapped, num, sizeof(num));
                     snprintf(note, sizeof(note), "phase_deg wrapped to %s degrees", num);
                 }
-                _controller.setPhase(wrapped, CHANGE_SOURCE::WEB);
+                applied = _controller.setPhase(channel, wrapped, CHANGE_SOURCE::WEB);
                 break;
             }
 
@@ -202,16 +247,17 @@ int RestApi::updateJson(const char* body, size_t len, char** out) {
                          key->key, num, key->unit, lo, hi, key->unit, why);
             }
 
-            if (key->setting == SETTING::FREQUENCY) _controller.setFrequency(f, CHANGE_SOURCE::WEB);
-            else if (key->setting == SETTING::AMPLITUDE) _controller.setAmplitude(f, CHANGE_SOURCE::WEB);
-            else _controller.setDCOffset(f, CHANGE_SOURCE::WEB);
+            if (key->setting == SETTING::FREQUENCY) applied = _controller.setFrequency(channel, f, CHANGE_SOURCE::WEB);
+            else if (key->setting == SETTING::AMPLITUDE) applied = _controller.setAmplitude(channel, f, CHANGE_SOURCE::WEB);
+            else applied = _controller.setDCOffset(channel, f, CHANGE_SOURCE::WEB);
             break;
         }
     }
+    if (!applied) return error(409, "channel 2 mirrors channel 1 (the mirror was just turned on), nothing was changed", out);
 
     JsonDocument doc;
     JsonObject root = doc.to<JsonObject>();
-    writeStateBody(_controller.state(), limits, root);
+    writeStateBody(_controller, limits, root);
     root["clamped"] = clamped;
     if (clamped) root["note"] = (const char*)note;
     return finish(doc, 200, out);

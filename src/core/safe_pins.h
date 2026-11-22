@@ -40,8 +40,8 @@
                                                 reset to sine
 
     setup() then runs begin() on both channels' FunctionGenerators right
-    away (CH2's only parks its chips: AD9833 reset to sine and asleep,
-    amplitude 0, offset 0 V, relay open).
+    away (AD9833 reset to sine and asleep, amplitude 0, offset 0 V, relay
+    open).
 */
 
 #ifndef SAFE_PINS_H

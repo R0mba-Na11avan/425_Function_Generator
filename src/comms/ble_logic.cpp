@@ -177,11 +177,11 @@ BLE_WRITE bleDecode(BLE_FIELD field, const uint8_t* data, size_t len, const Func
 
 void bleApply(FuncGenController& controller, const BleCommand& c) {
     switch (c.field) {
-        case BLE_FIELD::WAVEFORM: controller.setWaveform(c.waveform, CHANGE_SOURCE::BLE); break;
-        case BLE_FIELD::FREQUENCY: controller.setFrequency(c.number, CHANGE_SOURCE::BLE); break;
-        case BLE_FIELD::AMPLITUDE: controller.setAmplitude(c.number, CHANGE_SOURCE::BLE); break;
-        case BLE_FIELD::PHASE: controller.setPhase(c.number, CHANGE_SOURCE::BLE); break;
-        case BLE_FIELD::DC_OFFSET: controller.setDCOffset(c.number, CHANGE_SOURCE::BLE); break;
-        case BLE_FIELD::OUTPUT_ENABLE: controller.setOutputEnabled(c.enabled, CHANGE_SOURCE::BLE); break;
+        case BLE_FIELD::WAVEFORM: controller.setWaveform(CHANNEL_1, c.waveform, CHANGE_SOURCE::BLE); break;
+        case BLE_FIELD::FREQUENCY: controller.setFrequency(CHANNEL_1, c.number, CHANGE_SOURCE::BLE); break;
+        case BLE_FIELD::AMPLITUDE: controller.setAmplitude(CHANNEL_1, c.number, CHANGE_SOURCE::BLE); break;
+        case BLE_FIELD::PHASE: controller.setPhase(CHANNEL_1, c.number, CHANGE_SOURCE::BLE); break;
+        case BLE_FIELD::DC_OFFSET: controller.setDCOffset(CHANNEL_1, c.number, CHANGE_SOURCE::BLE); break;
+        case BLE_FIELD::OUTPUT_ENABLE: controller.setOutputEnabled(CHANNEL_1, c.enabled, CHANGE_SOURCE::BLE); break;
     }
 }

@@ -9,6 +9,11 @@
 
 #include "func_gen.h"
 
+//channel indexes (0 .. CHANNEL_COUNT - 1). every interface shows them as 1 and 2
+static const uint8_t CHANNEL_1 = 0;
+static const uint8_t CHANNEL_2 = 1;
+
+//one channel's settings
 struct FuncGenState {
     WAVEFORM waveform;
     float frequency;
@@ -16,6 +21,10 @@ struct FuncGenState {
     float amplitude;
     float dcOffset;
     bool outputEnabled;
+    //CH2 only: mirror (LINK) is on, so its waveform, frequency, phase,
+    //amplitude and offset follow CH1 and can't be set on their own.
+    //outputEnabled stays its own. always false for CH1
+    bool mirrored = false;
 };
 
 //who asked for a change. listeners use it to show remote changes (e.g. the LCD

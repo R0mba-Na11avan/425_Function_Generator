@@ -7,7 +7,7 @@
 #include "fakes/SPI.h"
 #include "fakes/freertos/semphr.h"
 
-static const int MAX_TESTS = 256;
+static const int MAX_TESTS = 512;
 
 static const char* testNames[MAX_TESTS];
 static TestFn testFns[MAX_TESTS];

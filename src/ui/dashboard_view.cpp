@@ -24,6 +24,9 @@ static const uint16_t COLOR_STATUS_BG = 0x18E3;
 static const uint16_t COLOR_AP_BG = 0xFD20;      //orange, so setup mode stands out
 static const uint16_t COLOR_REMOTE = 0xF81F;     //magenta: changed by an agent
 static const uint16_t COLOR_BLE = 0x3D9F;        //light blue: Bluetooth icon
+static const uint16_t COLOR_TAB = 0x2945;        //fill of the channel tab that is shown
+static const uint16_t COLOR_LINK = 0x5D5F;       //blue: LINK on, and what it locks
+static const uint16_t COLOR_OFF_TEXT = 0xF9E7;   //light red "OFF" in a channel tab
 
 static const int16_t VALUE_BASELINE = 52;        //amplitude/offset digits, from the field top
 static const uint8_t NET_LINE_CHARS = 42;        //built-in font is 6 px wide, stops before the MCP badge
@@ -167,78 +170,150 @@ static void renderStatus(Adafruit_GFX& g, Rect r, const DashboardView& v) {
     }
 }
 
+//the shown channel's state
+static const FuncGenState& shownState(const DashboardView& v) {
+    return v.channels[v.shown < CHANNEL_COUNT ? v.shown : CHANNEL_1];
+}
+
+static const int16_t TAB_TEXT_X = 46;   //summary lines, right of "CH1" in FreeSansBold9
+
+//both channel tabs. r is fieldRect(CHANNEL) on g, the tabs keep their place in it
+static void renderTabs(Adafruit_GFX& g, Rect r, const DashboardView& v, bool selected) {
+    Rect area = fieldRect(UI_FIELD::CHANNEL);
+    for (uint8_t ch = 0; ch < CHANNEL_COUNT; ch++) {
+        Rect t = channelTabRect(ch);
+        t.x += r.x - area.x;
+        t.y += r.y - area.y;
+        const FuncGenState& s = v.channels[ch];
+        bool shown = ch == v.shown;
+        //the shown channel's own fields flash, so only the other tab does
+        bool remote = !shown && v.remoteFlash[ch] != 0;
+
+        if (shown) g.fillRoundRect(t.x, t.y, t.w, t.h, 4, COLOR_TAB);
+        uint16_t border = remote ? COLOR_REMOTE : (selected ? COLOR_SELECTED : (shown ? COLOR_LABEL : COLOR_FRAME));
+        g.drawRoundRect(t.x, t.y, t.w, t.h, 4, border);
+        if (selected || remote) g.drawRoundRect(t.x + 1, t.y + 1, t.w - 2, t.h - 2, 3, border);
+
+        g.setFont(&FreeSansBold9pt7b);
+        g.setTextSize(1);
+        g.setTextColor(shown ? COLOR_TEXT : COLOR_LABEL);
+        g.setCursor(t.x + 6, t.y + 17);
+        g.print(channelName(ch));
+
+        char line1[16], line2[24];
+        formatTabLines(s, line1, sizeof(line1), line2, sizeof(line2));
+        g.setFont(nullptr);
+        g.setTextColor(s.mirrored ? COLOR_LINK : (shown ? COLOR_TEXT : COLOR_LABEL));
+        g.setCursor(t.x + TAB_TEXT_X, t.y + 4);
+        g.print(line1);
+        g.setTextColor(shown ? COLOR_TEXT : COLOR_LABEL);
+        g.setCursor(t.x + TAB_TEXT_X, t.y + 14);
+        g.print(line2);
+
+        const char* out = s.outputEnabled ? "ON" : "OFF";
+        g.setTextColor(s.outputEnabled ? COLOR_ON : COLOR_OFF_TEXT);
+        g.setCursor(t.x + t.w - 5 - (int16_t)strlen(out) * 6, t.y + 4);
+        g.print(out);
+    }
+}
+
+//the LINK button, filled while CH2 follows CH1
+static void renderMirror(Adafruit_GFX& g, Rect r, const DashboardView& v, bool selected, bool remote) {
+    bool on = v.channels[CHANNEL_2].mirrored;
+    if (on) g.fillRoundRect(r.x, r.y, r.w, r.h, 4, COLOR_LINK);
+    drawFrame(g, r, selected, false, remote);
+
+    int16_t x1, y1;
+    uint16_t w, h;
+    textBounds(g, &FreeSansBold9pt7b, "LINK", x1, y1, w, h);
+    g.setTextColor(on ? COLOR_BG : COLOR_LABEL);
+    g.setCursor(r.x + (r.w - w) / 2 - x1, r.y + (r.h - h) / 2 - y1);
+    g.print("LINK");
+}
+
 static void renderWaveform(Adafruit_GFX& g, Rect r, const DashboardView& v, bool selected, bool editing, bool remote) {
+    const FuncGenState& s = shownState(v);
+    bool locked = fieldLocked(UI_FIELD::WAVEFORM, s);
     drawFrame(g, r, selected, editing, remote);
     drawLabel(g, r, "WAVEFORM", editing ? COLOR_EDITING : COLOR_LABEL);
 
-    const char* name = waveformName(v.state.waveform);
+    const char* name = waveformName(s.waveform);
     int16_t x1, y1;
     uint16_t w, h;
     textBounds(g, &FreeSansBold9pt7b, name, x1, y1, w, h);
-    g.setTextColor(editing ? COLOR_EDITING : COLOR_TEXT);
+    g.setTextColor(editing ? COLOR_EDITING : (locked ? COLOR_LABEL : COLOR_TEXT));
     g.setCursor(r.x + r.w - 8 - w - x1, r.y + 18);
     g.print(name);
 
     //preview in green while the output is on
     Rect box = {(int16_t)(r.x + 10), (int16_t)(r.y + 26), (int16_t)(r.w - 20), (int16_t)(r.h - 34)};
-    drawPreview(g, box, v.state.waveform, v.state.outputEnabled ? COLOR_ON : COLOR_LABEL);
+    drawPreview(g, box, s.waveform, s.outputEnabled ? COLOR_ON : COLOR_LABEL);
 }
 
 static void renderOutput(Adafruit_GFX& g, Rect r, const DashboardView& v, bool selected, bool remote) {
     drawFrame(g, r, selected, false, remote);
     drawLabel(g, r, "OUTPUT", COLOR_LABEL);
 
-    bool on = v.state.outputEnabled;
-    Rect badge = {(int16_t)(r.x + 28), (int16_t)(r.y + 20), (int16_t)(r.w - 56), (int16_t)(r.h - 30)};
+    bool on = shownState(v).outputEnabled;
+    Rect badge = {(int16_t)(r.x + 28), (int16_t)(r.y + 18), (int16_t)(r.w - 56), (int16_t)(r.h - 26)};
     g.fillRoundRect(badge.x, badge.y, badge.w, badge.h, 6, on ? COLOR_ON : COLOR_OFF);
 
     const char* text = on ? "ON" : "OFF";
     int16_t x1, y1;
     uint16_t w, h;
-    textBounds(g, &FreeSansBold18pt7b, text, x1, y1, w, h);
+    textBounds(g, &FreeSansBold12pt7b, text, x1, y1, w, h);
     g.setTextColor(on ? COLOR_BG : COLOR_TEXT);
     g.setCursor(badge.x + (badge.w - w) / 2 - x1, badge.y + (badge.h - h) / 2 - y1);
     g.print(text);
 }
 
 static void renderFrequency(Adafruit_GFX& g, Rect r, const DashboardView& v, bool selected, bool editing, bool remote) {
+    const FuncGenState& s = shownState(v);
+    bool locked = fieldLocked(UI_FIELD::FREQUENCY, s);
     drawFrame(g, r, selected, editing, remote);
     drawLabel(g, r, "FREQUENCY", editing ? COLOR_EDITING : COLOR_LABEL);
 
-    //step, right aligned in the label row. the step the knob really uses at
-    //this frequency (0.1 Hz isn't on screen in MHz, so it acts as 1 Hz there)
-    uint8_t stepIndex = freqStepShown(v.state.frequency, v.freqStepIndex);
+    //right aligned in the label row: the step the knob really uses at this
+    //frequency (0.1 Hz isn't on screen in MHz, so it acts as 1 Hz there),
+    //or why it can't be edited
+    uint8_t stepIndex = freqStepShown(s.frequency, v.freqStepIndex);
     char step[12];
     char stepLine[20];
     formatFreqStep(stepIndex, step, sizeof(step));
-    snprintf(stepLine, sizeof(stepLine), "STEP %s", step);
+    if (locked) snprintf(stepLine, sizeof(stepLine), "LINKED TO CH1");
+    else snprintf(stepLine, sizeof(stepLine), "STEP %s", step);
     g.setFont(nullptr);
-    g.setTextColor(editing ? COLOR_EDITING : COLOR_LABEL);
+    g.setTextColor(locked ? COLOR_LINK : (editing ? COLOR_EDITING : COLOR_LABEL));
     g.setCursor(r.x + r.w - 8 - (int16_t)strlen(stepLine) * 6, r.y + 6);
     g.print(stepLine);
 
-    FrequencyText f = formatFrequency(v.state.frequency);
+    FrequencyText f = formatFrequency(s.frequency);
     int16_t startX = r.x + freqTextStartX(f.text);
     int16_t baseline = r.y + FREQ_BASELINE;
-    drawNumber(g, startX, baseline, f.text, editing ? COLOR_EDITING : COLOR_TEXT);
+    drawNumber(g, startX, baseline, f.text, editing ? COLOR_EDITING : (locked ? COLOR_LABEL : COLOR_TEXT));
 
     g.setFont(&FreeSansBold12pt7b);
-    g.setTextColor(COLOR_TEXT);
+    g.setTextColor(locked ? COLOR_LABEL : COLOR_TEXT);
     g.setCursor(r.x + freqUnitX(), baseline);
     g.print(f.unit);
 
     //underline the digit the encoder changes, if it is on screen
-    int8_t digit = stepDigitIndex(f, freqStepHz(stepIndex));
+    int8_t digit = locked ? -1 : stepDigitIndex(f, freqStepHz(stepIndex));
     if (digit >= 0) {
         int16_t x = numCharX(f.text, startX, digit);
-        g.fillRect(x, baseline + 12, numCharWidth(f.text[digit]), 3, editing ? COLOR_EDITING : COLOR_LABEL);
+        g.fillRect(x, baseline + 11, numCharWidth(f.text[digit]), 3, editing ? COLOR_EDITING : COLOR_LABEL);
     }
 }
 
-static void renderValue(Adafruit_GFX& g, Rect r, bool selected, bool editing, bool remote,
+static void renderValue(Adafruit_GFX& g, Rect r, bool selected, bool editing, bool remote, bool locked,
                         const char* label, const char* value, const char* unit) {
     drawFrame(g, r, selected, editing, remote);
     drawLabel(g, r, label, editing ? COLOR_EDITING : COLOR_LABEL);
+    if (locked) {
+        g.setTextColor(COLOR_LINK);
+        g.setCursor(r.x + 12 + (int16_t)strlen(label) * 6, r.y + 6);
+        g.print("LINKED");
+    }
 
     //unit right aligned in the label row, so the number gets the whole width
     //(12.00 and -10.00 don't fit next to a unit)
@@ -249,7 +324,7 @@ static void renderValue(Adafruit_GFX& g, Rect r, bool selected, bool editing, bo
 
     int16_t x = r.x + 10;
     int16_t baseline = r.y + VALUE_BASELINE;
-    drawNumber(g, x, baseline, value, editing ? COLOR_EDITING : COLOR_TEXT);
+    drawNumber(g, x, baseline, value, editing ? COLOR_EDITING : (locked ? COLOR_LABEL : COLOR_TEXT));
 }
 
 //public
@@ -267,31 +342,48 @@ void areaKey(const DashboardView& v, uint8_t area, char* key, size_t len) {
     }
 
     UI_FIELD field = (UI_FIELD)area;
+    const FuncGenState& s = shownState(v);
     bool selected = v.selected == field;
     bool editing = selected && v.editing;
-    char value[32] = "";
+    bool remote = v.remoteFlash[v.shown < CHANNEL_COUNT ? v.shown : 0] & fieldBit(field);
+    char value[96] = "";
 
     switch (field) {
+        case UI_FIELD::CHANNEL: {
+            //both tabs: which is shown, and each one's summary and flash
+            int n = snprintf(value, sizeof(value), "%u", v.shown);
+            for (uint8_t ch = 0; ch < CHANNEL_COUNT && n > 0 && (size_t)n < sizeof(value); ch++) {
+                char line1[16], line2[24];
+                formatTabLines(v.channels[ch], line1, sizeof(line1), line2, sizeof(line2));
+                n += snprintf(value + n, sizeof(value) - n, "|%s|%s|%d|%d", line1, line2,
+                              v.channels[ch].outputEnabled, ch != v.shown && v.remoteFlash[ch] != 0);
+            }
+            remote = false;
+            break;
+        }
+        case UI_FIELD::MIRROR:
+            snprintf(value, sizeof(value), "%d", v.channels[CHANNEL_2].mirrored);
+            remote = v.remoteFlash[CHANNEL_2] & fieldBit(field);
+            break;
         case UI_FIELD::WAVEFORM:
-            snprintf(value, sizeof(value), "%d|%d", (int)v.state.waveform, v.state.outputEnabled);
+            snprintf(value, sizeof(value), "%d|%d", (int)s.waveform, s.outputEnabled);
             break;
         case UI_FIELD::OUTPUT_ENABLE:
-            snprintf(value, sizeof(value), "%d", v.state.outputEnabled);
+            snprintf(value, sizeof(value), "%d", s.outputEnabled);
             break;
         case UI_FIELD::FREQUENCY: {
-            FrequencyText f = formatFrequency(v.state.frequency);
+            FrequencyText f = formatFrequency(s.frequency);
             snprintf(value, sizeof(value), "%s|%s|%u", f.text, f.unit, v.freqStepIndex);
             break;
         }
         case UI_FIELD::AMPLITUDE:
-            formatAmplitude(v.state.amplitude, value, sizeof(value));
+            formatAmplitude(s.amplitude, value, sizeof(value));
             break;
         case UI_FIELD::OFFSET:
-            formatOffset(v.state.dcOffset, value, sizeof(value));
+            formatOffset(s.dcOffset, value, sizeof(value));
             break;
     }
-    bool remote = v.remoteFlash & fieldBit(field);
-    snprintf(key, len, "%d|%d|%d|%s", selected, editing, remote, value);
+    snprintf(key, len, "%d|%d|%d|%d|%s", selected, editing, remote, fieldLocked(field, s), value);
 }
 
 void renderArea(Adafruit_GFX& g, uint8_t area, Rect r, const DashboardView& v) {
@@ -301,12 +393,20 @@ void renderArea(Adafruit_GFX& g, uint8_t area, Rect r, const DashboardView& v) {
     }
 
     UI_FIELD field = (UI_FIELD)area;
+    const FuncGenState& s = shownState(v);
     bool selected = v.selected == field;
     bool editing = selected && v.editing;
-    bool remote = v.remoteFlash & fieldBit(field);
+    bool remote = v.remoteFlash[v.shown < CHANNEL_COUNT ? v.shown : 0] & fieldBit(field);
+    bool locked = fieldLocked(field, s);
     char value[16];
 
     switch (field) {
+        case UI_FIELD::CHANNEL:
+            renderTabs(g, r, v, selected);
+            break;
+        case UI_FIELD::MIRROR:
+            renderMirror(g, r, v, selected, v.remoteFlash[CHANNEL_2] & fieldBit(field));
+            break;
         case UI_FIELD::WAVEFORM:
             renderWaveform(g, r, v, selected, editing, remote);
             break;
@@ -317,12 +417,12 @@ void renderArea(Adafruit_GFX& g, uint8_t area, Rect r, const DashboardView& v) {
             renderFrequency(g, r, v, selected, editing, remote);
             break;
         case UI_FIELD::AMPLITUDE:
-            formatAmplitude(v.state.amplitude, value, sizeof(value));
-            renderValue(g, r, selected, editing, remote, "AMPLITUDE", value, "Vpp");
+            formatAmplitude(s.amplitude, value, sizeof(value));
+            renderValue(g, r, selected, editing, remote, locked, "AMPLITUDE", value, "Vpp");
             break;
         case UI_FIELD::OFFSET:
-            formatOffset(v.state.dcOffset, value, sizeof(value));
-            renderValue(g, r, selected, editing, remote, "OFFSET", value, "V");
+            formatOffset(s.dcOffset, value, sizeof(value));
+            renderValue(g, r, selected, editing, remote, locked, "OFFSET", value, "V");
             break;
     }
 }

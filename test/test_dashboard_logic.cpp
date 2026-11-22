@@ -23,6 +23,17 @@ static FuncGenState state(float hz = 1000.0f) {
     return FuncGenState{WAVEFORM::SINE, hz, 0.0f, 1.0f, 0.0f, false};
 }
 
+//both channels, as DashboardEditor::handle takes them: ch1 as given, CH2 at
+//its own settings (or mirrored)
+struct Both {
+    FuncGenState ch[CHANNEL_COUNT];
+    operator const FuncGenState*() const { return ch; }
+};
+
+static Both both(const FuncGenState& ch1, FuncGenState ch2 = FuncGenState{WAVEFORM::TRIANGLE, 50.0f, 0.0f, 2.0f, 0.5f, false}) {
+    return Both{{ch1, ch2}};
+}
+
 static InputEvent encoder(int16_t clicks, int16_t delta) {
     InputEvent e = {};
     e.type = INPUT_EVENT::ENCODER_DELTA;
@@ -216,71 +227,71 @@ TEST(editor_starts_on_frequency) {
 TEST(editor_encoder_moves_selection_and_wraps) {
     DashboardEditor ed;
     FuncGenState s = state();
-    EditCommand c = ed.handle(encoder(1, 5), s, limits(), 0);
+    EditCommand c = ed.handle(encoder(1, 5), both(s), limits(), 0);
     CHECK(c.action == EDIT_ACTION::NONE);
     CHECK(ed.selected() == UI_FIELD::AMPLITUDE); //clicks move it, not the accelerated delta
-    ed.handle(encoder(2, 2), s, limits(), 0);
-    CHECK(ed.selected() == UI_FIELD::WAVEFORM);  //wrapped
-    ed.handle(encoder(-1, -1), s, limits(), 0);
+    ed.handle(encoder(2, 2), both(s), limits(), 0);
+    CHECK(ed.selected() == UI_FIELD::CHANNEL);   //wrapped
+    ed.handle(encoder(-1, -1), both(s), limits(), 0);
     CHECK(ed.selected() == UI_FIELD::OFFSET);    //wrapped backwards
 }
 
 TEST(editor_frequency_steps_and_clamps) {
     DashboardEditor ed;
     FuncGenState s = state(1000.0f);
-    ed.handle(button(INPUT_EVENT::BUTTON_SHORT), s, limits(), 0);
+    ed.handle(button(INPUT_EVENT::BUTTON_SHORT), both(s), limits(), 0);
     CHECK(ed.editing());
 
-    EditCommand c = ed.handle(encoder(1, 3), s, limits(), 0); //accelerated delta, 1 kHz step
+    EditCommand c = ed.handle(encoder(1, 3), both(s), limits(), 0); //accelerated delta, 1 kHz step
     CHECK(c.action == EDIT_ACTION::SET_FREQUENCY);
     CHECK_NEAR(c.value, 4000.0, 1e-3);
 
     s.frequency = 1234.0f;
-    c = ed.handle(encoder(-1, -1), s, limits(), 0);
+    c = ed.handle(encoder(-1, -1), both(s), limits(), 0);
     CHECK_NEAR(c.value, 234.0, 1e-3); //other digits kept, no snapping
 
-    c = ed.handle(encoder(-1, -10), s, limits(), 0);
+    c = ed.handle(encoder(-1, -10), both(s), limits(), 0);
     CHECK_NEAR(c.value, FREQ_MIN_HZ, 1e-6);
 
     s.frequency = FREQ_MAX_HZ;
-    c = ed.handle(encoder(1, 1), s, limits(), 0);
+    c = ed.handle(encoder(1, 1), both(s), limits(), 0);
     CHECK(c.action == EDIT_ACTION::NONE); //already at the limit
 
-    ed.handle(button(INPUT_EVENT::BUTTON_LONG), s, limits(), 0);
+    ed.handle(button(INPUT_EVENT::BUTTON_LONG), both(s), limits(), 0);
     CHECK(!ed.editing());
 }
 
 TEST(editor_press_moves_frequency_step_long_press_leaves) {
     DashboardEditor ed;
     FuncGenState s = state(500.0f);
-    ed.handle(button(INPUT_EVENT::BUTTON_LONG), s, limits(), 0);
+    ed.handle(button(INPUT_EVENT::BUTTON_LONG), both(s), limits(), 0);
     CHECK_EQ(ed.freqStepIndex(), UI_FREQ_STEP_DEFAULT); //not editing: nothing happens
     CHECK(!ed.editing());
 
-    ed.handle(button(INPUT_EVENT::BUTTON_SHORT), s, limits(), 0); //enter
+    ed.handle(button(INPUT_EVENT::BUTTON_SHORT), both(s), limits(), 0); //enter
     CHECK(ed.editing());
     CHECK_EQ(ed.freqStepIndex(), UI_FREQ_STEP_DEFAULT);
     for (uint8_t i = 1; i <= FREQ_STEP_COUNT; i++) {
-        ed.handle(button(INPUT_EVENT::BUTTON_SHORT), s, limits(), 0);
+        ed.handle(button(INPUT_EVENT::BUTTON_SHORT), both(s), limits(), 0);
         CHECK_EQ(ed.freqStepIndex(), (UI_FREQ_STEP_DEFAULT + i) % FREQ_STEP_COUNT);
         CHECK(ed.editing()); //presses never leave
     }
 
-    ed.handle(button(INPUT_EVENT::BUTTON_LONG), s, limits(), 0);
+    ed.handle(button(INPUT_EVENT::BUTTON_LONG), both(s), limits(), 0);
     CHECK(!ed.editing());
     uint8_t kept = ed.freqStepIndex();
-    ed.handle(button(INPUT_EVENT::BUTTON_SHORT), s, limits(), 0); //enter again
+    ed.handle(button(INPUT_EVENT::BUTTON_SHORT), both(s), limits(), 0); //enter again
     CHECK_EQ(ed.freqStepIndex(), kept); //the step is remembered
 
     //on other fields a press still toggles, and a long press also leaves
     DashboardEditor ed2;
-    ed2.handle(encoder(1, 1), s, limits(), 0); //amplitude
-    ed2.handle(button(INPUT_EVENT::BUTTON_SHORT), s, limits(), 0);
+    ed2.handle(encoder(1, 1), both(s), limits(), 0); //amplitude
+    ed2.handle(button(INPUT_EVENT::BUTTON_SHORT), both(s), limits(), 0);
     CHECK(ed2.editing());
-    ed2.handle(button(INPUT_EVENT::BUTTON_SHORT), s, limits(), 0);
+    ed2.handle(button(INPUT_EVENT::BUTTON_SHORT), both(s), limits(), 0);
     CHECK(!ed2.editing());
-    ed2.handle(button(INPUT_EVENT::BUTTON_SHORT), s, limits(), 0);
-    ed2.handle(button(INPUT_EVENT::BUTTON_LONG), s, limits(), 0);
+    ed2.handle(button(INPUT_EVENT::BUTTON_SHORT), both(s), limits(), 0);
+    ed2.handle(button(INPUT_EVENT::BUTTON_LONG), both(s), limits(), 0);
     CHECK(!ed2.editing());
     CHECK_EQ(ed2.freqStepIndex(), UI_FREQ_STEP_DEFAULT);
 }
@@ -288,7 +299,7 @@ TEST(editor_press_moves_frequency_step_long_press_leaves) {
 //presses until the frequency step is target, false if it never gets there
 static bool pressToStep(DashboardEditor& ed, const FuncGenState& s, uint8_t target) {
     for (uint8_t i = 0; i <= FREQ_STEP_COUNT && ed.freqStepIndex() != target; i++) {
-        ed.handle(button(INPUT_EVENT::BUTTON_SHORT), s, limits(), 0);
+        ed.handle(button(INPUT_EVENT::BUTTON_SHORT), both(s), limits(), 0);
     }
     return ed.freqStepIndex() == target;
 }
@@ -297,61 +308,61 @@ TEST(editor_frequency_tenths_can_be_removed) {
     //the old trap: 0.1 Hz minimum, 1 Hz smallest step, so 1.1, 2.1, ... forever
     DashboardEditor ed;
     FuncGenState s = state(1.1f);
-    ed.handle(button(INPUT_EVENT::BUTTON_SHORT), s, limits(), 0);
+    ed.handle(button(INPUT_EVENT::BUTTON_SHORT), both(s), limits(), 0);
     CHECK(pressToStep(ed, s, 0));
-    EditCommand c = ed.handle(encoder(-1, -1), s, limits(), 0);
+    EditCommand c = ed.handle(encoder(-1, -1), both(s), limits(), 0);
     CHECK(c.action == EDIT_ACTION::SET_FREQUENCY);
     CHECK_NEAR(c.value, 1.0, 1e-5);
 }
 
 TEST(editor_frequency_starts_from_the_value_on_screen) {
     DashboardEditor ed;
-    ed.handle(button(INPUT_EVENT::BUTTON_SHORT), state(), limits(), 0);
+    ed.handle(button(INPUT_EVENT::BUTTON_SHORT), both(state()), limits(), 0);
     CHECK(pressToStep(ed, state(), 1)); //1 Hz
 
     //"1.000000 MHz" on screen, the hidden 0.3 Hz is dropped
-    EditCommand c = ed.handle(encoder(1, 1), state(1000000.3f), limits(), 0);
+    EditCommand c = ed.handle(encoder(1, 1), both(state(1000000.3f)), limits(), 0);
     CHECK_NEAR(c.value, 1000001.0, 0.07);   //float spacing near 1e6 is 0.0625
 
     //the AD9833 applies about 1000.0629 for 1000.1: "1.0001 kHz" on screen,
     //so -0.1 Hz steps from 1000.1, not from 1000.0629
     CHECK(pressToStep(ed, state(), 0));
-    c = ed.handle(encoder(-1, -1), state(1000.0629f), limits(), 0);
+    c = ed.handle(encoder(-1, -1), both(state(1000.0629f)), limits(), 0);
     CHECK_NEAR(c.value, 1000.0, 1e-3);
 
     //0.1 Hz step in MHz acts as 1 Hz
-    c = ed.handle(encoder(1, 1), state(5000000.0f), limits(), 0);
+    c = ed.handle(encoder(1, 1), both(state(5000000.0f)), limits(), 0);
     CHECK_NEAR(c.value, 5000001.0, 0.5);
 }
 
 TEST(editor_amplitude_snaps_and_clamps) {
     DashboardEditor ed;
     FuncGenState s = state();
-    ed.handle(encoder(1, 1), s, limits(), 0); //amplitude
-    ed.handle(button(INPUT_EVENT::BUTTON_SHORT), s, limits(), 0);
+    ed.handle(encoder(1, 1), both(s), limits(), 0); //amplitude
+    ed.handle(button(INPUT_EVENT::BUTTON_SHORT), both(s), limits(), 0);
 
     s.amplitude = 1.03f;
-    EditCommand c = ed.handle(encoder(1, 1), s, limits(), 0);
+    EditCommand c = ed.handle(encoder(1, 1), both(s), limits(), 0);
     CHECK(c.action == EDIT_ACTION::SET_AMPLITUDE);
     CHECK_NEAR(c.value, 1.10, 1e-4); //1.08 snapped to the 0.05 grid
 
     ValueRange r = limits().amplitudeFor(s);
-    c = ed.handle(encoder(-1, -100), s, limits(), 0);
+    c = ed.handle(encoder(-1, -100), both(s), limits(), 0);
     CHECK_NEAR(c.value, r.min, 1e-6);
-    c = ed.handle(encoder(1, 1000), s, limits(), 0);
+    c = ed.handle(encoder(1, 1000), both(s), limits(), 0);
     CHECK_NEAR(c.value, r.max, 1e-6);
 }
 
 TEST(editor_offset_steps) {
     DashboardEditor ed;
     FuncGenState s = state();
-    ed.handle(encoder(2, 2), s, limits(), 0); //offset
+    ed.handle(encoder(2, 2), both(s), limits(), 0); //offset
     CHECK(ed.selected() == UI_FIELD::OFFSET);
-    ed.handle(button(INPUT_EVENT::BUTTON_SHORT), s, limits(), 0);
-    EditCommand c = ed.handle(encoder(-1, -2), s, limits(), 0);
+    ed.handle(button(INPUT_EVENT::BUTTON_SHORT), both(s), limits(), 0);
+    EditCommand c = ed.handle(encoder(-1, -2), both(s), limits(), 0);
     CHECK(c.action == EDIT_ACTION::SET_DC_OFFSET);
     CHECK_NEAR(c.value, -2 * UI_OFFSET_STEP_V, 1e-5);
-    c = ed.handle(encoder(-1, -1000), s, limits(), 0);
+    c = ed.handle(encoder(-1, -1000), both(s), limits(), 0);
     CHECK_NEAR(c.value, limits().dcOffsetFor(s).min, 1e-6);
 }
 
@@ -365,10 +376,10 @@ TEST(editor_knob_stops_at_the_peak_limit) {
     DashboardEditor ed;
     FuncGenState s = state();
     s.dcOffset = 2.0f;
-    ed.handle(encoder(1, 1), s, l, 0); //amplitude
+    ed.handle(encoder(1, 1), both(s), l, 0); //amplitude
     CHECK(ed.selected() == UI_FIELD::AMPLITUDE);
-    ed.handle(button(INPUT_EVENT::BUTTON_SHORT), s, l, 0);
-    EditCommand c = ed.handle(encoder(1, 1000), s, l, 0);
+    ed.handle(button(INPUT_EVENT::BUTTON_SHORT), both(s), l, 0);
+    EditCommand c = ed.handle(encoder(1, 1000), both(s), l, 0);
     CHECK(c.action == EDIT_ACTION::SET_AMPLITUDE);
     CHECK_NEAR(c.value, 6.0, 1e-5);
 
@@ -376,56 +387,56 @@ TEST(editor_knob_stops_at_the_peak_limit) {
     DashboardEditor ed2;
     s = state();
     s.amplitude = 4.0f;
-    ed2.handle(encoder(2, 2), s, l, 0); //offset
+    ed2.handle(encoder(2, 2), both(s), l, 0); //offset
     CHECK(ed2.selected() == UI_FIELD::OFFSET);
-    ed2.handle(button(INPUT_EVENT::BUTTON_SHORT), s, l, 0);
-    c = ed2.handle(encoder(1, 1000), s, l, 0);
+    ed2.handle(button(INPUT_EVENT::BUTTON_SHORT), both(s), l, 0);
+    c = ed2.handle(encoder(1, 1000), both(s), l, 0);
     CHECK_NEAR(c.value, 3.0, 1e-5);
-    c = ed2.handle(encoder(-1, -1000), s, l, 0);
+    c = ed2.handle(encoder(-1, -1000), both(s), l, 0);
     CHECK_NEAR(c.value, -3.0, 1e-5);
 }
 
 TEST(editor_waveform_cycles) {
     DashboardEditor ed;
     FuncGenState s = state();
-    ed.handle(encoder(-2, -2), s, limits(), 0); //waveform
+    ed.handle(encoder(-2, -2), both(s), limits(), 0); //waveform
     CHECK(ed.selected() == UI_FIELD::WAVEFORM);
-    ed.handle(button(INPUT_EVENT::BUTTON_SHORT), s, limits(), 0);
+    ed.handle(button(INPUT_EVENT::BUTTON_SHORT), both(s), limits(), 0);
 
-    EditCommand c = ed.handle(encoder(1, 9), s, limits(), 0); //uses clicks, not the accelerated delta
+    EditCommand c = ed.handle(encoder(1, 9), both(s), limits(), 0); //uses clicks, not the accelerated delta
     CHECK(c.action == EDIT_ACTION::SET_WAVEFORM && c.waveform == WAVEFORM::SQUARE);
-    c = ed.handle(encoder(-1, -1), s, limits(), 0);
+    c = ed.handle(encoder(-1, -1), both(s), limits(), 0);
     CHECK(c.waveform == WAVEFORM::TRIANGLE); //wraps backwards
-    c = ed.handle(encoder(3, 3), s, limits(), 0);
+    c = ed.handle(encoder(3, 3), both(s), limits(), 0);
     CHECK(c.action == EDIT_ACTION::NONE); //full circle, nothing to change
 }
 
 TEST(editor_button_toggles_output) {
     DashboardEditor ed;
     FuncGenState s = state();
-    ed.handle(encoder(-1, -1), s, limits(), 0); //output
+    ed.handle(encoder(-1, -1), both(s), limits(), 0); //output
     CHECK(ed.selected() == UI_FIELD::OUTPUT_ENABLE);
-    EditCommand c = ed.handle(button(INPUT_EVENT::BUTTON_SHORT), s, limits(), 0);
+    EditCommand c = ed.handle(button(INPUT_EVENT::BUTTON_SHORT), both(s), limits(), 0);
     CHECK(c.action == EDIT_ACTION::SET_OUTPUT && c.enabled);
     CHECK(!ed.editing()); //no edit mode for a toggle
     s.outputEnabled = true;
-    c = ed.handle(button(INPUT_EVENT::BUTTON_SHORT), s, limits(), 0);
+    c = ed.handle(button(INPUT_EVENT::BUTTON_SHORT), both(s), limits(), 0);
     CHECK(c.action == EDIT_ACTION::SET_OUTPUT && !c.enabled);
 }
 
 TEST(editor_tap_selects_then_toggles_edit) {
     DashboardEditor ed;
     FuncGenState s = state();
-    ed.handle(tapField(UI_FIELD::AMPLITUDE), s, limits(), 0);
+    ed.handle(tapField(UI_FIELD::AMPLITUDE), both(s), limits(), 0);
     CHECK(ed.selected() == UI_FIELD::AMPLITUDE);
     CHECK(!ed.editing());
-    ed.handle(tapField(UI_FIELD::AMPLITUDE), s, limits(), 0);
+    ed.handle(tapField(UI_FIELD::AMPLITUDE), both(s), limits(), 0);
     CHECK(ed.editing());
-    ed.handle(tapField(UI_FIELD::WAVEFORM), s, limits(), 0);
+    ed.handle(tapField(UI_FIELD::WAVEFORM), both(s), limits(), 0);
     CHECK(ed.selected() == UI_FIELD::WAVEFORM);
     CHECK(!ed.editing()); //moving away leaves edit mode
 
-    EditCommand c = ed.handle(tap(5, 5), s, limits(), 0); //status bar
+    EditCommand c = ed.handle(tap(5, 5), both(s), limits(), 0); //status bar
     CHECK(c.action == EDIT_ACTION::NONE);
     CHECK(ed.selected() == UI_FIELD::WAVEFORM);
 }
@@ -433,7 +444,7 @@ TEST(editor_tap_selects_then_toggles_edit) {
 TEST(editor_tap_output_toggles) {
     DashboardEditor ed;
     FuncGenState s = state();
-    EditCommand c = ed.handle(tapField(UI_FIELD::OUTPUT_ENABLE), s, limits(), 0);
+    EditCommand c = ed.handle(tapField(UI_FIELD::OUTPUT_ENABLE), both(s), limits(), 0);
     CHECK(c.action == EDIT_ACTION::SET_OUTPUT && c.enabled);
     CHECK(ed.selected() == UI_FIELD::OUTPUT_ENABLE);
 }
@@ -446,19 +457,19 @@ TEST(editor_tap_digit_sets_step) {
     int16_t start = r.x + freqTextStartX(f.text);
     int16_t y = r.y + FREQ_BASELINE - 10;
 
-    ed.handle(tap(numCharX(f.text, start, 2) + 3, y), s, limits(), 0); //the "5" = 100 Hz
+    ed.handle(tap(numCharX(f.text, start, 2) + 3, y), both(s), limits(), 0); //the "5" = 100 Hz
     CHECK_EQ(ed.freqStepIndex(), 3);
     CHECK(ed.selected() == UI_FIELD::FREQUENCY);
     CHECK(ed.editing());
 
-    ed.handle(tap(numCharX(f.text, start, 4) + 3, y), s, limits(), 0); //1 Hz digit
+    ed.handle(tap(numCharX(f.text, start, 4) + 3, y), both(s), limits(), 0); //1 Hz digit
     CHECK_EQ(ed.freqStepIndex(), 1);
     CHECK(ed.editing()); //stays in edit mode
 
-    ed.handle(tap(numCharX(f.text, start, 5) + 3, y), s, limits(), 0); //last digit = 0.1 Hz
+    ed.handle(tap(numCharX(f.text, start, 5) + 3, y), both(s), limits(), 0); //last digit = 0.1 Hz
     CHECK_EQ(ed.freqStepIndex(), 0);
 
-    ed.handle(tap(numCharX(f.text, start, 1) + 1, y), s, limits(), 0); //the dot: plain tap
+    ed.handle(tap(numCharX(f.text, start, 1) + 1, y), both(s), limits(), 0); //the dot: plain tap
     CHECK_EQ(ed.freqStepIndex(), 0);
     CHECK(!ed.editing()); //tapping the selected field toggles edit mode
 }
@@ -468,11 +479,11 @@ TEST(editor_tap_digit_sets_step) {
 TEST(editor_edit_mode_times_out) {
     DashboardEditor ed;
     FuncGenState s = state();
-    ed.handle(button(INPUT_EVENT::BUTTON_SHORT), s, limits(), 1000);
+    ed.handle(button(INPUT_EVENT::BUTTON_SHORT), both(s), limits(), 1000);
     CHECK(ed.editing());
     ed.tick(1000 + UI_EDIT_TIMEOUT_MS - 1);
     CHECK(ed.editing());
-    ed.handle(encoder(1, 1), s, limits(), 5000); //input restarts the clock
+    ed.handle(encoder(1, 1), both(s), limits(), 5000); //input restarts the clock
     ed.tick(1000 + UI_EDIT_TIMEOUT_MS);
     CHECK(ed.editing());
     ed.tick(5000 + UI_EDIT_TIMEOUT_MS);
@@ -483,13 +494,13 @@ TEST(editor_edit_mode_times_out) {
 TEST(editor_remote_change_ends_edit_of_that_field) {
     DashboardEditor ed;
     FuncGenState s = state();
-    ed.handle(button(INPUT_EVENT::BUTTON_SHORT), s, limits(), 0); //editing frequency
-    ed.remoteChanged(fieldBit(UI_FIELD::AMPLITUDE));
+    ed.handle(button(INPUT_EVENT::BUTTON_SHORT), both(s), limits(), 0); //editing frequency
+    ed.remoteChanged(CHANNEL_1, fieldBit(UI_FIELD::AMPLITUDE));
     CHECK(ed.editing()); //another field, keep going
-    ed.remoteChanged(fieldBit(UI_FIELD::AMPLITUDE) | fieldBit(UI_FIELD::FREQUENCY));
+    ed.remoteChanged(CHANNEL_1, fieldBit(UI_FIELD::AMPLITUDE) | fieldBit(UI_FIELD::FREQUENCY));
     CHECK(!ed.editing());
     //the next turn moves the selection instead of changing the agent's value
-    EditCommand c = ed.handle(encoder(1, 1), s, limits(), 0);
+    EditCommand c = ed.handle(encoder(1, 1), both(s), limits(), 0);
     CHECK(c.action == EDIT_ACTION::NONE);
     CHECK(ed.selected() == UI_FIELD::AMPLITUDE);
 }
@@ -497,27 +508,27 @@ TEST(editor_remote_change_ends_edit_of_that_field) {
 TEST(editor_info_panel) {
     DashboardEditor ed;
     FuncGenState s = state();
-    ed.handle(button(INPUT_EVENT::BUTTON_SHORT), s, limits(), 0);
+    ed.handle(button(INPUT_EVENT::BUTTON_SHORT), both(s), limits(), 0);
     Rect sr = statusRect();
-    ed.handle(tap(sr.x + 40, sr.y + 10), s, limits(), 0);
+    ed.handle(tap(sr.x + 40, sr.y + 10), both(s), limits(), 0);
     CHECK(ed.infoOpen());
     CHECK(!ed.editing());
 
     //the knob does nothing while the panel is open
-    EditCommand c = ed.handle(encoder(3, 3), s, limits(), 0);
+    EditCommand c = ed.handle(encoder(3, 3), both(s), limits(), 0);
     CHECK(c.action == EDIT_ACTION::NONE);
     CHECK(ed.infoOpen());
     CHECK(ed.selected() == UI_FIELD::FREQUENCY);
 
     //a tap closes it without acting on what is under the finger
-    c = ed.handle(tapField(UI_FIELD::OUTPUT_ENABLE), s, limits(), 0);
+    c = ed.handle(tapField(UI_FIELD::OUTPUT_ENABLE), both(s), limits(), 0);
     CHECK(!ed.infoOpen());
     CHECK(c.action == EDIT_ACTION::NONE);
 
     //a press closes it too, also with OUTPUT selected
-    ed.handle(tapField(UI_FIELD::OUTPUT_ENABLE), s, limits(), 0); //toggles output, selects it
-    ed.handle(tap(sr.x + 40, sr.y + 10), s, limits(), 0);
-    c = ed.handle(button(INPUT_EVENT::BUTTON_SHORT), s, limits(), 0);
+    ed.handle(tapField(UI_FIELD::OUTPUT_ENABLE), both(s), limits(), 0); //toggles output, selects it
+    ed.handle(tap(sr.x + 40, sr.y + 10), both(s), limits(), 0);
+    c = ed.handle(button(INPUT_EVENT::BUTTON_SHORT), both(s), limits(), 0);
     CHECK(!ed.infoOpen());
     CHECK(c.action == EDIT_ACTION::NONE);
 }
@@ -533,7 +544,7 @@ static InputEvent tapRect(Rect r) {
 static DashboardEditor openInfo() {
     DashboardEditor ed;
     Rect sr = statusRect();
-    ed.handle(tap(sr.x + 40, sr.y + 10), state(), limits(), 0, ALL_BUTTONS);
+    ed.handle(tap(sr.x + 40, sr.y + 10), both(state()), limits(), 0, ALL_BUTTONS);
     return ed;
 }
 
@@ -574,13 +585,13 @@ TEST(info_knob_moves_over_existing_items) {
     DashboardEditor ed = openInfo();
     FuncGenState s = state();
     CHECK(ed.infoFocus(ALL_BUTTONS) == INFO_ITEM::CLOSE);  //a press closes, like before the buttons
-    ed.handle(encoder(1, 1), s, limits(), 0, ALL_BUTTONS);
+    ed.handle(encoder(1, 1), both(s), limits(), 0, ALL_BUTTONS);
     CHECK(ed.infoFocus(ALL_BUTTONS) == INFO_ITEM::WIFI);
-    ed.handle(encoder(1, 1), s, limits(), 0, ALL_BUTTONS);
+    ed.handle(encoder(1, 1), both(s), limits(), 0, ALL_BUTTONS);
     CHECK(ed.infoFocus(ALL_BUTTONS) == INFO_ITEM::PHONES);
-    ed.handle(encoder(-2, -2), s, limits(), 0, ALL_BUTTONS);
+    ed.handle(encoder(-2, -2), both(s), limits(), 0, ALL_BUTTONS);
     CHECK(ed.infoFocus(ALL_BUTTONS) == INFO_ITEM::CLOSE);
-    ed.handle(encoder(4, 4), s, limits(), 0, ALL_BUTTONS);     //wraps: wifi, phones, close, wifi
+    ed.handle(encoder(4, 4), both(s), limits(), 0, ALL_BUTTONS);     //wraps: wifi, phones, close, wifi
     CHECK(ed.infoFocus(ALL_BUTTONS) == INFO_ITEM::WIFI);
     CHECK(ed.infoOpen());
     CHECK(ed.selected() == UI_FIELD::FREQUENCY);    //the dashboard selection didn't move
@@ -588,32 +599,32 @@ TEST(info_knob_moves_over_existing_items) {
     //missing buttons are skipped
     InfoButtons phonesOnly = {WIFI_BUTTON::NONE, true};
     DashboardEditor ed2 = openInfo();
-    ed2.handle(encoder(1, 1), s, limits(), 0, phonesOnly);
+    ed2.handle(encoder(1, 1), both(s), limits(), 0, phonesOnly);
     CHECK(ed2.infoFocus(phonesOnly) == INFO_ITEM::PHONES);
-    ed2.handle(encoder(1, 1), s, limits(), 0, phonesOnly);
+    ed2.handle(encoder(1, 1), both(s), limits(), 0, phonesOnly);
     CHECK(ed2.infoFocus(phonesOnly) == INFO_ITEM::CLOSE);
-    ed2.handle(encoder(-1, -1), s, limits(), 0, phonesOnly);
+    ed2.handle(encoder(-1, -1), both(s), limits(), 0, phonesOnly);
     CHECK(ed2.infoFocus(phonesOnly) == INFO_ITEM::PHONES);
 }
 
 TEST(info_forget_phones_needs_a_confirm) {
     DashboardEditor ed = openInfo();
     FuncGenState s = state();
-    ed.handle(encoder(2, 2), s, limits(), 0, ALL_BUTTONS);
-    EditCommand c = ed.handle(button(INPUT_EVENT::BUTTON_SHORT), s, limits(), 0, ALL_BUTTONS);
+    ed.handle(encoder(2, 2), both(s), limits(), 0, ALL_BUTTONS);
+    EditCommand c = ed.handle(button(INPUT_EVENT::BUTTON_SHORT), both(s), limits(), 0, ALL_BUTTONS);
     CHECK(c.action == EDIT_ACTION::NONE);
     CHECK(ed.infoConfirm() == INFO_CONFIRM::FORGET_PHONES);
     CHECK(!ed.confirmOk());     //starts on Cancel
 
     //turning right picks OK, left goes back to Cancel
-    ed.handle(encoder(1, 1), s, limits(), 0, ALL_BUTTONS);
+    ed.handle(encoder(1, 1), both(s), limits(), 0, ALL_BUTTONS);
     CHECK(ed.confirmOk());
-    ed.handle(encoder(-1, -1), s, limits(), 0, ALL_BUTTONS);
+    ed.handle(encoder(-1, -1), both(s), limits(), 0, ALL_BUTTONS);
     CHECK(!ed.confirmOk());
-    ed.handle(encoder(3, 3), s, limits(), 0, ALL_BUTTONS);
+    ed.handle(encoder(3, 3), both(s), limits(), 0, ALL_BUTTONS);
     CHECK(ed.confirmOk());
 
-    c = ed.handle(button(INPUT_EVENT::BUTTON_SHORT), s, limits(), 0, ALL_BUTTONS);
+    c = ed.handle(button(INPUT_EVENT::BUTTON_SHORT), both(s), limits(), 0, ALL_BUTTONS);
     CHECK(c.action == EDIT_ACTION::DEVICE);
     CHECK(c.device == DEVICE_ACTION::FORGET_PHONES);
     CHECK(ed.infoConfirm() == INFO_CONFIRM::NONE);
@@ -626,9 +637,9 @@ TEST(info_confirm_cancel_paths) {
                             tapRect(infoButtonRect(0)), tap(160, 60)};
     for (const InputEvent& e : cancels) {
         DashboardEditor ed = openInfo();
-        ed.handle(tapRect(infoButtonRect(1)), s, limits(), 0, ALL_BUTTONS);
+        ed.handle(tapRect(infoButtonRect(1)), both(s), limits(), 0, ALL_BUTTONS);
         CHECK(ed.infoConfirm() == INFO_CONFIRM::FORGET_PHONES);
-        EditCommand c = ed.handle(e, s, limits(), 0, ALL_BUTTONS);
+        EditCommand c = ed.handle(e, both(s), limits(), 0, ALL_BUTTONS);
         CHECK(c.action == EDIT_ACTION::NONE);
         CHECK(ed.infoConfirm() == INFO_CONFIRM::NONE);
         CHECK(ed.infoOpen());
@@ -636,9 +647,9 @@ TEST(info_confirm_cancel_paths) {
 
     //tapping OK confirms even with the knob on Cancel
     DashboardEditor ed = openInfo();
-    ed.handle(tapRect(infoButtonRect(0)), s, limits(), 0, ALL_BUTTONS);
+    ed.handle(tapRect(infoButtonRect(0)), both(s), limits(), 0, ALL_BUTTONS);
     CHECK(ed.infoConfirm() == INFO_CONFIRM::OPEN_WIFI_SETUP);
-    EditCommand c = ed.handle(tapRect(infoButtonRect(1)), s, limits(), 0, ALL_BUTTONS);
+    EditCommand c = ed.handle(tapRect(infoButtonRect(1)), both(s), limits(), 0, ALL_BUTTONS);
     CHECK(c.action == EDIT_ACTION::DEVICE);
     CHECK(c.device == DEVICE_ACTION::OPEN_WIFI_SETUP);
 }
@@ -647,13 +658,13 @@ TEST(info_back_to_saved_network_needs_no_confirm) {
     InfoButtons back = {WIFI_BUTTON::BACK_TO_SAVED, true};
     FuncGenState s = state();
     DashboardEditor ed = openInfo();
-    ed.handle(encoder(1, 1), s, limits(), 0, back);
-    EditCommand c = ed.handle(button(INPUT_EVENT::BUTTON_SHORT), s, limits(), 0, back);
+    ed.handle(encoder(1, 1), both(s), limits(), 0, back);
+    EditCommand c = ed.handle(button(INPUT_EVENT::BUTTON_SHORT), both(s), limits(), 0, back);
     CHECK(c.action == EDIT_ACTION::DEVICE);
     CHECK(c.device == DEVICE_ACTION::LEAVE_WIFI_SETUP);
     CHECK(ed.infoConfirm() == INFO_CONFIRM::NONE);
 
-    c = ed.handle(tapRect(infoButtonRect(0)), s, limits(), 0, back);
+    c = ed.handle(tapRect(infoButtonRect(0)), both(s), limits(), 0, back);
     CHECK(c.action == EDIT_ACTION::DEVICE);
     CHECK(c.device == DEVICE_ACTION::LEAVE_WIFI_SETUP);
 }
@@ -663,39 +674,39 @@ TEST(info_taps_and_missing_buttons) {
     //tapping where a missing button would be just closes the panel
     InfoButtons none = {WIFI_BUTTON::NONE, false};
     DashboardEditor ed = openInfo();
-    EditCommand c = ed.handle(tapRect(infoButtonRect(0)), s, limits(), 0, none);
+    EditCommand c = ed.handle(tapRect(infoButtonRect(0)), both(s), limits(), 0, none);
     CHECK(c.action == EDIT_ACTION::NONE);
     CHECK(!ed.infoOpen());
     CHECK(ed.infoConfirm() == INFO_CONFIRM::NONE);
 
     ed = openInfo();
-    ed.handle(tapRect(infoButtonRect(1)), s, limits(), 0, none);
+    ed.handle(tapRect(infoButtonRect(1)), both(s), limits(), 0, none);
     CHECK(!ed.infoOpen());
 
     //"close" closes
     ed = openInfo();
-    ed.handle(tapRect(infoCloseRect()), s, limits(), 0, ALL_BUTTONS);
+    ed.handle(tapRect(infoCloseRect()), both(s), limits(), 0, ALL_BUTTONS);
     CHECK(!ed.infoOpen());
 
     //a highlighted button that goes away (BLE stopped) falls back to close
     ed = openInfo();
-    ed.handle(encoder(2, 2), s, limits(), 0, ALL_BUTTONS);
+    ed.handle(encoder(2, 2), both(s), limits(), 0, ALL_BUTTONS);
     CHECK(ed.infoFocus(ALL_BUTTONS) == INFO_ITEM::PHONES);
     InfoButtons wifiOnly = {WIFI_BUTTON::CHANGE_NETWORK, false};
     CHECK(ed.infoFocus(wifiOnly) == INFO_ITEM::CLOSE);
-    c = ed.handle(button(INPUT_EVENT::BUTTON_SHORT), s, limits(), 0, wifiOnly);
+    c = ed.handle(button(INPUT_EVENT::BUTTON_SHORT), both(s), limits(), 0, wifiOnly);
     CHECK(c.action == EDIT_ACTION::NONE);
     CHECK(!ed.infoOpen());
     CHECK(ed.infoConfirm() == INFO_CONFIRM::NONE);
 
     //opening again starts on close, with no dialog left over
     ed = openInfo();
-    ed.handle(tapRect(infoButtonRect(1)), s, limits(), 0, ALL_BUTTONS);
-    ed.handle(button(INPUT_EVENT::BUTTON_LONG), s, limits(), 0, ALL_BUTTONS);   //cancels the dialog
-    ed.handle(button(INPUT_EVENT::BUTTON_LONG), s, limits(), 0, ALL_BUTTONS);   //closes the panel
+    ed.handle(tapRect(infoButtonRect(1)), both(s), limits(), 0, ALL_BUTTONS);
+    ed.handle(button(INPUT_EVENT::BUTTON_LONG), both(s), limits(), 0, ALL_BUTTONS);   //cancels the dialog
+    ed.handle(button(INPUT_EVENT::BUTTON_LONG), both(s), limits(), 0, ALL_BUTTONS);   //closes the panel
     CHECK(!ed.infoOpen());
     Rect sr = statusRect();
-    ed.handle(tap(sr.x + 40, sr.y + 10), s, limits(), 0, ALL_BUTTONS);
+    ed.handle(tap(sr.x + 40, sr.y + 10), both(s), limits(), 0, ALL_BUTTONS);
     CHECK(ed.infoFocus(ALL_BUTTONS) == INFO_ITEM::CLOSE);
     CHECK(ed.infoConfirm() == INFO_CONFIRM::NONE);
 }
@@ -730,36 +741,36 @@ TEST(changed_fields_mask) {
 
 TEST(remote_highlight_timing) {
     RemoteHighlight h;
-    CHECK_EQ(h.flashing(0), 0);
+    CHECK_EQ(h.flashing(CHANNEL_1, 0), 0);
     CHECK(!h.badge(0));
 
-    h.changed(fieldBit(UI_FIELD::FREQUENCY), 1000, CHANGE_SOURCE::MCP);
-    CHECK_EQ(h.flashing(1000), fieldBit(UI_FIELD::FREQUENCY));
-    CHECK_EQ(h.flashing(1000 + UI_REMOTE_FLASH_MS - 1), fieldBit(UI_FIELD::FREQUENCY));
-    CHECK_EQ(h.flashing(1000 + UI_REMOTE_FLASH_MS), 0);
+    h.changed(CHANNEL_1, fieldBit(UI_FIELD::FREQUENCY), 1000, CHANGE_SOURCE::MCP);
+    CHECK_EQ(h.flashing(CHANNEL_1, 1000), fieldBit(UI_FIELD::FREQUENCY));
+    CHECK_EQ(h.flashing(CHANNEL_1, 1000 + UI_REMOTE_FLASH_MS - 1), fieldBit(UI_FIELD::FREQUENCY));
+    CHECK_EQ(h.flashing(CHANNEL_1, 1000 + UI_REMOTE_FLASH_MS), 0);
     CHECK(h.badge(1000 + UI_REMOTE_BADGE_MS - 1));
     CHECK(!h.badge(1000 + UI_REMOTE_BADGE_MS));
 
     //a second change flashes its own field and keeps the badge up
-    h.changed(fieldBit(UI_FIELD::AMPLITUDE), 1500, CHANGE_SOURCE::MCP);
-    CHECK_EQ(h.flashing(1600), fieldBit(UI_FIELD::FREQUENCY) | fieldBit(UI_FIELD::AMPLITUDE));
-    CHECK_EQ(h.flashing(1000 + UI_REMOTE_FLASH_MS), fieldBit(UI_FIELD::AMPLITUDE));
+    h.changed(CHANNEL_1, fieldBit(UI_FIELD::AMPLITUDE), 1500, CHANGE_SOURCE::MCP);
+    CHECK_EQ(h.flashing(CHANNEL_1, 1600), fieldBit(UI_FIELD::FREQUENCY) | fieldBit(UI_FIELD::AMPLITUDE));
+    CHECK_EQ(h.flashing(CHANNEL_1, 1000 + UI_REMOTE_FLASH_MS), fieldBit(UI_FIELD::AMPLITUDE));
     CHECK(h.badge(1000 + UI_REMOTE_BADGE_MS));
 
     //an agent call that changed nothing still shows the badge
     RemoteHighlight quiet;
-    quiet.changed(0, 50, CHANGE_SOURCE::MCP);
-    CHECK_EQ(quiet.flashing(50), 0);
+    quiet.changed(CHANNEL_1, 0, 50, CHANGE_SOURCE::MCP);
+    CHECK_EQ(quiet.flashing(CHANNEL_1, 50), 0);
     CHECK(quiet.badge(50));
 }
 
 TEST(remote_highlight_badge_names_the_latest_source) {
     RemoteHighlight h;
-    h.changed(fieldBit(UI_FIELD::FREQUENCY), 0, CHANGE_SOURCE::MCP);
+    h.changed(CHANNEL_1, fieldBit(UI_FIELD::FREQUENCY), 0, CHANGE_SOURCE::MCP);
     CHECK(h.badgeSource() == CHANGE_SOURCE::MCP);
-    h.changed(fieldBit(UI_FIELD::AMPLITUDE), 10, CHANGE_SOURCE::BLE);
+    h.changed(CHANNEL_1, fieldBit(UI_FIELD::AMPLITUDE), 10, CHANGE_SOURCE::BLE);
     CHECK(h.badgeSource() == CHANGE_SOURCE::BLE);
-    h.changed(0, 20, CHANGE_SOURCE::MCP);
+    h.changed(CHANNEL_1, 0, 20, CHANGE_SOURCE::MCP);
     CHECK(h.badgeSource() == CHANGE_SOURCE::MCP);
 }
 
@@ -917,4 +928,171 @@ TEST(pairing_prompt_timeout_survives_millis_wrap) {
     p.update(pairingStatus(PAIRING::SHOW_PASSKEY, 1), start + 5000);    //wrapped
     CHECK(p.shown() == PAIR_PROMPT::CODE);
     CHECK_EQ(p.secondsLeft(start + 5000), (BLE_PAIR_TIMEOUT_MS - 5000) / 1000);
+}
+
+//two channels
+
+TEST(tab_row_layout) {
+    Rect row = fieldRect(UI_FIELD::CHANNEL);
+    for (uint8_t ch = 0; ch < CHANNEL_COUNT; ch++) {
+        Rect t = channelTabRect(ch);
+        CHECK(t.x >= row.x && t.y >= row.y && t.x + t.w <= row.x + row.w && t.y + t.h <= row.y + row.h);
+        UI_FIELD hit;
+        CHECK(fieldAt(t.x + t.w / 2, t.y + t.h / 2, hit) && hit == UI_FIELD::CHANNEL);
+    }
+    CHECK(channelTabRect(CHANNEL_1).x + channelTabRect(CHANNEL_1).w <= channelTabRect(CHANNEL_2).x);
+    CHECK(strcmp(channelName(CHANNEL_1), "CH1") == 0);
+    CHECK(strcmp(channelName(CHANNEL_2), "CH2") == 0);
+
+    char l1[16], l2[24];
+    FuncGenState s = state(1500.0f);
+    formatTabLines(s, l1, sizeof(l1), l2, sizeof(l2));
+    CHECK(strcmp(l1, "SINE") == 0);
+    CHECK(strcmp(l2, "1.5 kHz") == 0);
+    s.mirrored = true;
+    formatTabLines(s, l1, sizeof(l1), l2, sizeof(l2));
+    CHECK(strcmp(l1, "LINKED") == 0);
+    s.frequency = 1.0f;
+    formatTabLines(s, l1, sizeof(l1), l2, sizeof(l2));
+    CHECK(strcmp(l2, "1 Hz") == 0);
+    //the longest line still fits next to "CHx" in a tab (6 px font, text from x + 46)
+    s.frequency = 12345678.0f;
+    formatTabLines(s, l1, sizeof(l1), l2, sizeof(l2));
+    CHECK(strcmp(l2, "12.34568 MHz") == 0);
+    CHECK(46 + (int)strlen(l2) * 6 <= channelTabRect(CHANNEL_1).w - 4);
+}
+
+TEST(editor_switches_channels_and_edits_the_shown_one) {
+    DashboardEditor ed;
+    CHECK_EQ(ed.channel(), CHANNEL_1);
+    FuncGenState s = state(1000.0f);
+
+    //tap CH2's tab: fields show CH2, edit mode ends
+    ed.handle(button(INPUT_EVENT::BUTTON_SHORT), both(s), limits(), 0); //editing frequency
+    CHECK(ed.editing());
+    Rect t2 = channelTabRect(CHANNEL_2);
+    EditCommand c = ed.handle(tap(t2.x + 10, t2.y + 10), both(s), limits(), 0);
+    CHECK(c.action == EDIT_ACTION::NONE);
+    CHECK_EQ(ed.channel(), CHANNEL_2);
+    CHECK(ed.selected() == UI_FIELD::CHANNEL);
+    CHECK(!ed.editing());
+
+    //changes now go to CH2, starting from CH2's value (50 Hz)
+    ed.handle(encoder(4, 4), both(s), limits(), 0); //CHANNEL -> FREQUENCY
+    CHECK(ed.selected() == UI_FIELD::FREQUENCY);
+    ed.handle(button(INPUT_EVENT::BUTTON_SHORT), both(s), limits(), 0);
+    pressToStep(ed, both(s).ch[CHANNEL_2], 2); //10 Hz
+    c = ed.handle(encoder(1, 1), both(s), limits(), 0);
+    CHECK(c.action == EDIT_ACTION::SET_FREQUENCY);
+    CHECK_EQ(c.channel, CHANNEL_2);
+    CHECK_NEAR(c.value, 60.0f, 1e-3);
+
+    //output toggles CH2's output
+    ed.handle(button(INPUT_EVENT::BUTTON_LONG), both(s), limits(), 0);
+    c = ed.handle(tapField(UI_FIELD::OUTPUT_ENABLE), both(s), limits(), 0);
+    CHECK(c.action == EDIT_ACTION::SET_OUTPUT);
+    CHECK_EQ(c.channel, CHANNEL_2);
+    CHECK(c.enabled);
+
+    //knob press on the tabs goes back to CH1
+    ed.handle(encoder(-3, -3), both(s), limits(), 0); //OUTPUT -> CHANNEL
+    CHECK(ed.selected() == UI_FIELD::CHANNEL);
+    ed.handle(button(INPUT_EVENT::BUTTON_SHORT), both(s), limits(), 0);
+    CHECK_EQ(ed.channel(), CHANNEL_1);
+    Rect t1 = channelTabRect(CHANNEL_1);
+    ed.handle(tap(t1.x + 10, t1.y + 10), both(s), limits(), 0);
+    CHECK_EQ(ed.channel(), CHANNEL_1); //tapping the shown tab keeps it
+}
+
+TEST(editor_link_button_toggles_mirror) {
+    DashboardEditor ed;
+    FuncGenState s = state();
+    EditCommand c = ed.handle(tapField(UI_FIELD::MIRROR), both(s), limits(), 0);
+    CHECK(c.action == EDIT_ACTION::SET_MIRROR);
+    CHECK(c.enabled);
+    CHECK(ed.selected() == UI_FIELD::MIRROR);
+
+    FuncGenState linked = s;
+    linked.mirrored = true;
+    c = ed.handle(button(INPUT_EVENT::BUTTON_SHORT), both(s, linked), limits(), 0);
+    CHECK(c.action == EDIT_ACTION::SET_MIRROR);
+    CHECK(!c.enabled);
+    CHECK(!ed.editing());
+}
+
+TEST(editor_locked_fields_cant_be_edited) {
+    DashboardEditor ed;
+    FuncGenState s = state();
+    FuncGenState linked = s;
+    linked.mirrored = true;
+    CHECK(fieldLocked(UI_FIELD::FREQUENCY, linked));
+    CHECK(fieldLocked(UI_FIELD::WAVEFORM, linked));
+    CHECK(fieldLocked(UI_FIELD::AMPLITUDE, linked));
+    CHECK(fieldLocked(UI_FIELD::OFFSET, linked));
+    CHECK(!fieldLocked(UI_FIELD::OUTPUT_ENABLE, linked));
+    CHECK(!fieldLocked(UI_FIELD::FREQUENCY, s));
+
+    Rect t2 = channelTabRect(CHANNEL_2);
+    ed.handle(tap(t2.x + 10, t2.y + 10), both(s, linked), limits(), 0);
+    ed.handle(tapField(UI_FIELD::AMPLITUDE), both(s, linked), limits(), 0);
+    CHECK(ed.selected() == UI_FIELD::AMPLITUDE);
+    ed.handle(tapField(UI_FIELD::AMPLITUDE), both(s, linked), limits(), 0);
+    CHECK(!ed.editing());   //a second tap would edit, but it is locked
+    ed.handle(button(INPUT_EVENT::BUTTON_SHORT), both(s, linked), limits(), 0);
+    CHECK(!ed.editing());
+    CHECK(ed.handle(encoder(1, 1), both(s, linked), limits(), 0).action == EDIT_ACTION::NONE);
+
+    //a frequency digit tap doesn't start editing either
+    Rect r = fieldRect(UI_FIELD::FREQUENCY);
+    FrequencyText f = formatFrequency(linked.frequency);
+    int16_t start = r.x + freqTextStartX(f.text);
+    ed.handle(tap(numCharX(f.text, start, 2) + 3, r.y + FREQ_BASELINE - 10), both(s, linked), limits(), 0);
+    CHECK(ed.selected() == UI_FIELD::FREQUENCY);
+    CHECK(!ed.editing());
+
+    //the output still toggles
+    EditCommand c = ed.handle(tapField(UI_FIELD::OUTPUT_ENABLE), both(s, linked), limits(), 0);
+    CHECK(c.action == EDIT_ACTION::SET_OUTPUT);
+    CHECK_EQ(c.channel, CHANNEL_2);
+}
+
+TEST(editor_remote_changes_are_per_channel) {
+    DashboardEditor ed;
+    FuncGenState s = state();
+    ed.handle(button(INPUT_EVENT::BUTTON_SHORT), both(s), limits(), 0); //editing CH1 frequency
+    ed.remoteChanged(CHANNEL_2, fieldBit(UI_FIELD::FREQUENCY));
+    CHECK(ed.editing()); //the other channel
+    ed.remoteChanged(CHANNEL_1, fieldBit(UI_FIELD::FREQUENCY));
+    CHECK(!ed.editing());
+
+    //LINK turned on remotely while editing CH2 ends the edit
+    Rect t2 = channelTabRect(CHANNEL_2);
+    ed.handle(tap(t2.x + 10, t2.y + 10), both(s), limits(), 0);
+    ed.handle(tapField(UI_FIELD::AMPLITUDE), both(s), limits(), 0);
+    ed.handle(tapField(UI_FIELD::AMPLITUDE), both(s), limits(), 0);
+    CHECK(ed.editing());
+    ed.remoteChanged(CHANNEL_2, fieldBit(UI_FIELD::MIRROR));
+    CHECK(!ed.editing());
+
+    //and if the knob gets there first, the locked field still isn't changed
+    ed.handle(tapField(UI_FIELD::AMPLITUDE), both(s), limits(), 0);
+    CHECK(ed.editing());
+    FuncGenState linked = both(s).ch[CHANNEL_2];
+    linked.mirrored = true;
+    CHECK(ed.handle(encoder(1, 1), both(s, linked), limits(), 0).action == EDIT_ACTION::NONE);
+    CHECK(!ed.editing());
+}
+
+TEST(remote_highlight_is_per_channel) {
+    RemoteHighlight h;
+    h.changed(CHANNEL_2, fieldBit(UI_FIELD::FREQUENCY), 100, CHANGE_SOURCE::WEB);
+    CHECK_EQ(h.flashing(CHANNEL_1, 100), 0);
+    CHECK_EQ(h.flashing(CHANNEL_2, 100), fieldBit(UI_FIELD::FREQUENCY));
+    CHECK(h.badge(100));
+    CHECK(h.badgeSource() == CHANGE_SOURCE::WEB);
+    CHECK_EQ(h.flashing(9, 100), 0);
+
+    FuncGenState a = state(), b = state();
+    b.mirrored = true;
+    CHECK_EQ(changedFields(a, b), fieldBit(UI_FIELD::MIRROR));
 }

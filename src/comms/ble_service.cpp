@@ -201,8 +201,9 @@ void BleService::run() {
     }
 }
 
-void BleService::onStateChanged(const FuncGenState&, CHANGE_SOURCE, void* ctx) {
-    //any task: flag and wake only
+void BleService::onStateChanged(uint8_t channel, const FuncGenState&, CHANGE_SOURCE, void* ctx) {
+    //any task: flag and wake only. the service only carries CH1
+    if (channel != CHANNEL_1) return;
     BleService* self = (BleService*)ctx;
     self->_stateDirty = true;
     if (self->_task) xTaskNotifyGive(self->_task);
@@ -214,7 +215,7 @@ void BleService::onSync() {
     BleService* self = _instance;
     ble_hs_util_ensure_addr(0);
     ble_hs_id_infer_auto(0, &self->_ownAddrType);
-    self->_lastSent = self->_controller.state();
+    self->_lastSent = self->_controller.state(CHANNEL_1);
     self->_haveSent = true;
     self->_synced = true;
     self->updateBondCount();
@@ -260,7 +261,7 @@ void BleService::onForgetEvent(struct ble_npl_event*) {
 
 void BleService::sendChanges() {
     if (!_synced) return;
-    FuncGenState s = _controller.state();
+    FuncGenState s = _controller.state(CHANNEL_1);
     uint8_t changed = _haveSent ? bleChangedFields(_lastSent, s) : 0xFF;
     _lastSent = s;
     _haveSent = true;
@@ -370,7 +371,7 @@ int BleService::onAccess(uint16_t, uint16_t, struct ble_gatt_access_ctxt* ctxt, 
     switch (ctxt->op) {
         case BLE_GATT_ACCESS_OP_READ_CHR: {
             uint8_t value[BLE_VALUE_MAX_LEN];
-            uint8_t len = bleEncode(field, self->_controller.state(), value);
+            uint8_t len = bleEncode(field, self->_controller.state(CHANNEL_1), value);
             return os_mbuf_append(ctxt->om, value, len) == 0 ? 0 : BLE_ATT_ERR_INSUFFICIENT_RES;
         }
 
@@ -382,7 +383,7 @@ int BleService::onAccess(uint16_t, uint16_t, struct ble_gatt_access_ctxt* ctxt, 
             if (ble_hs_mbuf_to_flat(ctxt->om, data, sizeof(data), &len) != 0) return BLE_ATT_ERR_UNLIKELY;
 
             BleCommand command;
-            BLE_WRITE result = bleDecode(field, data, len, self->_controller.state(), self->_controller.limits(), command);
+            BLE_WRITE result = bleDecode(field, data, len, self->_controller.state(CHANNEL_1), self->_controller.limits(), command);
             if (result != BLE_WRITE::OK) return bleAttError(result);
             bleApply(self->_controller, command);
             return 0;

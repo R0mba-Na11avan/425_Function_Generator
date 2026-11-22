@@ -29,8 +29,9 @@
     the limits is rejected with an ATT error, never clamped (same rule as the
     MCP tools). The amplitude range depends on the current waveform.
 
-    Multichannel later: a second channel would be a second service with its
-    own UUID and the same characteristics.
+    Channels: this service is CH1 only for now (with LINK on, CH1 writes
+    reach CH2 too). CH2 over BLE is still to be decided (likely a second
+    service with its own UUID and the same characteristics).
 */
 
 #ifndef BLE_LOGIC_H
@@ -93,7 +94,7 @@ struct BleCommand {
 BLE_WRITE bleDecode(BLE_FIELD field, const uint8_t* data, size_t len, const FuncGenState& state,
                     const FuncGenLimits& limits, BleCommand& out);
 
-//applies a decoded write through the controller, tagged CHANGE_SOURCE::BLE
+//applies a decoded write to CH1 through the controller, tagged CHANGE_SOURCE::BLE
 void bleApply(FuncGenController& controller, const BleCommand& command);
 
 #endif

@@ -17,18 +17,26 @@
         - GET  API_INFO_PATH (/api/info)   -> firmware, Wi-Fi and BLE info (read-only)
 
     GET /api/state
-        { "state": { see api_json.h },
-          "ranges": { "frequency_hz": {min, max}, "amplitude_vpp": {min, max},
-                      "phase_deg": {min, max, max_exclusive}, "dc_offset_v": {min, max} },
-          "output_peak_v": 10 }
-        amplitude and offset ranges are the ones allowed right now
-        (FuncGenLimits::amplitudeFor / dcOffsetFor), so they move with each other
+        { "channels": [ { "state": { see api_json.h, has "channel": 1 },
+                          "ranges": { "frequency_hz": {min, max}, "amplitude_vpp": {min, max},
+                                      "phase_deg": {min, max, max_exclusive},
+                                      "dc_offset_v": {min, max} } },
+                        { ... channel 2 } ],
+          "mirror": false, "output_peak_v": 10 }
+        amplitude and offset ranges are the ones allowed right now for that
+        channel (FuncGenLimits::amplitudeFor / dcOffsetFor), so they move with
+        each other
 
     POST /api/state
-        - body: one key from the state JSON, e.g. {"amplitude_vpp": 2.5},
-          {"waveform": "square"}, {"output_enabled": true}
-        - none or more than one key, an unknown key, a wrong type or a number
-          that isn't finite -> 400 {"error": "..."}
+        - body: one key from the state JSON plus "channel" (1 or 2), e.g.
+          {"channel": 1, "amplitude_vpp": 2.5}, {"channel": 2, "waveform": "square"},
+          {"channel": 1, "output_enabled": true}. or {"mirror": true} on its own
+          (CH2 follows CH1, see funcgen_controller.h)
+        - none or more than one setting, an unknown key, a missing or bad
+          channel (or one on "mirror"), a wrong type or a number that isn't
+          finite -> 400 {"error": "..."}
+        - a mirrored setting on channel 2 while the mirror is on -> 409
+          {"error": "..."}: it is locked, never silently unlinked
         - out of range is NOT rejected (unlike MCP and BLE): the setter clamps it
           to the edge (phase wraps into 0..360). the reply then has
           "clamped": true and a "note" saying what was applied

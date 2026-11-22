@@ -16,13 +16,12 @@ Sorted by GPIO. Two SPI buses: the **generator bus** (FSPI: each channel's
 AD9833 and amplitude AD5452, plus one MCP4822 for both offsets) and the
 **display bus** (HSPI: LCD and touch).
 
-CH2 isn't in the firmware yet, but its chips are put into a known state at
-boot: `holdSafePinStates()` (the first thing `setup()` does) deselects every
+Both channels' chips are put into a known state at boot:
+`holdSafePinStates()` (the first thing `setup()` does) deselects every
 generator chip, opens both relays and puts both path switches on the divided
-path, then a CH2 `FunctionGenerator::begin()` parks CH2 (AD9833 reset to sine
-and asleep, amplitude 0, offset `VOUTB` at the 0 V code, relay open). Nothing
-touches CH2 after that. CH2's AD9833 and AD5452
-wire up exactly like CH1's (same tables below), except for the pins listed
+path, then each channel's `FunctionGenerator::begin()` resets it (AD9833 to
+sine and asleep, amplitude 0, offset at the 0 V code, relay open). CH2's
+AD9833 and AD5452 wire up exactly like CH1's (same tables below), except for the pins listed
 here.
 
 | GPIO | `config.h` name | Connects to | Notes |
@@ -38,15 +37,15 @@ here.
 | 10 | `PIN_AD9833_CS` | AD9833 `FSYNC` | The module's own pull-up (none on the board), then held HIGH from the top of `setup()` |
 | 11 | `PIN_GEN_MOSI` | `SDATA` on both AD9833s, `SDIN` on both AD5452s, MCP4822 `SDI` | Generator bus data out |
 | 12 | `PIN_GEN_SCK` | `SCLK` on both AD9833s and both AD5452s, MCP4822 `SCK` | Generator bus clock |
-| 13 | `PIN_OUTPUT_RELAY_2` | CH2 relay driver: 1 kΩ to the 2N3904 base | 47 kΩ base pull-down to GND, then held LOW (open) from the top of `setup()`. CH2's output is never turned on yet. (Was the generator bus MISO, which nothing used; the bus now runs without one) |
+| 13 | `PIN_OUTPUT_RELAY_2` | CH2 relay driver: 1 kΩ to the 2N3904 base | 47 kΩ base pull-down to GND, then held LOW (open) from the top of `setup()`. HIGH = CH2's output connected (Was the generator bus MISO, which nothing used; the bus now runs without one) |
 | 14 | `PIN_OFFSET_DAC_CS` | MCP4822 (offset, both channels) `CS` | 10 kΩ pull-up to 3.3 V, then held HIGH from the top of `setup()` |
 | 15 | `PIN_LCD_DC` | LCD `DC` | |
 | 16 | `PIN_LCD_RST` | LCD `RESET` | |
 | 17 | `PIN_LCD_BL` | LCD `LED` | Backlight, driven HIGH |
 | 18 | `PIN_TOUCH_CS` | `T_CS` | |
 | 21 | `PIN_WAVE_SWITCH` | TS5A23157 `IN1` | The module's own pull resistor (none on the board). Driven HIGH (divided path) from the top of `setup()` until the AD9833 is reset to sine |
-| 39 | `PIN_AD9833_CS_2` | CH2 AD9833 `FSYNC` | The module's own pull-up (none on the board), then held HIGH from the top of `setup()`. CH2 is parked at boot |
-| 40 | `PIN_AMP_DAC_CS_2` | CH2 AD5452 (amplitude) `SYNC` | 10 kΩ pull-up to 3.3 V, then held HIGH from the top of `setup()`. CH2 is parked at boot |
+| 39 | `PIN_AD9833_CS_2` | CH2 AD9833 `FSYNC` | The module's own pull-up (none on the board), then held HIGH from the top of `setup()` |
+| 40 | `PIN_AMP_DAC_CS_2` | CH2 AD5452 (amplitude) `SYNC` | 10 kΩ pull-up to 3.3 V, then held HIGH from the top of `setup()` |
 | 41 | `PIN_OUTPUT_RELAY` | CH1 relay driver: 1 kΩ to the 2N3904 base | 47 kΩ base pull-down to GND (output disconnected at boot), then held LOW from the top of `setup()`. HIGH = output connected (Omron G5V-1 DC5 coil) |
 | 42 | `PIN_ENC_SW` | Encoder `SW` | Internal pull-up. Held at power-on = forget Wi-Fi/phones |
 | 47 | `PIN_WAVE_SWITCH_2` | TS5A23157 `IN2` | The module's own pull resistor (none on the board). HIGH (divided path) from the top of `setup()` until CH2's AD9833 is reset to sine, then LOW |
@@ -149,7 +148,7 @@ The MCP4822 has no data-out pin either.
 
 Dual SPDT, VSSOP-10 (DGS) on a breakout module. Each channel has its own
 control pin: `INx` low connects `COMx` to `NCx`; `INx` high connects `COMx` to
-`NOx`. Channel 1 is CH1's path switch; channel 2 is reserved for CH2.
+`NOx`. Channel 1 is CH1's path switch, channel 2 is CH2's.
 
 Pin numbers are the chip's (TI DGS package). The module's header labels and
 order may differ, so match by name on the silkscreen. If the module has no
@@ -160,10 +159,10 @@ decoupling cap, add the 100 nF yourself.
 | 1 | `IN1` | GPIO21 | The module's own pull resistor until `setup()`, then driven by the firmware |
 | 2 | `NO1` | CH1 square divider top (39.2 kΩ to gain 1's + input, 10 kΩ from there to GND: 0.67 V) | Selected when `IN1` is HIGH (square) |
 | 3 | `GND` | GND | |
-| 4 | `NO2` | CH2 square divider top | Reserved for CH2 |
-| 5 | `IN2` | GPIO47 | Same as `IN1`, for CH2 (parked on sine at boot) |
-| 6 | `COM2` | CH2 AD9833 `OUT` | Reserved for CH2 |
-| 7 | `NC2` | CH2 gain 1 + input (direct path) | Reserved for CH2 |
+| 4 | `NO2` | CH2 square divider top | Selected when `IN2` is HIGH (square) |
+| 5 | `IN2` | GPIO47 | Same as `IN1`, for CH2 |
+| 6 | `COM2` | CH2 AD9833 `OUT` | |
+| 7 | `NC2` | CH2 gain 1 + input (direct path) | Selected when `IN2` is LOW (sine/triangle) |
 | 8 | `V+` | 3.3 V + 100 nF to GND at the chip | |
 | 9 | `NC1` | CH1 gain 1 + input (OPA2810 A), direct sine/triangle path | Selected when `IN1` is LOW (sine/triangle) |
 | 10 | `COM1` | CH1 AD9833 `OUT` | |
