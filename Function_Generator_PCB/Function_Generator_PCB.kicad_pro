@@ -78,24 +78,24 @@
       ],
       "drc_exclusions": [
         [
-          "courtyards_overlap|109055000|54155000|643ccf08-1a36-4e57-afbe-3aeea04e2bed|d2a1df4c-caf8-4788-899d-55ed91f10555",
-          ""
+          "courtyards_overlap|107055000|54155000|643ccf08-1a36-4e57-afbe-3aeea04e2bed|d2a1df4c-caf8-4788-899d-55ed91f10555",
+          "module sits above board"
         ],
         [
           "courtyards_overlap|139155000|76055000|0b1e1030-3cbc-475b-aa5d-69db8d90cbb5|6f7925dc-3954-478c-a39f-caacb1e326b7",
-          ""
+          "module sits above board"
         ],
         [
           "courtyards_overlap|139155000|86055000|0b1e1030-3cbc-475b-aa5d-69db8d90cbb5|69f24337-1ca6-46c6-8f9a-1447af754871",
-          ""
+          "module sits above board"
         ],
         [
           "courtyards_overlap|143155000|76055000|0b1e1030-3cbc-475b-aa5d-69db8d90cbb5|1621da26-a67f-4a88-91d6-75a986830fb9",
-          ""
+          "module sits above board"
         ],
         [
           "courtyards_overlap|143155000|86055000|0b1e1030-3cbc-475b-aa5d-69db8d90cbb5|81b39625-9d79-4a33-93ba-e9ca5a3c61df",
-          ""
+          "module sits above board"
         ]
       ],
       "meta": {
@@ -175,7 +175,7 @@
         "min_hole_to_hole": 0.25,
         "min_microvia_diameter": 0.2,
         "min_microvia_drill": 0.1,
-        "min_resolved_spokes": 2,
+        "min_resolved_spokes": 1,
         "min_silk_clearance": 0.0,
         "min_text_height": 0.8,
         "min_text_thickness": 0.08,
@@ -199,7 +199,6 @@
         {
           "td_allow_use_two_tracks": true,
           "td_curve_segcount": 0,
-          "td_enabled": false,
           "td_height_ratio": 1.0,
           "td_length_ratio": 0.5,
           "td_maxheight": 2.0,
@@ -211,7 +210,6 @@
         {
           "td_allow_use_two_tracks": true,
           "td_curve_segcount": 0,
-          "td_enabled": false,
           "td_height_ratio": 1.0,
           "td_length_ratio": 0.5,
           "td_maxheight": 2.0,
@@ -223,7 +221,6 @@
         {
           "td_allow_use_two_tracks": true,
           "td_curve_segcount": 0,
-          "td_enabled": false,
           "td_height_ratio": 1.0,
           "td_length_ratio": 0.5,
           "td_maxheight": 2.0,
@@ -684,8 +681,8 @@
     "meta": {
       "version": 5
     },
-    "net_colors": {},
-    "netclass_assignments": {},
+    "net_colors": null,
+    "netclass_assignments": null,
     "netclass_patterns": [
       {
         "netclass": "12V",
@@ -890,7 +887,7 @@
         "uuid": "36137b94-4d12-4e7a-a065-7ebda7200b05"
       }
     ],
-    "used_designators": "#FLG1-5,#PWR1-84,C1-36,D1-2,DS1,HS1,J1-5,Q1-2,R1-32,S1,SW1-5,U1-17",
+    "used_designators": "R1-32,#FLG1-5,J1-6,#PWR1-84,D1-2,C1-36,DS1,Q1-2,HS1,S1,SW1-5,U1-17",
     "variants": []
   },
   "sheets": [

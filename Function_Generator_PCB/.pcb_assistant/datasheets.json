@@ -890,6 +890,19 @@
       "tried": [],
       "fetched_at": 1795131793.3412526,
       "origin": "research"
+    },
+    "ESP32-S3-WROOM-1": {
+      "key": "ESP32-S3-WROOM-1",
+      "refs": [],
+      "status": "missing",
+      "file": null,
+      "source": null,
+      "url": null,
+      "sha256": null,
+      "pages": 0,
+      "tried": [],
+      "fetched_at": 0.0,
+      "origin": "research"
     }
   }
 }

@@ -1,9 +1,9 @@
-- ON HAND do-not-order: DS1, U1, U6/U7, SW1, SW2, SW3. Sockets still to buy. Open offer: DK MPNs D1/D2, Q1/Q2, J1/J2, J3, J4/J5, HS1 heatsink; relay SW4/SW5 G5V-1 DC5 DK proposal pending.
+- ON HAND do-not-order: DS1, U1, U6/U7, SW1, SW2, SW3. Sockets still to buy. Open offer: DK MPNs D1/D2, Q1/Q2, J1/J2, J3, J4/J5, HS1 heatsink; relay SW4/SW5 G5V-1 DC5 (30mA coil, pins coil 2/9, COM 5+6, NC1, NO10 - verified).
 - BOM gotcha: value/footprint change regroups row, drops MPN/pin -> re-set after fill_bom_from_schematic.
-- Offset: MCP4822 U17 (VDD 3.3V, CS GPIO14, LDAC GND). CH_off=3.0*Vdac-5; +5V drop shifts offset 1:1. Net '5V_ref' is actually U5/U12 IN- node.
-- Relays: coil 2(+5V)/9, COM 6, NC 1 floating, NO 10->R1/R2. Q1/Q2 2N3904, D1/D2 1N4148.
-- U8/U13 VREF from RRIO OPA2810 on +/-12 = 0 margin to AD5452 abs max (ds p.6).
-- J3 center-positive. SW2 rocker current rating unverified. Power: J3->SW2->+12C (U2, U3 in).
-- GND single net, no split. 2L 100x100, GND zone F+B, 11 fills-only rule areas (antenna + 10 op-amp windows).
-- (11-21 19:08 save) DONE: A1-A5 (R31 DNP on board, U15B routed, F8 parity clean), B1 OPA2810 courtyard, B2 courtyards excluded, ERC excludes (±12V pwr_not_driven excluded, flags removed - fine), 9 C1 vias placed (DUPLICATE via at 133.6,58.2), PTH thermal setting. DRC: 15 unconnected, 4 starved (SW3.3 x2, U7.2, U3.2). 2 ERC multiple_net_names still open (dup pairings).
-- Copy test 19:1x: dedup + 6 stub/vias (C32.2->140.6,123.9; C36.2->158.8,110.5; R17.2->146.0,86.1; C24.2->172.3,103.8; C4.2->142.6,64.9; C9.2->144.2,99.5) + vias (146.9,89.5),(130.5,119.0),(167.5,82.6) -> 6 unconnected, no clearance errors. Left: CH1 out-stage GND (C17,C5,C6,C23,C29,R9,U5.3) + C35 + U8.2 fenced by B.Cu +3.3V/GPIO5/9/11/12 under x148-173 y53-71; C13.2, R26.2 (+3.3V B run); DS1.2 (display bus GPIO1/5/15-18 on B).
+- Offset HW: CH_off=3.0*Vdac-5 (R12=R29=R13=4.02k) but firmware config.h assumes 3.402 & +5V max -> HW max +4.6V at code cap 3200. Option given: R12/R14 to +3.3V, 2.61k -> 3.54*Vdac-5.08. +5V drift -> offset 1:1.
+- Docs (pinout_table.md) want 10k pull-downs GPIO21/47 + RC LPF on sine path: board has neither (raised 11-22).
+- U8/U13 VREF: OPA2810 swing VS+-0.22 typ vs AD5452 +/-12 abs -> square must never go via NC path.
+- R31 DNP (in_bom/in_pos yes - check fab export). GND single net. J3 center-positive, no fuse/rev-pol.
+- 11-22 full review: DRC clean (0 unconnected, parity OK). Open: U1 header row 25.40 vs Espressif 22.86 (measure!), HS1 no footprint, no mtg holes, traces under antenna, CH1 U5A fb trace 24mm near U8 SPI, 5V_ref nodes ~20mm (move R29/R30), U2 no local out caps, weak GND U13.2/U12.3.
+- No GPIO/power breakouts (decided 11-22). Spare GPIOs 0,3,19,20,35-38,43-46,48.
+- (2026-11-22) RESOLVED 11-22: U1 DevKit header rows measured 10 pitches (9 holes between) = 25.40 mm, matches footprint. Not 22.86.
