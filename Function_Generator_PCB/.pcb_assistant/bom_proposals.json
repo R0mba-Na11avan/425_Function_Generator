@@ -2332,54 +2332,6 @@
       "created_at": "2026-11-18T00:58:35+00:00"
     },
     {
-      "id": "sch:79db3ae905d0",
-      "refdes": [
-        "R31"
-      ],
-      "qty": 1,
-      "value": "0",
-      "footprint": "Resistor_SMD:R_0805_2012Metric_Pad1.20x1.40mm_HandSolder",
-      "current_mpn": "RMCF0805ZT0R00",
-      "current_price": null,
-      "offer": {
-        "mpn": "RMCF0805ZT0R00",
-        "manufacturer": "Stackpole Electronics Inc",
-        "description": "RES 0 OHM JUMPER 1/8W 0805",
-        "digikey_pn": "RMCF0805ZT0R00CT-ND",
-        "packaging": "Cut Tape (CT)",
-        "unit_price": 0.1,
-        "stock": 2698683,
-        "lifecycle": "Active",
-        "product_url": "https://www.digikey.com/en/products/detail/stackpole-electronics-inc/RMCF0805ZT0R00/1756901",
-        "datasheet_url": "https://www.seielect.com/catalog/SEI-RMCF_RMCP.pdf",
-        "min_order": 1,
-        "min_order_cost": null,
-        "bulk_only": false,
-        "photo_url": "https://mm.digikey.com/Volume0/opasdata/d220001/medias/images/639/0805-RMCF-Series.jpg",
-        "category": "Resistors",
-        "parameters": {
-          "Resistance": "0 Ohms",
-          "Tolerance": "Jumper",
-          "Power (Watts)": "-",
-          "Composition": "Thick Film",
-          "Features": "Automotive AEC-Q200",
-          "Temperature Coefficient": "-",
-          "Operating Temperature": "-55\u00b0C ~ 155\u00b0C",
-          "Package / Case": "0805 (2012 Metric)",
-          "Supplier Device Package": "0805",
-          "Ratings": "-",
-          "Size / Dimension": "0.079\" L x 0.049\" W (2.00mm x 1.25mm)",
-          "Height - Seated (Max)": "0.026\" (0.65mm)",
-          "Number of Terminations": "2",
-          "Failure Rate": "-"
-        }
-      },
-      "alternatives": [],
-      "rationale": "exact part number RMCF0805ZT0R00",
-      "status": "approved",
-      "created_at": "2026-11-18T01:00:06+00:00"
-    },
-    {
       "id": "sch:21fd5ab0e28e",
       "refdes": [
         "DS1"
@@ -2865,7 +2817,7 @@
       "alternatives": [],
       "rationale": "generic symbol \u2014 set an MPN on the part (or ask the copilot to pick one)",
       "status": "skipped",
-      "created_at": "2026-11-21T22:44:54+00:00"
+      "created_at": "2026-11-22T02:29:53+00:00"
     },
     {
       "id": "sch:7be6222b5239",
@@ -2881,7 +2833,7 @@
       "alternatives": [],
       "rationale": "generic symbol \u2014 set an MPN on the part (or ask the copilot to pick one)",
       "status": "skipped",
-      "created_at": "2026-11-21T22:44:54+00:00"
+      "created_at": "2026-11-22T02:29:53+00:00"
     },
     {
       "id": "sch:2c5734bb5d4d",
@@ -2897,7 +2849,7 @@
       "alternatives": [],
       "rationale": "generic symbol \u2014 set an MPN on the part (or ask the copilot to pick one)",
       "status": "skipped",
-      "created_at": "2026-11-21T22:44:54+00:00"
+      "created_at": "2026-11-22T02:29:53+00:00"
     },
     {
       "id": "sch:cdeee9933325",
@@ -2913,7 +2865,7 @@
       "alternatives": [],
       "rationale": "generic symbol \u2014 set an MPN on the part (or ask the copilot to pick one)",
       "status": "skipped",
-      "created_at": "2026-11-21T22:44:54+00:00"
+      "created_at": "2026-11-22T02:29:53+00:00"
     },
     {
       "id": "sch:3525ea079c19",
@@ -2930,7 +2882,7 @@
       "alternatives": [],
       "rationale": "generic symbol \u2014 set an MPN on the part (or ask the copilot to pick one)",
       "status": "skipped",
-      "created_at": "2026-11-21T22:44:54+00:00"
+      "created_at": "2026-11-22T02:29:53+00:00"
     },
     {
       "id": "sch:a2ccf65c916a",
@@ -2947,7 +2899,7 @@
       "alternatives": [],
       "rationale": "generic symbol \u2014 set an MPN on the part (or ask the copilot to pick one)",
       "status": "skipped",
-      "created_at": "2026-11-21T22:44:54+00:00"
+      "created_at": "2026-11-22T02:29:53+00:00"
     },
     {
       "id": "sch:822b02010113",
@@ -2963,7 +2915,7 @@
       "alternatives": [],
       "rationale": "generic symbol \u2014 set an MPN on the part (or ask the copilot to pick one)",
       "status": "skipped",
-      "created_at": "2026-11-21T22:44:54+00:00"
+      "created_at": "2026-11-22T02:29:53+00:00"
     }
   ]
 }

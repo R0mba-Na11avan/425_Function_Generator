@@ -5,6 +5,7 @@
     "erc:pin_not_connected#U2": "",
     "erc:power_pin_not_driven#": "",
     "erc:pin_not_driven#U1": "",
-    "erc:power_pin_not_driven#U1": ""
+    "erc:power_pin_not_driven#U1": "",
+    "drc:malformed_courtyard#": ""
   }
 }

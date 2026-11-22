@@ -1,12 +1,9 @@
-- ON HAND pinned "do not order": DS1, U1, U6/U7, SW1, SW2, SW3. Sockets still need buying. DEFERRED: U6/U7 header order.
-- BOM gotcha: value/footprint change regroups row and drops MPN/pin -> re-set after fill_bom_from_schematic.
-- (11-19) 0805 fix done: C16/C20/C24 in 100n row, R8/R28 in 1k row, R27/R32 47k row MPN RC0805FR-0747KL (engineer's).
-- Open offer: DigiKey MPNs for D1/D2, Q1/Q2, J3, J4/J5, HS1 heatsink.
-- Offset: MCP4822 U17 (VDD 3.3V, CS GPIO14, LDAC GND). DAC_A->R11 1k->U5p5, C20; DAC_B->R15->U12p5, C24. CH_off=3.0*Vdac-5. Calibrate.
-- Relays SW4/SW5 G5V-1 DC5, DK proposal pending. Coil 2(+5V)/9, COM 6 (pin5 pad floats), NC 1 floating (was GND short, fixed), NO 10->R1/R2. Q1/Q2 2N3904, D1/D2 1N4148 DO-35 fp.
-- U15 unit B unplaced. U8/U13 VREF from RRIO OPA2810 on +/-12 = 0 margin to AD5452 abs max (ds p.6).
-- J3 center-positive. HS1 near 7805. SW2 rocker current rating unverified. Power in: J3->SW2->+12C (U2 in, U3 in).
-- (11-21) Track widths advised (1oz): PWR_IN(+12C, J3 net) 1.0, +5V 0.8, +/-12V 0.5, +3.3V 0.3, signals Default 0.2/0.2, GND pour. No netclass patterns existed.
-- (2026-11-21) (11-21) Layout review: 2L 100x100, netclasses exist (PWR_IN 1.2,12V 0.5,5V 0.4,3.3V 0.3 but +3.3V unassigned). Advised: GND pour both layers + antenna keepout, 5V_ref own branch from 7805 (CH2 now fed via relay coil trace), fix U16 EN/GND clearance, display bus along top edge B.Cu.
-- (2026-11-21) (11-21) GNDA wired to GND on power sheet (30.48,123.19) -> single GND net on board (65 pads), no split. ERC multiple_net_names. Advised single solid GND, partition by placement.
-- (2026-11-22) (11-21 15:47) Pour done right: GND zone F+B, 11 rule areas (antenna + 10 op-amp windows), CH1 rerouted top no vias. DRC 25 unconn/22 starved. Advised: 9 vias + 2 stubs (->14), THT-only thermals (starved 22->5). Remaining 14 islands from B.Cu runs (CENTER_BIAS, SW3B-COM2, GPIO4/9/11/12).
+- ON HAND do-not-order: DS1, U1, U6/U7, SW1, SW2, SW3. Sockets still to buy. Open offer: DK MPNs D1/D2, Q1/Q2, J1/J2, J3, J4/J5, HS1 heatsink; relay SW4/SW5 G5V-1 DC5 DK proposal pending.
+- BOM gotcha: value/footprint change regroups row, drops MPN/pin -> re-set after fill_bom_from_schematic.
+- Offset: MCP4822 U17 (VDD 3.3V, CS GPIO14, LDAC GND). CH_off=3.0*Vdac-5; +5V drop shifts offset 1:1. Net '5V_ref' is actually U5/U12 IN- node.
+- Relays: coil 2(+5V)/9, COM 6, NC 1 floating, NO 10->R1/R2. Q1/Q2 2N3904, D1/D2 1N4148.
+- U8/U13 VREF from RRIO OPA2810 on +/-12 = 0 margin to AD5452 abs max (ds p.6).
+- J3 center-positive. SW2 rocker current rating unverified. Power: J3->SW2->+12C (U2, U3 in).
+- GND single net, no split. 2L 100x100, GND zone F+B, 11 fills-only rule areas (antenna + 10 op-amp windows).
+- (11-21 19:08 save) DONE: A1-A5 (R31 DNP on board, U15B routed, F8 parity clean), B1 OPA2810 courtyard, B2 courtyards excluded, ERC excludes (±12V pwr_not_driven excluded, flags removed - fine), 9 C1 vias placed (DUPLICATE via at 133.6,58.2), PTH thermal setting. DRC: 15 unconnected, 4 starved (SW3.3 x2, U7.2, U3.2). 2 ERC multiple_net_names still open (dup pairings).
+- Copy test 19:1x: dedup + 6 stub/vias (C32.2->140.6,123.9; C36.2->158.8,110.5; R17.2->146.0,86.1; C24.2->172.3,103.8; C4.2->142.6,64.9; C9.2->144.2,99.5) + vias (146.9,89.5),(130.5,119.0),(167.5,82.6) -> 6 unconnected, no clearance errors. Left: CH1 out-stage GND (C17,C5,C6,C23,C29,R9,U5.3) + C35 + U8.2 fenced by B.Cu +3.3V/GPIO5/9/11/12 under x148-173 y53-71; C13.2, R26.2 (+3.3V B run); DS1.2 (display bus GPIO1/5/15-18 on B).

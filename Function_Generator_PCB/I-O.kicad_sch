@@ -7366,7 +7366,7 @@
 		(in_bom yes)
 		(on_board yes)
 		(in_pos_files yes)
-		(dnp no)
+		(dnp yes)
 		(uuid "78ca4d3c-895c-4cf8-87e0-c5cd096ddda0")
 		(property "Reference" "R31"
 			(at 81.534 90.424 90)

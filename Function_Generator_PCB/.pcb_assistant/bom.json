@@ -378,31 +378,6 @@
       "line_total": 0.6
     },
     {
-      "id": "sch:79db3ae905d0",
-      "refdes": [
-        "R31"
-      ],
-      "qty": 1,
-      "value": "0",
-      "footprint": "Resistor_SMD:R_0805_2012Metric_Pad1.20x1.40mm_HandSolder",
-      "mpn": "RMCF0805ZT0R00",
-      "datasheet_url": "https://www.seielect.com/catalog/SEI-RMCF_RMCP.pdf",
-      "product_url": "https://www.digikey.com/en/products/detail/stackpole-electronics-inc/RMCF0805ZT0R00/1756901",
-      "why": "0R 0805 jumper (Stackpole RMCF, the same series as R25). DigiKey: 2.7M in stock, $0.10, Active.",
-      "unit_price": 0.1,
-      "manufacturer": "Stackpole Electronics Inc",
-      "distributor_pn": "RMCF0805ZT0R00CT-ND",
-      "stock": 2698683,
-      "lifecycle": "Active",
-      "fetched_at": "2026-11-18T01:00:06+00:00",
-      "min_order": null,
-      "source": "schematic",
-      "status": "active",
-      "duplicate_of": [],
-      "separate_from": [],
-      "line_total": 0.1
-    },
-    {
       "id": "sch:cf5126747381",
       "refdes": [
         "C21",
