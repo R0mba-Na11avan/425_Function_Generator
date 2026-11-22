@@ -10,6 +10,19 @@ ROOT="$(cd "$(dirname "$0")/.." && pwd)"
 OUT="$ROOT/test/build"
 mkdir -p "$OUT/screens"
 
+#the embedded web pages must match their sources in web/ (see web/README.md)
+#(the Windows python3 shim exists even without Python, so try running it)
+PYTHON=python3
+python3 --version > /dev/null 2>&1 || PYTHON=python
+"$PYTHON" "$ROOT/tools/embed_web.py" --check
+
+#the page scripts are plain JS files, so they can be syntax-checked directly
+if command -v node > /dev/null; then
+    for js in "$ROOT"/web/*/*.js; do node --check "$js"; done
+else
+    echo "node not found, skipping the web page JS syntax check"
+fi
+
 #firmware sources under test, compiled against the fakes in test/fakes
 SOURCES=(
     "$ROOT/src/core/func_gen.cpp"

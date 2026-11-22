@@ -1,0 +1,36 @@
+<!doctype html>
+<html lang="en"><head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Function Generator Wi-Fi</title>
+<link rel="stylesheet" href="style.css"></head><body><main>
+<h1>Function Generator Wi-Fi</h1>
+<p>Pick the network the generator should join.</p>
+<p class="hint">Only want to use the generator? <a href="{{WEB_CONTROL_PATH}}">Open the controls</a>, they work on this setup network too.</p>
+
+<div class="card" id="pick">
+<div class="row"><h2>Networks</h2><button class="small" id="refresh" type="button">Refresh</button></div>
+<div id="nets"></div>
+<div class="hint" id="scanmsg">Scanning...</div>
+</div>
+
+<form class="card" id="form" autocomplete="off">
+<label for="ssid">Network name (type it for a hidden network)</label>
+<input type="text" id="ssid" maxlength="32" autocapitalize="none" spellcheck="false" required>
+<label for="pass">Password</label>
+<input type="password" id="pass" maxlength="64">
+<div class="check"><input type="checkbox" id="show"><label for="show" style="margin:0">Show password</label></div>
+<div class="hint">Leave it empty for an open network.</div>
+<button class="main" id="save" type="submit">Save and connect</button>
+<div id="msg"></div>
+</form>
+
+<div class="card" id="done" hidden>
+<h2 class="ok" style="font-size:16px;margin:0 0 8px">Saved</h2>
+<p>The generator is restarting and joining <b id="donessid"></b>. This page will stop responding and your device will drop off this setup network.</p>
+<p>Once it has joined, its screen shows its address, and AI agents can reach it at <b>http://{{MDNS_HOSTNAME}}.local/mcp</b>.</p>
+<p>If it can't join, this setup network comes back in about 30 seconds.</p>
+</div>
+
+<script src="app.js"></script>
+</main></body></html>

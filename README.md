@@ -62,7 +62,11 @@ src/
              http_server, mcp_server, rest_api (web control endpoints),
              api_json (state JSON + Origin check shared by MCP and REST),
              ble_service (+ ble_logic GATT layout and encoding)
-  web/       provisioning_html.h (Wi-Fi setup page), index_html.h (control page)
+  web/       provisioning_html.h (Wi-Fi setup page), index_html.h (control page),
+             GENERATED from the top-level web/ folder, don't edit
+web/         the pages as plain HTML/CSS/JS (control/, setup/). after a change run
+             python tools/embed_web.py (see web/README.md)
+tools/       embed_web.py (web/ -> src/web/*_html.h), gen_intellisense.py
 ```
 
 Dependencies only point downward: `ui`/`comms` -> `core` -> `libs`. `ui` and
@@ -289,7 +293,10 @@ the AD9833, the AD5452, the MCP4822 and the path switch, and render the dashboar
 to BMP screenshots in `test/build/screens`. The HTTP server, Wi-Fi state machine
 and setup routes run against a fake esp_http_server. The BLE value encoding and
 range checks run against the real controller; the NimBLE stack itself isn't
-faked. The web API runs end to end like MCP; the page's JavaScript isn't run. Needs g++ (on Windows:
+faked. The web API runs end to end like MCP; the page's JavaScript is only
+syntax-checked (with `node`, if installed), not run. The script also fails if
+`src/web/*_html.h` is older than `web/` (run `python tools/embed_web.py`).
+Needs Python and g++ (on Windows:
 `scoop install mingw`):
 
     bash test/run_tests.sh

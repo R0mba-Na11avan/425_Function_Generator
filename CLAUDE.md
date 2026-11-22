@@ -79,6 +79,9 @@ BLE (last). Read `README.md` for the architecture and status. Each stub header i
   headers are only found relative to the including file, so include across
   folders with relative paths (`"../core/func_gen.h"`).
 - Exactly one `.ino` (`425_Function_Generator.ino`). Everything else is `.h`/`.cpp`.
+- Web pages: edit the plain files in `web/<page>/`, then run
+  `python tools/embed_web.py`, which regenerates `src/web/*_html.h` (never edit
+  those by hand). Values from `config.h` go in as `{{NAME}}`. See `web/README.md`.
 - Board: ESP32S3 Dev Module, Flash 16MB, PSRAM "OPI PSRAM", Partition Scheme
   "16M Flash (3MB APP/9.9MB FATFS)". Avoid GPIO26-37 (octal flash/PSRAM) and
   the strapping pins 0/3/45/46.
