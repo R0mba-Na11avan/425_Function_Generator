@@ -1,70 +1,114 @@
 <!doctype html>
-<html lang="en"><head>
-<meta charset="utf-8">
-<meta name="viewport" content="width=device-width,initial-scale=1">
-<title>Function Generator</title>
-<link rel="stylesheet" href="style.css"></head><body><main>
-<header><h1>Function Generator</h1><span id="conn">connecting...</span></header>
-<nav role="tablist">
-<button role="tab" id="tab-ctl" aria-controls="ctl" aria-selected="true">Controls</button>
-<button role="tab" id="tab-dev" aria-controls="dev" aria-selected="false">Device</button>
-</nav>
-<div id="banner" class="banner" hidden>Can't reach the generator. Retrying...</div>
+<html lang="en">
+<head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width,initial-scale=1">
+    <title>Function Generator</title>
+    <link rel="stylesheet" href="style.css">
+</head>
+<body>
+<main>
+    <header>
+        <h1>Function Generator</h1>
+        <span id="conn">connecting...</span>
+    </header>
 
-<section id="ctl" role="tabpanel" aria-labelledby="tab-ctl">
-<div class="card" id="chancard">
-<div class="row"><div class="seg" id="chan">
-<button data-ch="0" aria-pressed="true">CH1</button>
-<button data-ch="1" aria-pressed="false">CH2</button>
-</div><button id="link" class="toggle" aria-pressed="false" title="CH2 follows CH1 (all but the output)">Link</button></div>
-<div class="hint" id="lockmsg" hidden>CH2 follows CH1 while Link is on. Change CH1, or turn Link off to set CH2 on its own. Its output stays separate.</div>
-</div>
+    <nav role="tablist">
+        <button role="tab" id="tab-ctl" aria-controls="ctl" aria-selected="true">Controls</button>
+        <button role="tab" id="tab-dev" aria-controls="dev" aria-selected="false">Device</button>
+    </nav>
 
-<div class="card" id="outcard">
-<div class="row"><h2>Output</h2><button id="out" class="toggle" aria-pressed="false">OFF</button></div>
-</div>
+    <div id="banner" class="banner" hidden>Can't reach the generator. Retrying...</div>
 
-<div class="card" id="wavecard">
-<h2>Waveform</h2>
-<div class="seg" id="wave">
-<button data-w="sine" aria-pressed="false">Sine</button>
-<button data-w="square" aria-pressed="false">Square</button>
-<button data-w="triangle" aria-pressed="false">Triangle</button>
-</div>
-<canvas id="plot"></canvas>
-<div id="cap"></div>
-</div>
+    <!-- controls tab -->
+    <section id="ctl" role="tabpanel" aria-labelledby="tab-ctl">
+        <div class="card" id="chancard">
+            <div class="row">
+                <div class="seg" id="chan">
+                    <button data-ch="0" aria-pressed="true">CH1</button>
+                    <button data-ch="1" aria-pressed="false">CH2</button>
+                </div>
+                <button id="link" class="toggle" aria-pressed="false" title="CH2 follows CH1 (all but the output)">Link</button>
+            </div>
+            <div class="hint" id="lockmsg" hidden>CH2 follows CH1 while Link is on. Change CH1, or turn Link off to set CH2 on its own. Its output stays separate.</div>
+        </div>
 
-<div class="card">
-<div class="field" id="f-frequency_hz">
-<label for="in-frequency_hz">Frequency</label>
-<div class="inrow"><input id="in-frequency_hz" type="number" step="any" inputmode="decimal">
-<select id="unit" aria-label="Frequency unit"><option>Hz</option><option>kHz</option><option>MHz</option></select></div>
-<div class="range"></div><div class="msg"></div>
-</div>
-<div class="field" id="f-amplitude_vpp">
-<label for="in-amplitude_vpp">Amplitude</label>
-<div class="inrow"><input id="in-amplitude_vpp" type="number" step="any" inputmode="decimal"><span class="unit">Vpp</span></div>
-<div class="range"></div><div class="msg"></div>
-</div>
-<div class="field" id="f-dc_offset_v">
-<label for="in-dc_offset_v">DC offset</label>
-<div class="inrow"><input id="in-dc_offset_v" type="number" step="any" inputmode="decimal"><span class="unit">V</span></div>
-<div class="range"></div><div class="msg"></div>
-</div>
-<div class="field" id="f-phase_deg">
-<label for="in-phase_deg">Phase</label>
-<div class="inrow"><input id="in-phase_deg" type="number" step="any" inputmode="decimal"><span class="unit">&deg;</span></div>
-<div class="range"></div><div class="msg"></div>
-</div>
-<div class="hint">Press Enter or leave a field to send it. Esc undoes the typing.</div>
-</div>
-</section>
+        <div class="card" id="outcard">
+            <div class="row">
+                <h2>Output</h2>
+                <button id="out" class="toggle" aria-pressed="false">OFF</button>
+            </div>
+        </div>
 
-<section id="dev" role="tabpanel" aria-labelledby="tab-dev" hidden>
-<div class="card"><dl id="info"></dl></div>
-<div class="hint">Wi-Fi changes and forgetting phones are only on the generator's screen.</div>
-</section>
+        <div class="card" id="wavecard">
+            <h2>Waveform</h2>
+            <div class="seg" id="wave">
+                <button data-w="sine" aria-pressed="false">Sine</button>
+                <button data-w="square" aria-pressed="false">Square</button>
+                <button data-w="triangle" aria-pressed="false">Triangle</button>
+            </div>
+            <canvas id="plot"></canvas>
+            <div id="cap"></div>
+        </div>
 
-<script src="app.js"></script>
-</main></body></html>
+        <div class="card">
+            <div class="field" id="f-frequency_hz">
+                <label for="in-frequency_hz">Frequency</label>
+                <div class="inrow">
+                    <input id="in-frequency_hz" type="number" step="any" inputmode="decimal">
+                    <select id="unit" aria-label="Frequency unit">
+                        <option>Hz</option>
+                        <option>kHz</option>
+                        <option>MHz</option>
+                    </select>
+                </div>
+                <div class="range"></div>
+                <div class="msg"></div>
+            </div>
+
+            <div class="field" id="f-amplitude_vpp">
+                <label for="in-amplitude_vpp">Amplitude</label>
+                <div class="inrow">
+                    <input id="in-amplitude_vpp" type="number" step="any" inputmode="decimal">
+                    <span class="unit">Vpp</span>
+                </div>
+                <div class="range"></div>
+                <div class="msg"></div>
+            </div>
+
+            <div class="field" id="f-dc_offset_v">
+                <label for="in-dc_offset_v">DC offset</label>
+                <div class="inrow">
+                    <input id="in-dc_offset_v" type="number" step="any" inputmode="decimal">
+                    <span class="unit">V</span>
+                </div>
+                <div class="range"></div>
+                <div class="msg"></div>
+            </div>
+
+            <div class="field" id="f-phase_deg">
+                <label for="in-phase_deg">Phase</label>
+                <div class="inrow">
+                    <input id="in-phase_deg" type="number" step="any" inputmode="decimal">
+                    <span class="unit">&deg;</span>
+                </div>
+                <div class="range"></div>
+                <div class="msg"></div>
+            </div>
+
+            <div class="hint">Press Enter or leave a field to send it. Esc undoes the typing.</div>
+        </div>
+    </section>
+
+    <!-- device tab -->
+    <section id="dev" role="tabpanel" aria-labelledby="tab-dev" hidden>
+        <div class="card">
+            <dl id="info"></dl>
+        </div>
+        <div class="hint">Wi-Fi changes and forgetting phones are only on the generator's screen.</div>
+    </section>
+
+    <script src="app.js"></script>
+</main>
+</body>
+</html>
